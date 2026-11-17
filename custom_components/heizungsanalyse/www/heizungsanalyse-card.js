@@ -1,7 +1,7 @@
-/* Heizungsanalyse 0.3.1 - gebaut aus frontend/src (npm run build). Nicht von Hand bearbeiten. */
+/* Heizungsanalyse 0.3.2 - gebaut aus frontend/src (npm run build). Nicht von Hand bearbeiten. */
 (() => {
   // src/version.js
-  var HA_VERSION = "0.3.1";
+  var HA_VERSION = "0.3.2";
 
   // src/i18n.js
   var EN = {

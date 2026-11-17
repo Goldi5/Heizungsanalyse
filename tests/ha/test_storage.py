@@ -92,3 +92,24 @@ async def test_data_survives_reload(hass: HomeAssistant) -> None:
     inventory = await second.async_inventory()
 
     assert inventory["pumps"]["hk2"]["model"] == "Testpumpe"
+
+
+async def test_loads_version_1_data_from_0_2(hass: HomeAssistant, hass_storage) -> None:
+    """Speicher aus 0.2.x (Version 1) wird übernommen, statt den Start abzubrechen."""
+    hass_storage["heizungsanalyse.entry_v1"] = {
+        "version": 1,
+        "minor_version": 1,
+        "key": "heizungsanalyse.entry_v1",
+        "data": {
+            "inventory": {"pumps": {"hk1": {"setting": "Stufe 2"}}},
+            "change_log": [{"ts": "2026-11-10T08:00:00+00:00", "object": "hydraulics", "field": "kurve"}],
+            "rollups": {"2026-11-10": {"heat_kwh": 80.0}},
+        },
+    }
+    store = InventoryStore(hass, "entry_v1")
+
+    data = await store.async_load()
+
+    assert data["inventory"]["pumps"]["hk1"]["setting"] == "Stufe 2"
+    assert len(data["change_log"]) == 1
+    assert "2026-11-10" in data["rollups"]

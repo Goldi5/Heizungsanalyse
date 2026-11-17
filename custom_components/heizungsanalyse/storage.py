@@ -32,6 +32,21 @@ EMPTY_INVENTORY: dict[str, dict[str, Any]] = {
 }
 
 
+class _VersionedStore(Store[dict[str, Any]]):
+    """Store mit Migration: ältere Fassungen werden unverändert übernommen.
+
+    Version 1 (bis 0.2.x) kennt nur Inventar, Änderungsverlauf und Roll-ups;
+    fehlende Bereiche (Protokoll, Debug-Spur, Dashboard) ergänzt ``async_load``.
+    Ohne diese Methode wirft Home Assistant ``NotImplementedError`` und die
+    Integration startet nach dem Update nicht (0.3.0/0.3.1).
+    """
+
+    async def _async_migrate_func(
+        self, old_major_version: int, old_minor_version: int, old_data: dict[str, Any]
+    ) -> dict[str, Any]:
+        return dict(old_data or {})
+
+
 def _split_object(object_id: str) -> tuple[str, str | None]:
     """``pumps.hk2`` -> (``pumps``, ``hk2``); ``hydraulics`` -> (``hydraulics``, None)."""
     section, separator, key = object_id.partition(".")
@@ -45,7 +60,7 @@ class InventoryStore:
 
     def __init__(self, hass: HomeAssistant, entry_id: str) -> None:
         self._hass = hass
-        self._store: Store[dict[str, Any]] = Store(hass, STORAGE_VERSION, f"{DOMAIN}.{entry_id}")
+        self._store: Store[dict[str, Any]] = _VersionedStore(hass, STORAGE_VERSION, f"{DOMAIN}.{entry_id}")
         self._data: dict[str, Any] | None = None
         self._save_handle: Any = None
         self._trace_dirty = False

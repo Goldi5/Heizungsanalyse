@@ -1,3 +1,12 @@
+## 0.3.2 – 2026-11-17
+
+### Behoben
+- **Start nach dem Update von 0.2.x schlug fehl** („Fehler beim Einrichten“,
+  alle Sensoren nicht verfügbar): 0.3.0 hat die Speicherversion erhöht, aber
+  keine Übernahme der alten Daten mitgeliefert. Home Assistant brach dann mit
+  `NotImplementedError` ab. Alte Daten (Inventar, Änderungen, Roll-ups) werden
+  jetzt unverändert übernommen, neue Bereiche ergänzt.
+
 ## 0.3.1 – 2026-11-17
 
 ### Behoben
