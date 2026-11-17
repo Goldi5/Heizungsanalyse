@@ -9,14 +9,15 @@ Die Integration bringt ihr Dashboard selbst mit. Es gibt nichts abzutippen.
    URL, damit nach einem Update keine alte Fassung im Browser hängt). Im
    YAML-Modus von Lovelace wird sie als Extra-Modul geladen.
 2. Öffnet ein **Admin** danach irgendeine Dashboard-Seite, legt die Karte
-   einmalig das Dashboard `heizungsanalyse` an (Seitenleiste, Symbol
+   einmalig das Dashboard `heizungs-analyse` an (Seitenleiste, Symbol
    Wärmepumpe) und speichert die Strategie `custom:heizungsanalyse`.
 3. Die Integration merkt sich, dass das erledigt ist. Wer das Dashboard
    löscht, bekommt es nicht ungefragt zurück. Ein schon vorhandenes Dashboard
-   mit dem Pfad `heizungsanalyse` wird nie überschrieben.
+   mit dem Pfad `heizungs-analyse` wird nie überschrieben.
 
 Von Hand geht es auch: *Einstellungen → Dashboards → Dashboard hinzufügen →
-Neues Dashboard von Grund auf*, dann in der Rohkonfiguration:
+Heizungsanalyse*. Oder ein leeres Dashboard anlegen und in der
+Rohkonfiguration eintragen:
 
 ```yaml
 strategy:

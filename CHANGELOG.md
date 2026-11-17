@@ -1,3 +1,15 @@
+## 0.3.1 – 2026-11-17
+
+### Behoben
+- **Dashboard wurde nicht angelegt:** Home Assistant verlangt einen Bindestrich
+  im Pfad eines Dashboards; `heizungsanalyse` wurde stillschweigend abgelehnt.
+  Der Pfad ist jetzt `heizungs-analyse`. Scheitert das Anlegen trotzdem, steht
+  der Grund im Protokoll.
+- **Fehlte in „Dashboard hinzufügen“:** Die Strategie meldet sich jetzt wie bei
+  Raumklima als Vorlage „Heizungsanalyse“ an und lässt sich dort auswählen.
+- Das „?“ an „Laufzeit / Zyklus“ zeigte den Hilfetext des Systemstatus
+  (doppelter Schlüssel); doppelte Übersetzungen entfernt.
+
 ## 0.3.0 – 2026-11-17
 
 ### Neu

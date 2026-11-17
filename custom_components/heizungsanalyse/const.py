@@ -24,7 +24,8 @@ PLATFORMS: Final[list[str]] = ["sensor"]
 
 # Dashboard
 CARD_URL: Final = "/heizungsanalyse_static/heizungsanalyse-card.js"
-DASHBOARD_PATH: Final = "heizungsanalyse"
+# Home Assistant verlangt einen Bindestrich im Pfad eines Dashboards
+DASHBOARD_PATH: Final = "heizungs-analyse"
 DASHBOARD_ICON: Final = "mdi:heat-pump"
 
 # Aktualisierung und Auswertungsfenster

@@ -425,7 +425,7 @@ function runtimeCard(d, ui) {
     [t("Tage mit Daten"), esc(fmt(k.days_with_data, 0))],
     [t("Speicherstand"), `${esc(fmt(storage.rollups, 0))} ${esc(t("Roll-ups"))} · ${esc(fmt(storage.log_entries, 0))} ${esc(t("Protokollzeilen"))}`],
   ];
-  return `<div class="c">${head(t("Systemstatus"), "runtime", ui)}${mismatch ? `<div class="fs">${pill("warn", t("Version weicht ab"))}</div>` : ""}
+  return `<div class="c">${head(t("Systemstatus"), "system", ui)}${mismatch ? `<div class="fs">${pill("warn", t("Version weicht ab"))}</div>` : ""}
     <table class="kv">${rows.map(([a, b]) => `<tr><th>${a}</th><td>${b}</td></tr>`).join("")}</table>
     <div class="row" style="margin-top:10px">
       <button class="btn" data-act="log-download">${esc(t("Diagnose herunterladen"))}</button>

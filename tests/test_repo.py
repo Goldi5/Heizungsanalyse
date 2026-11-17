@@ -54,3 +54,10 @@ def test_translations_cover_english_and_german() -> None:
     assert strings.keys() == de.keys() == en.keys()
     assert strings["config"]["step"]["user"]["title"] == de["config"]["step"]["user"]["title"]
     assert strings["config"]["step"]["user"]["title"] != en["config"]["step"]["user"]["title"]
+
+
+def test_dashboard_path_has_hyphen() -> None:
+    """Home Assistant lehnt Dashboard-Pfade ohne Bindestrich ab."""
+    from hz.const import DASHBOARD_PATH
+
+    assert "-" in DASHBOARD_PATH

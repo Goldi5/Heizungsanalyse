@@ -70,7 +70,7 @@ const HELP = {
     de: "Stammdaten deiner Anlage: Pumpen, Thermostate, Hydraulik. Pflege sie über den Dienst „Heizungsanalyse: Inventar aktualisieren“ – jede Änderung landet automatisch im Verlauf.",
     en: "Master data of your system: pumps, thermostats, hydraulics. Maintain it via the service “Heating analysis: update inventory” – every change lands in the history automatically.",
   },
-  runtime: {
+  system: {
     de: "Der Systemstatus zeigt, welche Version die Karte und welche das Backend hat, wann der letzte Lauf war und ob ein Fehler auftrat. Die Karte meldet eigene Fehler selbst mit – dann steht hier die gekürzte Meldung statt einer stillen Fehlfunktion.",
     en: "System status shows which version the card and the backend have, when the last run happened and whether an error occurred. The card reports its own errors itself – then the shortened message appears here instead of a silent failure.",
   },

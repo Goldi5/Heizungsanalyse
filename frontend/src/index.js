@@ -18,6 +18,18 @@ if (!window.customCards.find((c) => c.type === "heizungsanalyse-card")) {
   window.customCards.push({ type: "heizungsanalyse-card", name: "Heizungsanalyse", description: "Anlage, Effizienz, Räume, Vorher/Nachher, Inventar", preview: false });
 }
 
+// In „Dashboard hinzufügen“ als eigene Vorlage anbieten (wie Raumklima)
+window.customStrategies = window.customStrategies || [];
+if (!window.customStrategies.find((x) => x.type === "heizungsanalyse")) {
+  window.customStrategies.push({
+    type: "heizungsanalyse",
+    strategyType: "dashboard",
+    name: "Heizungsanalyse",
+    description: "Wärmepumpe: Kennzahlen, Hinweise, Räume, Vorher/Nachher, Protokoll – baut sich automatisch auf",
+    documentationURL: "https://github.com/Goldi5/Heizungsanalyse",
+  });
+}
+
 // Einmalig das Dashboard anlegen, sobald die Oberfläche bereit ist
 (function autoCreate(tries = 0) {
   const hass = findHass();

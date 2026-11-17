@@ -1,7 +1,7 @@
-/* Heizungsanalyse 0.3.0 - gebaut aus frontend/src (npm run build). Nicht von Hand bearbeiten. */
+/* Heizungsanalyse 0.3.1 - gebaut aus frontend/src (npm run build). Nicht von Hand bearbeiten. */
 (() => {
   // src/version.js
-  var HA_VERSION = "0.3.0";
+  var HA_VERSION = "0.3.1";
 
   // src/i18n.js
   var EN = {
@@ -41,7 +41,6 @@
     "Empfehlung": "Recommendation",
     "Beleg": "Evidence",
     "Warnung": "Warning",
-    "Hinweis": "Note",
     "COP-Kennlinie": "COP curve",
     "Tages-COP gegen Außentemperatur": "Daily COP vs outdoor temperature",
     "Trend": "Trend",
@@ -185,7 +184,6 @@
     "Suchen": "Search",
     "24 Stunden": "24 hours",
     "7 Tage": "7 days",
-    "30 Tage": "30 days",
     "Keine Einträge für diesen Filter.": "No entries for this filter.",
     "Diagnose herunterladen": "Download diagnostics",
     "Protokoll kopieren": "Copy log",
@@ -203,17 +201,11 @@
     "Format der Statistikzeilen unerwartet. Recorder-Version prüfen.": "Unexpected statistics row format. Check the recorder version.",
     "Start": "Start",
     "Auswertung": "Analysis",
-    "Quelle": "Source",
     "Hinweis": "Finding",
     "Konfiguration": "Configuration",
-    "Inventar": "Inventory",
     "Dashboard": "Dashboard",
     "Fehler": "Error",
-    "Info": "Info",
-    "Warnung": "Warning",
-    "Neustart": "Restart",
-    "Einträge": "entries",
-    "Protokollzeilen": "log lines"
+    "Info": "Info"
   };
   var lang = "de";
   function setLang(hass) {
@@ -559,7 +551,7 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
       de: "Stammdaten deiner Anlage: Pumpen, Thermostate, Hydraulik. Pflege sie über den Dienst „Heizungsanalyse: Inventar aktualisieren“ – jede Änderung landet automatisch im Verlauf.",
       en: "Master data of your system: pumps, thermostats, hydraulics. Maintain it via the service “Heating analysis: update inventory” – every change lands in the history automatically."
     },
-    runtime: {
+    system: {
       de: "Der Systemstatus zeigt, welche Version die Karte und welche das Backend hat, wann der letzte Lauf war und ob ein Fehler auftrat. Die Karte meldet eigene Fehler selbst mit – dann steht hier die gekürzte Meldung statt einer stillen Fehlfunktion.",
       en: "System status shows which version the card and the backend have, when the last run happened and whether an error occurred. The card reports its own errors itself – then the shortened message appears here instead of a silent failure."
     },
@@ -1144,7 +1136,7 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
       [t("Tage mit Daten"), esc(fmt(k.days_with_data, 0))],
       [t("Speicherstand"), `${esc(fmt(storage.rollups, 0))} ${esc(t("Roll-ups"))} · ${esc(fmt(storage.log_entries, 0))} ${esc(t("Protokollzeilen"))}`]
     ];
-    return `<div class="c">${head(t("Systemstatus"), "runtime", ui)}${mismatch ? `<div class="fs">${pill("warn", t("Version weicht ab"))}</div>` : ""}
+    return `<div class="c">${head(t("Systemstatus"), "system", ui)}${mismatch ? `<div class="fs">${pill("warn", t("Version weicht ab"))}</div>` : ""}
     <table class="kv">${rows.map(([a, b]) => `<tr><th>${a}</th><td>${b}</td></tr>`).join("")}</table>
     <div class="row" style="margin-top:10px">
       <button class="btn" data-act="log-download">${esc(t("Diagnose herunterladen"))}</button>
@@ -1551,6 +1543,10 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
       await hass.callWS({ type: "heizungsanalyse/dashboard/mark", url_path: path, created: !exists });
       return exists ? null : path;
     } catch (e) {
+      try {
+        await hass.callWS({ type: "heizungsanalyse/trace", message: `Dashboard anlegen fehlgeschlagen: ${String(e && (e.message || e.code) || e).slice(0, 200)}` });
+      } catch (err) {
+      }
       return null;
     } finally {
       running = false;
@@ -1569,6 +1565,16 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
   window.customCards = window.customCards || [];
   if (!window.customCards.find((c) => c.type === "heizungsanalyse-card")) {
     window.customCards.push({ type: "heizungsanalyse-card", name: "Heizungsanalyse", description: "Anlage, Effizienz, Räume, Vorher/Nachher, Inventar", preview: false });
+  }
+  window.customStrategies = window.customStrategies || [];
+  if (!window.customStrategies.find((x) => x.type === "heizungsanalyse")) {
+    window.customStrategies.push({
+      type: "heizungsanalyse",
+      strategyType: "dashboard",
+      name: "Heizungsanalyse",
+      description: "Wärmepumpe: Kennzahlen, Hinweise, Räume, Vorher/Nachher, Protokoll – baut sich automatisch auf",
+      documentationURL: "https://github.com/Goldi5/Heizungsanalyse"
+    });
   }
   (function autoCreate(tries = 0) {
     const hass = findHass();

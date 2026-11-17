@@ -93,3 +93,8 @@ test("Protokoll zeigt Neustart-Marker und Details", () => {
   assert.ok(opened.includes("<pre>"));
   assert.ok(opened.includes("median_k"));
 });
+
+test("Strategie steht in „Dashboard hinzufügen“", async () => {
+  const src = readFileSync(new URL("../src/index.js", import.meta.url), "utf8");
+  assert.match(src, /customStrategies\.push\(\{[\s\S]*type: "heizungsanalyse"[\s\S]*strategyType: "dashboard"/);
+});

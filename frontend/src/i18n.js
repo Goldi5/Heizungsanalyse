@@ -37,7 +37,6 @@ export const EN = {
   "Empfehlung": "Recommendation",
   "Beleg": "Evidence",
   "Warnung": "Warning",
-  "Hinweis": "Note",
   "COP-Kennlinie": "COP curve",
   "Tages-COP gegen Außentemperatur": "Daily COP vs outdoor temperature",
   "Trend": "Trend",
@@ -181,7 +180,6 @@ export const EN = {
   "Suchen": "Search",
   "24 Stunden": "24 hours",
   "7 Tage": "7 days",
-  "30 Tage": "30 days",
   "Keine Einträge für diesen Filter.": "No entries for this filter.",
   "Diagnose herunterladen": "Download diagnostics",
   "Protokoll kopieren": "Copy log",
@@ -199,17 +197,11 @@ export const EN = {
   "Format der Statistikzeilen unerwartet. Recorder-Version prüfen.": "Unexpected statistics row format. Check the recorder version.",
   "Start": "Start",
   "Auswertung": "Analysis",
-  "Quelle": "Source",
   "Hinweis": "Finding",
   "Konfiguration": "Configuration",
-  "Inventar": "Inventory",
   "Dashboard": "Dashboard",
   "Fehler": "Error",
   "Info": "Info",
-  "Warnung": "Warning",
-  "Neustart": "Restart",
-  "Einträge": "entries",
-  "Protokollzeilen": "log lines",
 };
 
 let lang = "de";

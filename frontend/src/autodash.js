@@ -25,6 +25,12 @@ export async function ensureDashboard(hass) {
     await hass.callWS({ type: "heizungsanalyse/dashboard/mark", url_path: path, created: !exists });
     return exists ? null : path;
   } catch (e) {
+    // Im Protokoll sichtbar machen – sonst scheitert das Anlegen unbemerkt
+    try {
+      await hass.callWS({ type: "heizungsanalyse/trace", message: `Dashboard anlegen fehlgeschlagen: ${String((e && (e.message || e.code)) || e).slice(0, 200)}` });
+    } catch (err) {
+      /* Protokoll ist Beiwerk */
+    }
     return null; // Dashboard lässt sich jederzeit von Hand anlegen
   } finally {
     running = false;
