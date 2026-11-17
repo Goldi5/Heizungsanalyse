@@ -11,15 +11,15 @@ Waermepumpe, Heizkreise, Thermostate oder Pumpen.
 ## Status
 
 Frueher Entwicklungsstand. Vorhanden sind das Repo-Geruest (M0), die
-Einrichtung (M1) und die ersten Kennzahlen (M2): COP, Verdichterstarts,
-Laufzeit je Zyklus, Vorlauf-Abweichung und Tage mit Daten.
+Einrichtung (M1), die ersten Kennzahlen (M2) und das Geraeteinventar mit
+Aenderungsverlauf und Diensten (M3).
 
 | Phase | Inhalt | Stand |
 |---|---|---|
 | M0 | Repo-Geruest, CI, leere Integration | erledigt |
 | M1 | Config-Flow, Entity-Mapping, Kreis- und Raum-Modell | erledigt |
 | M2 | Kennzahlen (COP, Starts, Laufzeit, Vorlauf) | erledigt |
-| M3 | Geraeteinventar, Aenderungsverlauf, Services | offen |
+| M3 | Geraeteinventar, Aenderungsverlauf, Services | erledigt |
 | M4 | Raum- und Kreisanalyse | offen |
 | M5 | Findings-Engine | offen |
 | M6 | Doku, Dashboard-Beispiel, Release 0.1.0 | offen |
@@ -38,6 +38,7 @@ Laufzeit je Zyklus, Vorlauf-Abweichung und Tage mit Daten.
 
 - [Annahmen und offene Fragen](docs/assumptions.md)
 - [Architektur](docs/architecture.md)
+- [Dienste](docs/services.md)
 
 ## Grenzen
 

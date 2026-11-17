@@ -1,0 +1,83 @@
+update_inventory:
+  name: Inventar aktualisieren
+  description: >-
+    Stammdaten eines Heizkreises, Thermostats oder der Hydraulik setzen. Jede
+    echte Aenderung wird automatisch im Aenderungsverlauf protokolliert.
+  fields:
+    object:
+      name: Objekt
+      description: "Bereich und Bezeichner, z. B. pumps.hk2, thermostats.bad oder hydraulics."
+      required: true
+      selector:
+        text:
+    values:
+      name: Werte
+      description: Felder und neue Werte. Erlaubte Felder haengen vom Bereich ab.
+      required: true
+      selector:
+        object:
+    note:
+      name: Notiz
+      description: Optionaler Grund oder Hinweis zur Aenderung.
+      selector:
+        text:
+
+log_change:
+  name: Aenderung dokumentieren
+  description: >-
+    Freie Aenderung am Inventar festhalten, ohne Stammdaten zu setzen. Fuer
+    Vorher-Nachher-Vergleiche mit compare_periods.
+  fields:
+    object:
+      name: Objekt
+      required: true
+      selector:
+        text:
+    field:
+      name: Feld
+      required: true
+      selector:
+        text:
+    old_value:
+      name: Alter Wert
+      selector:
+        text:
+    new_value:
+      name: Neuer Wert
+      selector:
+        text:
+    note:
+      name: Notiz
+      selector:
+        text:
+
+compare_periods:
+  name: Zeitraeume vergleichen
+  description: >-
+    Kennzahlen vor und nach einem Stichtag vergleichen. Ohne change_time wird
+    der letzte Eintrag im Aenderungsverlauf genommen.
+  fields:
+    days:
+      name: Fenstergroesse
+      description: Anzahl Tage vor und nach dem Stichtag.
+      selector:
+        number:
+          min: 1
+          max: 90
+          mode: box
+    change_time:
+      name: Stichtag
+      selector:
+        datetime:
+
+export_report:
+  name: Bericht erzeugen
+  description: Kennzahlen, Inventar und Aenderungsverlauf als Markdown oder JSON.
+  fields:
+    format:
+      name: Format
+      selector:
+        select:
+          options:
+            - markdown
+            - json

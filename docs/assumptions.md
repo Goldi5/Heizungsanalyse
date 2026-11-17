@@ -134,3 +134,13 @@ kein Rechenfehler: A4 nannte einen anderen Zeitraum, und der Strom enthaelt
 Warmwasser, waehrend die Waerme nur Heizung umfasst. Der Referenz-Fixture
 bleibt bewusst bei den Planwerten (3,8), weil er die Abnahmebedingung aus M2
 abbildet; die Live-Zahl wird hier separat festgehalten.
+
+## 9. Grenzen aus M3
+
+- **Inventar ist manuell.** Die Integration liest keine Geraetedaten aus
+  Hersteller-Apps oder Registern; Felder werden ueber den Dienst gepflegt.
+  Fehlende Felder bleiben leer und werden im Bericht als `unbekannt` gefuehrt.
+- **Roll-ups sind Tageskoernung.** Feinere Vergleiche (z. B. vor/nach einer
+  Aenderung am selben Tag) sind erst mit M4/M5 moeglich.
+- **Der Verlauf ist kein Audit-Log.** Er dokumentiert die vom Nutzer
+  gepflegten Aenderungen, nicht jede Zustandsaenderung einer Entity.

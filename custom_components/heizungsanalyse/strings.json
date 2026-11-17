@@ -153,5 +153,69 @@
         "name": "Tage mit Daten"
       }
     }
+  },
+  "services": {
+    "update_inventory": {
+      "name": "Inventar aktualisieren",
+      "description": "Stammdaten von Pumpe, Thermostat oder Hydraulik setzen; jede Aenderung wird protokolliert.",
+      "fields": {
+        "object": {
+          "name": "Objekt",
+          "description": "Bereich und Bezeichner, z. B. pumps.hk2, thermostats.bad oder hydraulics."
+        },
+        "values": {
+          "name": "Werte",
+          "description": "Felder und neue Werte. Erlaubte Felder haengen vom Bereich ab."
+        },
+        "note": {
+          "name": "Notiz",
+          "description": "Optionaler Grund oder Hinweis zur Aenderung."
+        }
+      }
+    },
+    "log_change": {
+      "name": "Aenderung dokumentieren",
+      "description": "Freie Aenderung festhalten, ohne Stammdaten zu setzen.",
+      "fields": {
+        "object": {
+          "name": "Objekt"
+        },
+        "field": {
+          "name": "Feld"
+        },
+        "old_value": {
+          "name": "Alter Wert"
+        },
+        "new_value": {
+          "name": "Neuer Wert"
+        },
+        "note": {
+          "name": "Notiz"
+        }
+      }
+    },
+    "compare_periods": {
+      "name": "Zeitraeume vergleichen",
+      "description": "Kennzahlen vor und nach einem Stichtag vergleichen.",
+      "fields": {
+        "days": {
+          "name": "Fenstergroesse",
+          "description": "Anzahl Tage vor und nach dem Stichtag."
+        },
+        "change_time": {
+          "name": "Stichtag",
+          "description": "Ohne Angabe gilt der letzte Eintrag im Aenderungsverlauf."
+        }
+      }
+    },
+    "export_report": {
+      "name": "Bericht erzeugen",
+      "description": "Kennzahlen, Inventar und Aenderungsverlauf als Markdown oder JSON.",
+      "fields": {
+        "format": {
+          "name": "Format"
+        }
+      }
+    }
   }
 }

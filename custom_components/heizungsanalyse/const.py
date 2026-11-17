@@ -95,3 +95,21 @@ CONF_CLIMATE_ENTITY: Final = "climate_entity"
 CONF_VALVE_POSITION_ENTITY: Final = "valve_position_entity"
 
 CIRCUIT_TYPES: Final = ("buffer", "radiators", "underfloor", "dhw")
+
+# --- Inventar und Dienste --------------------------------------------------------
+INVENTORY_FIELDS: Final = {
+    "pumps": ("manufacturer", "model", "control_mode", "setting", "power_w", "notes"),
+    "thermostats": ("model", "valve_preset", "room", "notes"),
+    "hydraulics": ("buffer_volume_l", "hydraulic_separator", "bypass_valve", "notes"),
+}
+
+SERVICE_UPDATE_INVENTORY: Final = "update_inventory"
+SERVICE_LOG_CHANGE: Final = "log_change"
+SERVICE_COMPARE_PERIODS: Final = "compare_periods"
+SERVICE_EXPORT_REPORT: Final = "export_report"
+
+EVENT_INVENTORY_CHANGED: Final = f"{DOMAIN}_inventory_changed"
+EVENT_PERIOD_COMPARISON: Final = f"{DOMAIN}_period_comparison"
+
+DEFAULT_COMPARE_DAYS: Final = 14
+REPORT_CHANGE_LIMIT: Final = 20

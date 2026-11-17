@@ -1,3 +1,22 @@
+## 0.4.0b0 – 2026-11-17
+
+### Neu
+- **Geraeteinventar** (`storage.py`): Pumpen, Thermostate und Hydraulik als
+  eigener Speicher je Konfigurationseintrag; Felder je Bereich sind in
+  `const.INVENTORY_FIELDS` festgelegt.
+- **Aenderungsverlauf:** jede echte Aenderung wird mit Zeitstempel, altem und
+  neuem Wert sowie optionaler Notiz protokolliert; unveraenderte Werte nicht.
+- **Roll-ups:** Tagesproben werden gespeichert, damit Vergleiche auch nach
+  einem Recorder-Purge funktionieren; der laufende Tag wird uebersprungen.
+- **Dienste:** `update_inventory`, `log_change`, `compare_periods`,
+  `export_report` (Markdown/JSON, mit Antwortdaten).
+- **Ereignisse** `heizungsanalyse_inventory_changed` und
+  `heizungsanalyse_period_comparison` fuer Automatisierungen.
+- **Dokumentation:** `docs/services.md` mit Feldern, Beispielen und
+  Rueckgabewerten.
+- **Tests:** Inventar und Verlauf, Persistenz, Roll-ups, alle Dienste und ein
+  Quelltext-Test gegen steuernde Service-Aufrufe.
+
 ## 0.3.0b0 – 2026-11-17
 
 ### Neu

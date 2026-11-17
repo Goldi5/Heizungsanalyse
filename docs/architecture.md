@@ -120,3 +120,29 @@ Datenfluss je Lauf:
    Statistik vorhanden ist.
 5. Sensoren lesen ausschliesslich `coordinator.data`; sie fragen selbst nichts
    ab und schreiben nichts.
+
+## 8. Umsetzung M3
+
+```
+storage.py          InventoryStore (Store je Eintrag): Inventar, Verlauf, Roll-ups
+analysis/periods.py samples_from_rollups, merge_samples, within, summarize,
+                    compare_periods
+report.py           render_markdown, render_json (ohne HA-Import)
+services.py         vier Dienste, nur eigener Speicher, Antwortdaten optional
+```
+
+Entscheidungen:
+
+- Dienste werden in `async_setup` einmal registriert, nicht je Eintrag; die
+  Handler holen den Laufzeitkontext ueber `runtime_data`. Das vermeidet
+  doppelte Registrierung und Lecks beim Neu laden.
+- Der Speicher liegt unter `heizungsanalyse.<entry_id>`, also getrennt je
+  Eintrag; ein zweiter Eintrag (andere Anlage) ueberschreibt nichts.
+- Roll-ups werden nach jedem Coordinator-Lauf geschrieben und beim Start
+  geladen. `compare_periods` mischt gespeicherte Roll-ups mit den frischen
+  Tagesproben, frische Werte gewinnen.
+- Aenderungen werden nur bei echter Wertdifferenz protokolliert; der Verlauf
+  ist auf die letzten `CHANGE_LOG_LIMIT` Eintraege begrenzt, der Bericht auf
+  `REPORT_CHANGE_LIMIT`.
+- Es gibt keinen Pfad zu `hass.services.async_call`; `tests/test_read_only.py`
+  prueft den Quelltext auf steuernde Muster und direkte `.storage`-Zugriffe.

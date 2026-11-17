@@ -153,5 +153,69 @@
         "name": "Days with data"
       }
     }
+  },
+  "services": {
+    "update_inventory": {
+      "name": "Update inventory",
+      "description": "Set master data of a pump, thermostat or the hydraulics; every change is logged.",
+      "fields": {
+        "object": {
+          "name": "Object",
+          "description": "Section and key, e.g. pumps.hk2, thermostats.bad or hydraulics."
+        },
+        "values": {
+          "name": "Values",
+          "description": "Fields and new values. Allowed fields depend on the section."
+        },
+        "note": {
+          "name": "Note",
+          "description": "Optional reason or remark for the change."
+        }
+      }
+    },
+    "log_change": {
+      "name": "Log change",
+      "description": "Record a free-form change without setting master data.",
+      "fields": {
+        "object": {
+          "name": "Object"
+        },
+        "field": {
+          "name": "Field"
+        },
+        "old_value": {
+          "name": "Old value"
+        },
+        "new_value": {
+          "name": "New value"
+        },
+        "note": {
+          "name": "Note"
+        }
+      }
+    },
+    "compare_periods": {
+      "name": "Compare periods",
+      "description": "Compare metrics before and after a reference date.",
+      "fields": {
+        "days": {
+          "name": "Window size",
+          "description": "Days before and after the reference date."
+        },
+        "change_time": {
+          "name": "Reference date",
+          "description": "Defaults to the newest change log entry."
+        }
+      }
+    },
+    "export_report": {
+      "name": "Export report",
+      "description": "Metrics, inventory and change log as Markdown or JSON.",
+      "fields": {
+        "format": {
+          "name": "Format"
+        }
+      }
+    }
   }
 }
