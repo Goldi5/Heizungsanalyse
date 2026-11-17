@@ -13,6 +13,7 @@ export class HeizungsanalyseCard extends HTMLElement {
     this._ui = { help: null, range: 90, form: false, widths: {}, logCat: "", logLevel: "", logQ: "", logHours: 168, logOpen: null, cfgMsg: null };
     this._log = [];
     this._cfgData = null;
+    this._cfgSuggestion = null;
     this._diag = null;
     this._logError = null;
     this._diagError = null;
@@ -89,6 +90,7 @@ export class HeizungsanalyseCard extends HTMLElement {
     }
     if (this._config.view === "einstellungen") {
       await this._loadConfig();
+      await this._loadSuggestion();
       return;
     }
     if (this._config.view === "protokoll") {
@@ -127,6 +129,17 @@ export class HeizungsanalyseCard extends HTMLElement {
       this._reportTrace("log failed: " + this._logError);
     }
     if (!force || this._config.view === "protokoll") this._render();
+  }
+
+  async _loadSuggestion() {
+    if (!this._hass) return;
+    try {
+      const res = await this._hass.callWS({ type: "heizungsanalyse/suggest_curve" });
+      this._cfgSuggestion = res && res.suggestion ? res.suggestion : null;
+    } catch (e) {
+      this._cfgSuggestion = null;
+    }
+    this._render();
   }
 
   async _loadConfig() {
@@ -201,7 +214,7 @@ export class HeizungsanalyseCard extends HTMLElement {
     const view = this._config.view;
     let data = d;
     if (view === "protokoll") data = { ...d, diag: this._diag, log: { entries: this._log }, logError: this._logError };
-    if (view === "einstellungen") data = { ...d, config: this._cfgData, configError: this._cfgError };
+    if (view === "einstellungen") data = { ...d, config: this._cfgData, configError: this._cfgError, suggestion: this._cfgSuggestion };
     this._paint(`${header(d, view)}${renderView(view, data, this._ui, this._live())}`);
     if (!fromMeasure) requestAnimationFrame(() => this._measure());
   }

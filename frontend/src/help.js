@@ -106,6 +106,10 @@ const HELP = {
     de: "Räume als JSON. climate_entity optional; ohne Thermostat kein Komfort-Finding.",
     en: "Rooms as JSON. climate_entity optional; without a thermostat no comfort finding.",
   },
+  cfg_curve: {
+    de: "Vorschlag aus der Vorlauf-Abweichung der letzten 7 Tage. Offset senkt/anhebt die ganze Kurve, Steigung ändert die Temperaturabhängigkeit. Werte werden erst nach Speichern übernommen.",
+    en: "Suggestion from the flow deviation of the last 7 days. Offset shifts the whole curve, slope changes the temperature dependence. Values apply only after saving.",
+  },
   cfg_thresholds: {
     de: "Schwellen der Findings. Startwerte sind Platzhalter.",
     en: "Finding thresholds. Starting values are placeholders.",

@@ -55,3 +55,4 @@ class HourSample:
     flow_c: float | None = None
     target_flow_c: float | None = None
     compressor_on: bool | None = None
+    outdoor_c: float | None = None

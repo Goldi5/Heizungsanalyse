@@ -334,7 +334,8 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
         )
 
         dhw_op_id = self._entity(CONF_DHW_OPERATION_ENTITY)
-        hours, compressor_filtered = await self._read_hours(flow_id, target_flow_id, compressor_id, dhw_op_id)
+        outdoor_id = self.entry.data.get(CONF_OUTDOOR_ENTITY)
+        hours, compressor_filtered = await self._read_hours(flow_id, target_flow_id, compressor_id, dhw_op_id, outdoor_id)
         self._hydraulics = await self._read_hydraulics(target_flow_id, compressor_id, dhw_op_id)
         self._flow_hours = hours
         await self._evaluate_change_outcomes(samples)
@@ -1124,6 +1125,7 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
         target_flow_id: str | None,
         compressor_id: str | None,
         dhw_op_id: str | None = None,
+        outdoor_id: str | None = None,
     ) -> tuple[list[HourSample], bool]:
         """Stundenwerte für die Vorlauf-Abweichung.
 
@@ -1134,7 +1136,7 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
         if not flow_id or not target_flow_id:
             return [], False
 
-        wanted = {flow_id, target_flow_id, compressor_id, dhw_op_id}
+        wanted = {flow_id, target_flow_id, compressor_id, dhw_op_id, outdoor_id}
         hourly = await async_read_hourly(self.hass, wanted, DEVIATION_DAYS)
 
         flow = {value.hour: value.mean for value in hourly.get(flow_id, []) if value.mean is not None}
@@ -1142,6 +1144,7 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
         compressor = {
             value.hour: value.mean for value in (hourly.get(compressor_id, []) if compressor_id else []) if value.mean is not None
         }
+        outdoor = {value.hour: value.mean for value in (hourly.get(outdoor_id, []) if outdoor_id else []) if value.mean is not None}
         if not compressor and compressor_id and self._spans.get(compressor_id) is not None:
             # Binärsensor ohne Statistik: Laufanteil je Stunde aus dem Zustandsverlauf
             compressor = share_per_hour(self._spans[compressor_id], flow.keys())
@@ -1172,6 +1175,7 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
                     flow_c=flow_c,
                     target_flow_c=target[hour],
                     compressor_on=running,
+                    outdoor_c=outdoor.get(hour),
                 )
             )
         return sorted(hours, key=lambda item: item.hour), filtered

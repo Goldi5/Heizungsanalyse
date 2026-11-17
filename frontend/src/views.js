@@ -566,6 +566,25 @@ export function viewEinstellungen(d, ui) {
   const circ = JSON.stringify(cfg.circuits || [], null, 2);
   const rooms = JSON.stringify(cfg.rooms || [], null, 2);
   const thr = JSON.stringify(cfg.thresholds || {}, null, 2);
+
+  const sg = (d && d.suggestion) || {};
+  const bins = sg.bins || [];
+  let curveCard = "";
+  if (bins.length) {
+    const rows = bins.map((b) => `<tr><td>${esc(fmt(b.outdoor_lower, 0))}–${esc(fmt(b.outdoor_upper, 0))} °C</td><td>${esc((b.median_deviation_k > 0 ? "+" : "") + fmt(b.median_deviation_k, 1))} K</td><td>${esc(fmt(b.samples, 0))}</td></tr>`).join("");
+    const offset = (sg.suggested_offset_k > 0 ? "+" : "") + fmt(sg.suggested_offset_k, 1);
+    const conf = sg.confidence === "high" ? t("hoch") : sg.confidence === "medium" ? t("mittel") : t("niedrig");
+    curveCard = `<div class="muted" style="margin-bottom:8px">${esc(sg.reason || "")}</div>
+      <table class="cfgtbl"><tr><th>${esc(t("Außen"))}</th><th>${esc(t("Median-Abweichung"))}</th><th>${esc(t("Stunden"))}</th></tr>${rows}</table>
+      <div class="row" style="margin-top:10px">
+        <div class="gl"><div class="lbl">${esc(t("Vorschlag Offset"))}</div><div class="num">${esc(offset)} K</div></div>
+        <div class="gl"><div class="lbl">${esc(t("Geschätzter COP-Gewinn"))}</div><div class="num">${esc(fmt(sg.estimated_cop_gain_pct, 1))} %</div></div>
+        <div class="gl"><div class="lbl">${esc(t("Konfidenz"))}</div><div class="num">${esc(conf)}</div></div>
+      </div>`;
+  } else {
+    curveCard = `<div class="muted">${esc(t("Noch keine Daten für einen Vorschlag."))}</div>`;
+  }
+
   return `<div class="grid">
     <div class="c">${head(t("Quellen"), "cfg_sources", ui)}
       <div class="cfggroup"><div class="h">${esc(t("Pflicht"))}</div>${mand}</div>
@@ -580,6 +599,14 @@ export function viewEinstellungen(d, ui) {
     <div class="c">${head(t("Schwellen"), "cfg_thresholds", ui)}
       <textarea class="cfgjson" data-cfgjson="thresholds">${esc(thr)}</textarea>
     </div>
+    <div class="c">${head(t("Heizkurve"), "cfg_curve", ui)}
+      ${curveCard}
+      <div class="cfggroup" style="margin-top:12px">
+        <div class="h">${esc(t("Manuelle Anpassung"))}</div>
+        <div class="srcrow"><label>${esc(t("Offset (K)"))}</label><input data-cfg="options" data-key="heating_curve_offset" type="number" step="0.1" value="${esc(String((cfg.options && cfg.options.heating_curve_offset) || 0))}"></div>
+        <div class="srcrow"><label>${esc(t("Steigung"))}</label><input data-cfg="options" data-key="heating_curve_slope" type="number" step="0.01" value="${esc(String((cfg.options && cfg.options.heating_curve_slope) || 1))}"></div>
+      </div>
+    </div>
     <div class="c"><div class="row">
       <button class="btn primary" data-act="cfg-save">${esc(t("Speichern"))}</button>
       <span class="muted">${esc(t("Speichern laedt die Integration neu."))}</span>
@@ -588,7 +615,6 @@ export function viewEinstellungen(d, ui) {
     </div>
   </div>`;
 }
-
 
 export function viewSchema(d, ui, live) {
   const k = d.kpis || {};

@@ -242,6 +242,19 @@ export const EN = {
   "Keine Heizkreise.": "No heating circuits.",
   "Werte: Ist / Soll °C, Abweichung zum Soll.": "Values: actual / target °C, deviation from target.",
   "Keine Hinweise": "No findings",
+  "Außen": "Outdoor",
+  "Geschätzter COP-Gewinn": "Estimated COP gain",
+  "Konfidenz": "Confidence",
+  "Manuelle Anpassung": "Manual adjustment",
+  "Median-Abweichung": "Median deviation",
+  "Noch keine Daten für einen Vorschlag.": "Not enough data for a suggestion yet.",
+  "Offset (K)": "Offset (K)",
+  "Steigung": "Slope",
+  "Stunden": "Hours",
+  "Vorschlag Offset": "Suggested offset",
+  "hoch": "high",
+  "mittel": "medium",
+  "niedrig": "low",
 };
 
 let lang = "de";

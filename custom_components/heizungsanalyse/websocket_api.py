@@ -9,6 +9,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.util import dt as dt_util
 import voluptuous as vol
 
+from .analysis.curve_suggestion import suggest_curve
 from .analysis.periods import merge_samples, samples_from_rollups
 from .const import (
     CONF_CIRCUITS,
@@ -48,6 +49,7 @@ def async_register(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_dashboard_mark)
     websocket_api.async_register_command(hass, ws_config_get)
     websocket_api.async_register_command(hass, ws_config_set)
+    websocket_api.async_register_command(hass, ws_suggest_curve)
     websocket_api.async_register_command(hass, ws_log)
     websocket_api.async_register_command(hass, ws_diagnostics)
     websocket_api.async_register_command(hass, ws_trace)
@@ -270,3 +272,16 @@ async def ws_config_set(hass: HomeAssistant, connection: websocket_api.ActiveCon
     await hass.config_entries.async_reload(entry.entry_id)
     await hass.async_block_till_done()
     connection.send_result(msg["id"], {"ok": True})
+
+
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/suggest_curve"})
+@websocket_api.async_response
+async def ws_suggest_curve(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Heizkurvenvorschlag aus Vorlauf-Abweichung."""
+    runtime = _runtime(hass)
+    if runtime is None:
+        connection.send_error(msg["id"], "not_setup", "Heizungsanalyse ist nicht eingerichtet")
+        return
+    hours = getattr(runtime.coordinator, "_flow_hours", []) or []
+    suggestion = suggest_curve(hours)
+    connection.send_result(msg["id"], {"suggestion": suggestion.as_dict()})
