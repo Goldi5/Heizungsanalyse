@@ -47,11 +47,14 @@ async def test_dashboard_wanted_once(hass: HomeAssistant, hass_ws_client) -> Non
     assert (await client.receive_json())["result"]["wanted"] is False
 
 
-async def test_card_file_is_served(hass: HomeAssistant, hass_client_no_auth) -> None:
-    await _setup(hass)
-    client = await hass_client_no_auth()
-    response = await client.get(CARD_URL)
+async def test_card_file_is_served(hass: HomeAssistant) -> None:
+    from types import SimpleNamespace
+
+    from custom_components.heizungsanalyse.frontend import CardView
+
+    request = SimpleNamespace(app={"hass": hass})
+    response = await CardView().get(request)
     assert response.status == 200
-    body = await response.text()
-    assert "heizungsanalyse-card" in body
+    assert "heizungsanalyse-card" in response.text
     assert response.headers["Cache-Control"].startswith("no-store")
+    assert CARD_URL.endswith("heizungsanalyse-card.js")

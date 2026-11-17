@@ -2,9 +2,21 @@
 
 from __future__ import annotations
 
+from collections.abc import Generator
+from unittest.mock import patch
+
+from homeassistant.core import HomeAssistant
 import pytest
 
 
 @pytest.fixture(autouse=True)
 def auto_enable_custom_integrations(enable_custom_integrations: None) -> None:
     """Die eigene Integration in jedem Test erlauben."""
+
+
+@pytest.fixture(autouse=True)
+def no_frontend(hass: HomeAssistant) -> Generator[None]:
+    """Die Kartendatei braucht das echte Frontend (hass_frontend) – im Test überspringen."""
+    hass.config.components.add("frontend")
+    with patch("custom_components.heizungsanalyse.async_register_frontend", return_value=None):
+        yield
