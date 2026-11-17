@@ -1,4 +1,4 @@
-## 0.1.1b0 – 2026-11-17
+## 0.1.1 – 2026-11-17
 
 ### Neu
 - **Zusammenspiel mit raumklima-2** (`docs/raumklima-2.md`): Schnittstelle,
@@ -6,6 +6,16 @@
 - **Isolationstest** (`tests/test_isolation.py`): keine raumklima-Importe, keine
   fest verdrahteten Entity-IDs, eigene Domain.
 - README um das Zusammenspiel und die Dokumentationsliste ergaenzt.
+- Brand-Icon (`brand/icon.png`) fuer HACS und Repo-Themen.
+
+### Behoben
+- `CONFIG_SCHEMA` ergaenzt (hassfest-Warnung).
+- Ueberzaehliger `options.init`-Block in den Uebersetzungen entfernt und
+  Beschreibung fuer den Optionsdialog ergaenzt (hassfest-Fehler).
+
+### Veroeffentlichung
+- Erstes oeffentliches Repo `Goldi5/Heizungsanalyse`; CI (ruff, pytest,
+  hassfest, HACS) gruen.
 
 ## 0.1.0 – 2026-11-17
 

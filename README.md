@@ -12,12 +12,12 @@ Test prueft den Quelltext auf steuernde Aufrufe.
 
 ## Status
 
-Version 0.1.0. Alle Analysestufen sind vorhanden: Repo-Geruest (M0),
+Version 0.1.1. Alle Analysestufen sind vorhanden: Repo-Geruest (M0),
 Einrichtung (M1), Kennzahlen (M2), Inventar und Dienste (M3), Raum- und
 Kreisanalyse (M4), Findings (M5), Doku und Dashboard-Beispiel (M6) sowie die
-dokumentierte Schnittstelle zu raumklima-2 (M7). Der Tag `v0.1.0` ist lokal
-gesetzt; das Veroeffentlichen ueber GitHub steht aus, weil das Repo noch kein
-Remote hat.
+dokumentierte Schnittstelle zu raumklima-2 (M7). Eroeffentlicht als
+`Goldi5/Heizungsanalyse` (Release `v0.1.1`); CI mit ruff, pytest, hassfest und
+HACS-Validierung ist gruen.
 
 | Phase | Inhalt | Stand |
 |---|---|---|
@@ -27,8 +27,9 @@ Remote hat.
 | M3 | Geraeteinventar, Aenderungsverlauf, Services | erledigt |
 | M4 | Raum- und Kreisanalyse | erledigt |
 | M5 | Findings-Engine | erledigt |
-| M6 | Doku, Dashboard-Beispiel, Release 0.1.0 | erledigt (Tag lokal) |
+| M6 | Doku, Dashboard-Beispiel, Release 0.1.0 | erledigt |
 | M7 | Zusammenspiel mit raumklima-2 | erledigt (Doku + Isolationstest) |
+| | Release 0.1.1 auf GitHub | erledigt |
 
 ## Voraussetzungen
 
