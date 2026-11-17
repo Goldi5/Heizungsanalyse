@@ -94,11 +94,16 @@ export function viewAnlage(d, ui) {
 
   const findings = d.findings.length
     ? d.findings
-        .map((f) => `<div class="find"><div class="sev ${f.severity}"></div><div><div class="ft"><span class="id">${esc(f.id)}</span>${esc(f.title)}</div>
-          <div class="fd">${esc(f.text)}</div>${f.suggestion ? `<div class="fs"><b>${esc(t("Empfehlung"))}:</b> ${esc(f.suggestion)}</div>` : ""}
-          ${evidence(f.evidence) ? `<div class="ev">${evidence(f.evidence)}</div>` : ""}</div></div>`)
+        .map((f) => `<div class="alert ${f.severity === "warning" ? "warning" : "info"}">
+          <div class="abody">
+            <div class="atitle"><span class="aid">${esc(f.id)}</span>${esc(f.title)}</div>
+            <div class="adesc">${esc(f.text)}</div>
+            ${f.suggestion ? `<div class="asug"><b>${esc(t("Empfehlung"))}:</b> ${esc(f.suggestion)}</div>` : ""}
+            ${evidence(f.evidence) ? `<div class="aev">${evidence(f.evidence)}</div>` : ""}
+          </div>
+        </div>`)
         .join("")
-    : `<div class="empty">${esc(t("Keine Hinweise – keine Regel hat angeschlagen. Das heißt nicht, dass alles optimal ist."))}</div>`;
+    : `<div class="alert info"><div class="abody"><div class="atitle">${esc(t("Keine Hinweise"))}</div><div class="adesc">${esc(t("Keine Hinweise – keine Regel hat angeschlagen. Das heißt nicht, dass alles optimal ist."))}</div></div></div>`;
 
   const curve = copCurveCard(d, ui, fit);
   const energy = energyCard(d, ui, 30);
@@ -106,7 +111,7 @@ export function viewAnlage(d, ui) {
   const liveCard = liveNow(d, ui);
 
   return `<div class="grid hero">${scoreCard}${kpis}</div>
-    <div class="grid g2"><div class="c">${head(t("Hinweise mit Beleg"), "findings", ui)}${findings}</div>${curve}</div>
+    <div class="grid g2"><div>${findings}</div>${curve}</div>
     <div class="grid g2">${energy}${liveCard || missing || ""}</div>
     ${liveCard && missing ? `<div class="grid g2">${missing}</div>` : ""}`;
 }

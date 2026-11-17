@@ -244,7 +244,8 @@
     "Puffer-Soll Vorlauf": "Buffer target flow",
     "keine Räume": "no rooms",
     "Keine Heizkreise.": "No heating circuits.",
-    "Werte: Ist / Soll °C, Abweichung zum Soll.": "Values: actual / target °C, deviation from target."
+    "Werte: Ist / Soll °C, Abweichung zum Soll.": "Values: actual / target °C, deviation from target.",
+    "Keine Hinweise": "No findings"
   };
   var lang = "de";
   function setLang(hass) {
@@ -379,6 +380,8 @@
   --hz-card: var(--ha-card-background, var(--card-background-color, #fff));
   --hz-soft: color-mix(in srgb, var(--hz-ink) 4%, transparent);
   --hz-heat: #ff7a45; --hz-ok: #22b89a; --hz-warn: #f2a93b; --hz-bad: #e5484d; --hz-cool: #4c8dff; --hz-vio: #8b7cf6;
+  --hz-radius: 20px; --hz-radius-sm: 14px; --hz-shadow: 0 4px 16px rgba(16,24,40,.06); --hz-shadow-lg: 0 8px 32px rgba(16,24,40,.10);
+  --hz-gap: 18px;
   font-family: var(--ha-font-family-body, Inter, system-ui, sans-serif); color: var(--hz-ink);
 }
 * { box-sizing: border-box; }
@@ -388,22 +391,31 @@
 .head .meta { margin-left:auto; color:var(--hz-mut); font-size:.78rem; display:flex; align-items:center; gap:6px; }
 .dot { width:8px; height:8px; border-radius:50%; background:var(--hz-ok); }
 .dot.off { background:var(--hz-bad); }
-.grid { display:grid; gap:16px; }
+.grid { display:grid; gap:var(--hz-gap); }
 .g2 { grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); }
 .g3 { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
 .hero { grid-template-columns: minmax(280px, 330px) 1fr; }
-.kpis { display:grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap:16px; }
+.hero2 { display:grid; grid-template-columns: auto 1fr; gap:20px; align-items:center; background:linear-gradient(135deg, color-mix(in srgb, var(--hz-heat) 8%, var(--hz-card)), var(--hz-card)); border:1px solid var(--hz-line); border-radius:var(--hz-radius); padding:20px 24px; box-shadow:var(--hz-shadow); }
+.hero2 .score-ring { width:96px; height:96px; flex:none; }
+.hero2 .score-val { font-size:2rem; font-weight:800; line-height:1; }
+.hero2 .glance { display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap:12px; }
+.hero2 .gl { background:var(--hz-soft); border-radius:var(--hz-radius-sm); padding:10px 12px; }
+.hero2 .gl .lbl { font-size:.7rem; color:var(--hz-mut); font-weight:700; text-transform:uppercase; letter-spacing:.06em; }
+.hero2 .gl .num { font-size:1.4rem; font-weight:800; margin-top:2px; font-variant-numeric:tabular-nums; }
+.hero2 .gl .sub { font-size:.72rem; color:var(--hz-mut); margin-top:2px; }
+.kpis { display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:var(--hz-gap); }
 @media (max-width: 520px) { .kpis { grid-template-columns: 1fr 1fr; gap:10px; } .kpis .big { font-size:1.6rem; } }
-@media (max-width: 760px) { .hero { grid-template-columns: 1fr; } .g2, .g3 { grid-template-columns: 1fr; } .wrap { padding:10px; gap:12px; } }
-.c { background:var(--hz-card); border:1px solid var(--hz-line); border-radius:18px; padding:16px 18px; min-width:0;
-  box-shadow: 0 1px 2px rgba(16,24,40,.04); }
-.h { display:flex; align-items:center; gap:8px; font-size:.74rem; font-weight:700; color:var(--hz-mut); text-transform:uppercase; letter-spacing:.06em; }
+@media (max-width: 760px) { .hero { grid-template-columns: 1fr; } .hero2 { grid-template-columns: 1fr; } .g2, .g3 { grid-template-columns: 1fr; } .wrap { padding:10px; gap:12px; } .alert { padding:12px 14px; } }
+.c { background:var(--hz-card); border:1px solid var(--hz-line); border-radius:var(--hz-radius); padding:20px 22px; min-width:0;
+  box-shadow: var(--hz-shadow); transition: box-shadow .2s ease, transform .2s ease; }
+.c:hover { box-shadow: var(--hz-shadow-lg); }
+.h { display:flex; align-items:center; gap:10px; font-size:.78rem; font-weight:700; color:var(--hz-mut); text-transform:uppercase; letter-spacing:.08em; }
 .h .sub { text-transform:none; letter-spacing:0; font-weight:500; }
 .q { margin-left:auto; width:20px; height:20px; border-radius:50%; border:1.5px solid var(--hz-line); color:var(--hz-mut); font-size:.7rem;
   display:grid; place-items:center; font-weight:800; cursor:pointer; background:none; padding:0; flex:none; }
 .q:hover, .q.on { border-color:var(--hz-heat); color:var(--hz-heat); }
 .help { margin:10px 0 2px; padding:10px 12px; border-radius:12px; background:var(--hz-soft); font-size:.84rem; line-height:1.5; color:var(--hz-ink); }
-.big { font-size:2rem; font-weight:800; letter-spacing:-.02em; margin-top:6px; line-height:1.1; }
+.big { font-size:2.2rem; font-weight:800; letter-spacing:-.03em; margin-top:6px; line-height:1; font-variant-numeric:tabular-nums; }
 .big small { font-size:.9rem; color:var(--hz-mut); font-weight:600; margin-left:4px; }
 .muted { color:var(--hz-mut); font-size:.82rem; }
 .pill { display:inline-flex; align-items:center; gap:6px; font-size:.74rem; font-weight:700; padding:4px 9px; border-radius:999px; white-space:nowrap; }
@@ -419,7 +431,7 @@
 .ringfg.tone-ok { stroke:var(--hz-ok); } .ringfg.tone-warn { stroke:var(--hz-warn); } .ringfg.tone-bad { stroke:var(--hz-bad); } .ringfg.tone-mut { stroke:var(--hz-mut); }
 .ringv { font-size:30px; font-weight:800; fill:var(--hz-ink); }
 .lvl { font-weight:800; font-size:1.25rem; }
-.spark { width:100%; height:36px; display:block; margin:8px 0 6px; }
+.spark { width:100%; height:40px; display:block; margin:8px 0 4px; }
 .cbox { width:100%; min-width:0; }
 .lvgrid { display:grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap:10px; margin-top:10px; }
 .lv { background:var(--hz-soft); border-radius:12px; padding:10px 12px; }
@@ -436,6 +448,18 @@
 .chart .hlt { fill:var(--hz-ink); font-weight:700; font-size:12px; }
 .legend { display:flex; flex-wrap:wrap; gap:6px 14px; font-size:.78rem; color:var(--hz-mut); margin-top:6px; }
 .legend i { display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; vertical-align:-1px; }
+.alert { display:flex; gap:14px; padding:16px 18px; border-radius:var(--hz-radius-sm); border:1px solid var(--hz-line); background:var(--hz-card); margin-bottom:10px; position:relative; overflow:hidden; }
+.alert::before { content:""; position:absolute; left:0; top:0; bottom:0; width:5px; }
+.alert.warning::before { background:var(--hz-bad); }
+.alert.info::before { background:var(--hz-cool); }
+.alert .abody { flex:1; min-width:0; }
+.alert .atitle { font-weight:700; font-size:.95rem; display:flex; align-items:center; gap:8px; }
+.alert .atitle .aid { color:var(--hz-mut); font-weight:600; font-size:.8rem; }
+.alert .adesc { font-size:.85rem; color:var(--hz-mut); margin-top:4px; line-height:1.5; }
+.alert .aev { display:inline-flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+.alert .aev span { font-size:.72rem; color:var(--hz-mut); background:var(--hz-soft); border-radius:6px; padding:3px 8px; }
+.alert .asug { font-size:.84rem; margin-top:8px; line-height:1.5; }
+.alert .asug b { color:var(--hz-ink); }
 .find { display:flex; gap:12px; padding:12px 0; border-top:1px solid var(--hz-line); }
 .find:first-of-type { border-top:0; }
 .sev { width:5px; border-radius:4px; flex:none; }
@@ -959,15 +983,20 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     ${kpi("runtime", t("Laufzeit / Zyklus"), fmt(k.runtime_per_cycle, 0), t("min"), sparkline(last30.map((r) => r.cycle_min), "var(--hz-cool)"), k.runtime_per_cycle == null ? pill("mut", t("keine Daten")) : pill(runTone, runTone === "bad" ? t("unter der Schwelle") : t("im grünen Bereich")))}
     ${kpi("flow", t("Vorlauf Ist − Soll"), signed(flow), "K", sparkline(last30.map((r) => r.flow != null && r.target_flow != null ? r.flow - r.target_flow : null), "var(--hz-bad)", { ref: 0 }), flow == null ? pill("mut", t("keine Daten")) : pill(flowTone, flow > 1 ? t("Vorlauf zu warm → Kurve prüfen") : flow < -1 ? t("Vorlauf zu kalt") : t("passt")))}
   </div>`;
-    const findings = d.findings.length ? d.findings.map((f) => `<div class="find"><div class="sev ${f.severity}"></div><div><div class="ft"><span class="id">${esc(f.id)}</span>${esc(f.title)}</div>
-          <div class="fd">${esc(f.text)}</div>${f.suggestion ? `<div class="fs"><b>${esc(t("Empfehlung"))}:</b> ${esc(f.suggestion)}</div>` : ""}
-          ${evidence(f.evidence) ? `<div class="ev">${evidence(f.evidence)}</div>` : ""}</div></div>`).join("") : `<div class="empty">${esc(t("Keine Hinweise – keine Regel hat angeschlagen. Das heißt nicht, dass alles optimal ist."))}</div>`;
+    const findings = d.findings.length ? d.findings.map((f) => `<div class="alert ${f.severity === "warning" ? "warning" : "info"}">
+          <div class="abody">
+            <div class="atitle"><span class="aid">${esc(f.id)}</span>${esc(f.title)}</div>
+            <div class="adesc">${esc(f.text)}</div>
+            ${f.suggestion ? `<div class="asug"><b>${esc(t("Empfehlung"))}:</b> ${esc(f.suggestion)}</div>` : ""}
+            ${evidence(f.evidence) ? `<div class="aev">${evidence(f.evidence)}</div>` : ""}
+          </div>
+        </div>`).join("") : `<div class="alert info"><div class="abody"><div class="atitle">${esc(t("Keine Hinweise"))}</div><div class="adesc">${esc(t("Keine Hinweise – keine Regel hat angeschlagen. Das heißt nicht, dass alles optimal ist."))}</div></div></div>`;
     const curve = copCurveCard(d, ui, fit);
     const energy = energyCard(d, ui, 30);
     const missing = missingCard(d);
     const liveCard = liveNow(d, ui);
     return `<div class="grid hero">${scoreCard}${kpis}</div>
-    <div class="grid g2"><div class="c">${head(t("Hinweise mit Beleg"), "findings", ui)}${findings}</div>${curve}</div>
+    <div class="grid g2"><div>${findings}</div>${curve}</div>
     <div class="grid g2">${energy}${liveCard || missing || ""}</div>
     ${liveCard && missing ? `<div class="grid g2">${missing}</div>` : ""}`;
   }

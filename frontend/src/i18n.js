@@ -241,6 +241,7 @@ export const EN = {
   "keine Räume": "no rooms",
   "Keine Heizkreise.": "No heating circuits.",
   "Werte: Ist / Soll °C, Abweichung zum Soll.": "Values: actual / target °C, deviation from target.",
+  "Keine Hinweise": "No findings",
 };
 
 let lang = "de";
