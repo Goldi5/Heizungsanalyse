@@ -4,7 +4,7 @@ import { helpText } from "./help.js";
 import { binChart, ring, scatterChart, sparkline, timeChart, withWidth } from "./charts.js";
 import { CHECK_NAMES, SCORE_LEVEL, binByOutdoor, dayLabel, esc, fmt, kpiTone, linearFit, rangeRows, signed, trend, weatherAdjusted } from "./logic.js";
 
-export const VIEWS = ["anlage", "effizienz", "raeume", "vergleich", "inventar", "protokoll"];
+export const VIEWS = ["anlage", "effizienz", "raeume", "vergleich", "inventar", "protokoll", "einstellungen"];
 
 // Kopf einer Kachel mit „?“
 function head(title, key, ui, sub = "") {
@@ -549,6 +549,42 @@ export function viewProtokoll(d, ui) {
     ${!diag ? `<div class="c empty">${esc(t("Diagnose nicht verfügbar – Protokoll wird trotzdem angezeigt."))}</div>` : ""}`;
 }
 
+export function viewEinstellungen(d, ui) {
+  const cfg = (d && d.config) || {};
+  const data = cfg.data || {};
+  const options = cfg.options || {};
+  const mandatory = ["power_entity", "heat_entity", "outdoor_entity", "compressor_entity"];
+  const optional = Object.keys(options).filter((k) => k !== "circuits" && k !== "rooms" && k !== "thresholds");
+  const srcRow = (key, value, group) => `<div class="srcrow"><label>${esc(key)}</label><input data-cfg="${group}" data-key="${esc(key)}" type="text" value="${esc(value || "")}" placeholder="entity.id"></div>`;
+  const mand = mandatory.map((k) => srcRow(k, data[k], "data")).join("");
+  const opt = optional.map((k) => srcRow(k, options[k], "options")).join("");
+  const circ = JSON.stringify(cfg.circuits || [], null, 2);
+  const rooms = JSON.stringify(cfg.rooms || [], null, 2);
+  const thr = JSON.stringify(cfg.thresholds || {}, null, 2);
+  return `<div class="grid">
+    <div class="c">${head(t("Quellen"), "cfg_sources", ui)}
+      <div class="cfggroup"><div class="h">${esc(t("Pflicht"))}</div>${mand}</div>
+      <div class="cfggroup"><div class="h">${esc(t("Optional"))}</div>${opt || `<div class="muted">${esc(t("keine"))}</div>`}</div>
+    </div>
+    <div class="c">${head(t("Heizkreise"), "cfg_circuits", ui)}
+      <textarea class="cfgjson" data-cfgjson="circuits">${esc(circ)}</textarea>
+    </div>
+    <div class="c">${head(t("Raeume"), "cfg_rooms", ui)}
+      <textarea class="cfgjson" data-cfgjson="rooms">${esc(rooms)}</textarea>
+    </div>
+    <div class="c">${head(t("Schwellen"), "cfg_thresholds", ui)}
+      <textarea class="cfgjson" data-cfgjson="thresholds">${esc(thr)}</textarea>
+    </div>
+    <div class="c"><div class="row">
+      <button class="btn primary" data-act="cfg-save">${esc(t("Speichern"))}</button>
+      <span class="muted">${esc(t("Speichern laedt die Integration neu."))}</span>
+    </div>
+    ${ui.cfgMsg ? `<div class="fd" style="margin-top:8px">${esc(ui.cfgMsg)}</div>` : ""}
+    </div>
+  </div>`;
+}
+
+
 export function renderView(view, d, ui, live) {
   switch (view) {
     case "effizienz": return viewEffizienz(d, ui);
@@ -556,6 +592,7 @@ export function renderView(view, d, ui, live) {
     case "vergleich": return viewVergleich(d, ui);
     case "inventar": return viewInventar(d, ui);
     case "protokoll": return viewProtokoll(d, ui);
+    case "einstellungen": return viewEinstellungen(d, ui);
     default: return viewAnlage(d, ui);
   }
 }

@@ -228,6 +228,14 @@ export const EN = {
   "Dashboard": "Dashboard",
   "Fehler": "Error",
   "Info": "Info",
+  "Quellen": "Sources",
+  "Pflicht": "Mandatory",
+  "Optional": "Optional",
+  "keine": "none",
+  "Raeume": "Rooms",
+  "Schwellen": "Thresholds",
+  "Speichern laedt die Integration neu.": "Saving reloads the integration.",
+  "JSON-Fehler: {e}": "JSON error: {e}",
 };
 
 let lang = "de";

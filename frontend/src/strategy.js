@@ -8,6 +8,7 @@ const VIEW_DEFS = [
   { view: "vergleich", title: "Vorher / Nachher", icon: "mdi:compare-horizontal" },
   { view: "inventar", title: "Inventar", icon: "mdi:clipboard-list-outline" },
   { view: "protokoll", title: "Protokoll", icon: "mdi:text-box-search-outline" },
+  { view: "einstellungen", title: "Einstellungen", icon: "mdi:tune-variant" },
 ];
 
 export function buildDashboard(config = {}) {

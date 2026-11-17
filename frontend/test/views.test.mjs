@@ -55,10 +55,10 @@ test("jeder t()-Text hat eine englische Übersetzung", () => {
   assert.deepEqual([...new Set(missing)], []);
 });
 
-test("Strategie baut sechs Ansichten mit der Karte", () => {
+test("Strategie baut sieben Ansichten mit der Karte", () => {
   setLang({ language: "de" });
   const d = buildDashboard({});
-  assert.equal(d.views.length, 6);
+  assert.equal(d.views.length, 7);
   assert.deepEqual(d.views.map((v) => v.path), VIEWS);
   for (const v of d.views) assert.equal(v.cards[0].type, "custom:heizungsanalyse-card");
 });

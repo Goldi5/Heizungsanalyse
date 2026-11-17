@@ -58,3 +58,22 @@ async def test_card_file_is_served(hass: HomeAssistant) -> None:
     assert "heizungsanalyse-card" in response.text
     assert response.headers["Cache-Control"].startswith("no-store")
     assert CARD_URL.endswith("heizungsanalyse-card.js")
+
+
+async def test_config_roundtrip(hass: HomeAssistant, hass_ws_client) -> None:
+    await _setup(hass) if False else None
+    from .test_services import _setup as setup
+    await setup(hass)
+    client = await hass_ws_client(hass)
+
+    await client.send_json({"id": 1, "type": f"{DOMAIN}/config"})
+    msg = await client.receive_json()
+    assert msg["success"]
+    assert "data" in msg["result"] and "options" in msg["result"]
+    assert msg["result"]["data"]["power_entity"] == "sensor.wp_strom"
+
+    await client.send_json({"id": 2, "type": f"{DOMAIN}/config/save", "options": {"thresholds": {"starts_per_day": 7}}})
+    assert (await client.receive_json())["success"]
+
+    await client.send_json({"id": 3, "type": f"{DOMAIN}/config"})
+    assert (await client.receive_json())["result"]["thresholds"]["starts_per_day"] == 7

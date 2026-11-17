@@ -231,7 +231,15 @@
     "Konfiguration": "Configuration",
     "Dashboard": "Dashboard",
     "Fehler": "Error",
-    "Info": "Info"
+    "Info": "Info",
+    "Quellen": "Sources",
+    "Pflicht": "Mandatory",
+    "Optional": "Optional",
+    "keine": "none",
+    "Raeume": "Rooms",
+    "Schwellen": "Thresholds",
+    "Speichern laedt die Integration neu.": "Saving reloads the integration.",
+    "JSON-Fehler: {e}": "JSON error: {e}"
   };
   var lang = "de";
   function setLang(hass) {
@@ -502,6 +510,15 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
   .logrow .cat { display:none; }
   .search { width:100%; margin-left:0; }
 }
+
+.srcrow { display:grid; grid-template-columns: minmax(180px, 1fr) 2fr; gap:8px; align-items:center; padding:6px 0; border-top:1px solid var(--hz-line); }
+.srcrow:first-of-type { border-top:0; }
+.srcrow label { font-size:.78rem; color:var(--hz-mut); font-weight:600; word-break:break-all; }
+.srcrow input { font:inherit; font-size:.85rem; padding:6px 10px; border-radius:10px; border:1px solid var(--hz-line); background:var(--hz-card); color:var(--hz-ink); }
+.cfggroup { margin-top:10px; }
+.cfggroup .h { margin-bottom:6px; }
+.cfgjson { width:100%; min-height:160px; font-family:ui-monospace,monospace; font-size:.78rem; padding:10px; border-radius:12px; border:1px solid var(--hz-line); background:var(--hz-soft); color:var(--hz-ink); resize:vertical; }
+
 .flash { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--hz-ink); color:var(--hz-card); padding:9px 16px; border-radius:999px; font-size:.85rem; font-weight:600; z-index:9; }
 `;
 
@@ -617,6 +634,22 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     log: {
       de: "Das Protokoll hält Start, Auswertung, Quellen, Hinweise, Konfiguration, Inventar, Dashboard und Kartenfehler fest. Höchstens 2000 Einträge oder 30 Tage. Einträge lassen sich nach Kategorie, Stufe und Text filtern, nach Tag gruppiert aufklappen und als JSON exportieren.",
       en: "The log keeps start, analysis, sources, findings, configuration, inventory, dashboard and card errors. At most 2000 entries or 30 days. Entries can be filtered by category, level and text, grouped by day, expanded and exported as JSON."
+    },
+    cfg_sources: {
+      de: "Pflicht- und optionale Quellen. Änderungen werden nach dem Speichern übernommen; die Integration lädt neu. Leere Felder bleiben ungenutzt.",
+      en: "Mandatory and optional sources. Changes apply after saving; the integration reloads. Empty fields stay unused."
+    },
+    cfg_circuits: {
+      de: "Heizkreise als JSON. Jeder Eintrag braucht id und name; type ist buffer, radiators, underfloor oder dhw.",
+      en: "Heating circuits as JSON. Each entry needs id and name; type is buffer, radiators, underfloor or dhw."
+    },
+    cfg_rooms: {
+      de: "Räume als JSON. climate_entity optional; ohne Thermostat kein Komfort-Finding.",
+      en: "Rooms as JSON. climate_entity optional; without a thermostat no comfort finding."
+    },
+    cfg_thresholds: {
+      de: "Schwellen der Findings. Startwerte sind Platzhalter.",
+      en: "Finding thresholds. Starting values are placeholders."
     },
     sources: {
       de: "Welche Sensoren zugeordnet sind. Fehlende optionale Sensoren schalten Auswertungen nicht frei – ergänzen lässt sich das unter Konfigurieren.",
@@ -829,7 +862,7 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
   }
 
   // src/views.js
-  var VIEWS = ["anlage", "effizienz", "raeume", "vergleich", "inventar", "protokoll"];
+  var VIEWS = ["anlage", "effizienz", "raeume", "vergleich", "inventar", "protokoll", "einstellungen"];
   function head(title, key, ui, sub = "") {
     const open = ui.help === key;
     return `<div class="h">${esc(title)}${sub ? ` <span class="sub">${sub}</span>` : ""}<button class="q ${open ? "on" : ""}" data-help="${key}" aria-label="?">?</button></div>${open ? `<div class="help">${esc(helpText(key))}</div>` : ""}`;
@@ -1299,6 +1332,40 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     <div class="grid">${logList(d, ui)}</div>
     ${!diag ? `<div class="c empty">${esc(t("Diagnose nicht verfügbar – Protokoll wird trotzdem angezeigt."))}</div>` : ""}`;
   }
+  function viewEinstellungen(d, ui) {
+    const cfg = d && d.config || {};
+    const data = cfg.data || {};
+    const options = cfg.options || {};
+    const mandatory = ["power_entity", "heat_entity", "outdoor_entity", "compressor_entity"];
+    const optional = Object.keys(options).filter((k) => k !== "circuits" && k !== "rooms" && k !== "thresholds");
+    const srcRow = (key, value, group) => `<div class="srcrow"><label>${esc(key)}</label><input data-cfg="${group}" data-key="${esc(key)}" type="text" value="${esc(value || "")}" placeholder="entity.id"></div>`;
+    const mand = mandatory.map((k) => srcRow(k, data[k], "data")).join("");
+    const opt = optional.map((k) => srcRow(k, options[k], "options")).join("");
+    const circ = JSON.stringify(cfg.circuits || [], null, 2);
+    const rooms = JSON.stringify(cfg.rooms || [], null, 2);
+    const thr = JSON.stringify(cfg.thresholds || {}, null, 2);
+    return `<div class="grid">
+    <div class="c">${head(t("Quellen"), "cfg_sources", ui)}
+      <div class="cfggroup"><div class="h">${esc(t("Pflicht"))}</div>${mand}</div>
+      <div class="cfggroup"><div class="h">${esc(t("Optional"))}</div>${opt || `<div class="muted">${esc(t("keine"))}</div>`}</div>
+    </div>
+    <div class="c">${head(t("Heizkreise"), "cfg_circuits", ui)}
+      <textarea class="cfgjson" data-cfgjson="circuits">${esc(circ)}</textarea>
+    </div>
+    <div class="c">${head(t("Raeume"), "cfg_rooms", ui)}
+      <textarea class="cfgjson" data-cfgjson="rooms">${esc(rooms)}</textarea>
+    </div>
+    <div class="c">${head(t("Schwellen"), "cfg_thresholds", ui)}
+      <textarea class="cfgjson" data-cfgjson="thresholds">${esc(thr)}</textarea>
+    </div>
+    <div class="c"><div class="row">
+      <button class="btn primary" data-act="cfg-save">${esc(t("Speichern"))}</button>
+      <span class="muted">${esc(t("Speichern laedt die Integration neu."))}</span>
+    </div>
+    ${ui.cfgMsg ? `<div class="fd" style="margin-top:8px">${esc(ui.cfgMsg)}</div>` : ""}
+    </div>
+  </div>`;
+  }
   function renderView(view, d, ui, live) {
     switch (view) {
       case "effizienz":
@@ -1311,6 +1378,8 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
         return viewInventar(d, ui);
       case "protokoll":
         return viewProtokoll(d, ui);
+      case "einstellungen":
+        return viewEinstellungen(d, ui);
       default:
         return viewAnlage(d, ui);
     }
@@ -1321,8 +1390,9 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     setConfig(config) {
       this._config = { view: "anlage", ...config || {} };
       if (!VIEWS.includes(this._config.view)) this._config.view = "anlage";
-      this._ui = { help: null, range: 90, form: false, widths: {}, logCat: "", logLevel: "", logQ: "", logHours: 168, logOpen: null };
+      this._ui = { help: null, range: 90, form: false, widths: {}, logCat: "", logLevel: "", logQ: "", logHours: 168, logOpen: null, cfgMsg: null };
       this._log = [];
+      this._cfgData = null;
       this._diag = null;
       this._logError = null;
       this._diagError = null;
@@ -1399,6 +1469,10 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
         this._error = e && (e.message || e.code) ? e.message || e.code : String(e);
         this._reportTrace("summary failed: " + this._error);
       }
+      if (this._config.view === "einstellungen") {
+        await this._loadConfig();
+        return;
+      }
       if (this._config.view === "protokoll") {
         await this._loadDiag();
         await this._loadLog(force);
@@ -1434,6 +1508,58 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
       }
       if (!force || this._config.view === "protokoll") this._render();
     }
+    async _loadConfig() {
+      if (!this._hass) return;
+      try {
+        this._cfgData = await this._hass.callWS({ type: "heizungsanalyse/config" });
+        this._cfgError = null;
+      } catch (e) {
+        this._cfgError = e && (e.message || e.code) ? e.message || e.code : String(e);
+        this._cfgData = null;
+        this._reportTrace("config failed: " + this._cfgError);
+      }
+      this._render();
+    }
+    async _saveConfig() {
+      if (!this._hass || !this._cfgData) return;
+      const root = this.shadowRoot;
+      const data = { ...this._cfgData.data };
+      const options = { ...this._cfgData.options };
+      root.querySelectorAll("[data-cfg]").forEach((el) => {
+        const group = el.dataset.cfg;
+        const key = el.dataset.key;
+        const val = el.value.trim();
+        if (group === "data") {
+          if (val) data[key] = val;
+          else delete data[key];
+        } else {
+          if (val) options[key] = val;
+          else delete options[key];
+        }
+      });
+      root.querySelectorAll("[data-cfgjson]").forEach((el) => {
+        const key = el.dataset.cfgjson;
+        const raw = el.value.trim();
+        try {
+          const parsed = raw ? JSON.parse(raw) : key === "thresholds" ? {} : [];
+          options[key] = parsed;
+        } catch (e) {
+          this._ui.cfgMsg = t("JSON-Fehler: {e}", { e: e.message || e });
+          this._render();
+          throw e;
+        }
+      });
+      try {
+        await this._hass.callWS({ type: "heizungsanalyse/config/save", data, options });
+        this._ui.cfgMsg = t("Gespeichert");
+        invalidate();
+        setTimeout(() => this._load(true), 1500);
+      } catch (e) {
+        this._ui.cfgMsg = t("Fehler: {e}", { e: e.message || e });
+        this._reportTrace("config save failed: " + (e.message || e));
+      }
+      this._render();
+    }
     _live() {
       const out = {};
       for (const r of this._data && this._data.rooms || []) {
@@ -1454,7 +1580,9 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
       if (!d) return;
       if (!d.configured) return this._paint(`<div class="c empty">${esc(t("Die Heizungsanalyse ist noch nicht eingerichtet."))}</div>`);
       const view = this._config.view;
-      const data = view === "protokoll" ? { ...d, diag: this._diag, log: { entries: this._log }, logError: this._logError } : d;
+      let data = d;
+      if (view === "protokoll") data = { ...d, diag: this._diag, log: { entries: this._log }, logError: this._logError };
+      if (view === "einstellungen") data = { ...d, config: this._cfgData, configError: this._cfgError };
       this._paint(`${header(d, view)}${renderView(view, data, this._ui, this._live())}`);
       if (!fromMeasure) requestAnimationFrame(() => this._measure());
     }
@@ -1506,6 +1634,7 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
       else if (el.dataset.act === "log-download") return void this._download();
       else if (el.dataset.act === "log-copy") return void this._copy();
       else if (el.dataset.act === "log-refresh") return void this._refresh();
+      else if (el.dataset.act === "cfg-save") return void this._saveConfig();
       this._render();
     }
     _input(e) {
@@ -1585,7 +1714,8 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     { view: "raeume", title: "Räume & Kreise", icon: "mdi:home-thermometer" },
     { view: "vergleich", title: "Vorher / Nachher", icon: "mdi:compare-horizontal" },
     { view: "inventar", title: "Inventar", icon: "mdi:clipboard-list-outline" },
-    { view: "protokoll", title: "Protokoll", icon: "mdi:text-box-search-outline" }
+    { view: "protokoll", title: "Protokoll", icon: "mdi:text-box-search-outline" },
+    { view: "einstellungen", title: "Einstellungen", icon: "mdi:tune-variant" }
   ];
   function buildDashboard(config = {}) {
     return {

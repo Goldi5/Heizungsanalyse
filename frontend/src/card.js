@@ -10,8 +10,9 @@ export class HeizungsanalyseCard extends HTMLElement {
   setConfig(config) {
     this._config = { view: "anlage", ...(config || {}) };
     if (!VIEWS.includes(this._config.view)) this._config.view = "anlage";
-    this._ui = { help: null, range: 90, form: false, widths: {}, logCat: "", logLevel: "", logQ: "", logHours: 168, logOpen: null };
+    this._ui = { help: null, range: 90, form: false, widths: {}, logCat: "", logLevel: "", logQ: "", logHours: 168, logOpen: null, cfgMsg: null };
     this._log = [];
+    this._cfgData = null;
     this._diag = null;
     this._logError = null;
     this._diagError = null;
@@ -86,6 +87,10 @@ export class HeizungsanalyseCard extends HTMLElement {
       this._error = e && (e.message || e.code) ? e.message || e.code : String(e);
       this._reportTrace("summary failed: " + this._error);
     }
+    if (this._config.view === "einstellungen") {
+      await this._loadConfig();
+      return;
+    }
     if (this._config.view === "protokoll") {
       await this._loadDiag();
       await this._loadLog(force);
@@ -124,6 +129,55 @@ export class HeizungsanalyseCard extends HTMLElement {
     if (!force || this._config.view === "protokoll") this._render();
   }
 
+  async _loadConfig() {
+    if (!this._hass) return;
+    try {
+      this._cfgData = await this._hass.callWS({ type: "heizungsanalyse/config" });
+      this._cfgError = null;
+    } catch (e) {
+      this._cfgError = e && (e.message || e.code) ? e.message || e.code : String(e);
+      this._cfgData = null;
+      this._reportTrace("config failed: " + this._cfgError);
+    }
+    this._render();
+  }
+
+  async _saveConfig() {
+    if (!this._hass || !this._cfgData) return;
+    const root = this.shadowRoot;
+    const data = { ...this._cfgData.data };
+    const options = { ...this._cfgData.options };
+    root.querySelectorAll("[data-cfg]").forEach((el) => {
+      const group = el.dataset.cfg;
+      const key = el.dataset.key;
+      const val = el.value.trim();
+      if (group === "data") { if (val) data[key] = val; else delete data[key]; }
+      else { if (val) options[key] = val; else delete options[key]; }
+    });
+    root.querySelectorAll("[data-cfgjson]").forEach((el) => {
+      const key = el.dataset.cfgjson;
+      const raw = el.value.trim();
+      try {
+        const parsed = raw ? JSON.parse(raw) : (key === "thresholds" ? {} : []);
+        options[key] = parsed;
+      } catch (e) {
+        this._ui.cfgMsg = t("JSON-Fehler: {e}", { e: e.message || e });
+        this._render();
+        throw e;
+      }
+    });
+    try {
+      await this._hass.callWS({ type: "heizungsanalyse/config/save", data, options });
+      this._ui.cfgMsg = t("Gespeichert");
+      invalidate();
+      setTimeout(() => this._load(true), 1500);
+    } catch (e) {
+      this._ui.cfgMsg = t("Fehler: {e}", { e: e.message || e });
+      this._reportTrace("config save failed: " + (e.message || e));
+    }
+    this._render();
+  }
+
   _live() {
     const out = {};
     for (const r of (this._data && this._data.rooms) || []) {
@@ -145,7 +199,9 @@ export class HeizungsanalyseCard extends HTMLElement {
     if (!d) return;
     if (!d.configured) return this._paint(`<div class="c empty">${esc(t("Die Heizungsanalyse ist noch nicht eingerichtet."))}</div>`);
     const view = this._config.view;
-    const data = view === "protokoll" ? { ...d, diag: this._diag, log: { entries: this._log }, logError: this._logError } : d;
+    let data = d;
+    if (view === "protokoll") data = { ...d, diag: this._diag, log: { entries: this._log }, logError: this._logError };
+    if (view === "einstellungen") data = { ...d, config: this._cfgData, configError: this._cfgError };
     this._paint(`${header(d, view)}${renderView(view, data, this._ui, this._live())}`);
     if (!fromMeasure) requestAnimationFrame(() => this._measure());
   }
@@ -186,6 +242,7 @@ export class HeizungsanalyseCard extends HTMLElement {
     else if (el.dataset.act === "log-download") return void this._download();
     else if (el.dataset.act === "log-copy") return void this._copy();
     else if (el.dataset.act === "log-refresh") return void this._refresh();
+    else if (el.dataset.act === "cfg-save") return void this._saveConfig();
     this._render();
   }
 

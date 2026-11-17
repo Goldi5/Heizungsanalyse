@@ -13,6 +13,7 @@ from .analysis.periods import merge_samples, samples_from_rollups
 from .const import (
     CONF_CIRCUITS,
     CONF_ROOMS,
+    CONF_THRESHOLDS,
     DASHBOARD_ICON,
     DASHBOARD_PATH,
     DOMAIN,
@@ -43,6 +44,8 @@ def async_register(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_summary)
     websocket_api.async_register_command(hass, ws_dashboard_status)
     websocket_api.async_register_command(hass, ws_dashboard_mark)
+    websocket_api.async_register_command(hass, ws_config_get)
+    websocket_api.async_register_command(hass, ws_config_set)
     websocket_api.async_register_command(hass, ws_log)
     websocket_api.async_register_command(hass, ws_diagnostics)
     websocket_api.async_register_command(hass, ws_trace)
@@ -211,4 +214,53 @@ async def ws_trace(hass: HomeAssistant, connection: websocket_api.ActiveConnecti
             "ua": (msg.get("ua") or "")[:120],
         },
     )
+    connection.send_result(msg["id"], {"ok": True})
+
+
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/config"})
+@websocket_api.async_response
+async def ws_config_get(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Konfiguration lesen (Quellen, Kreise, Räume, Schwellen)."""
+    runtime = _runtime(hass)
+    if runtime is None:
+        connection.send_error(msg["id"], "not_setup", "Heizungsanalyse ist nicht eingerichtet")
+        return
+    entry = runtime.entry
+    connection.send_result(
+        msg["id"],
+        {
+            "data": dict(entry.data),
+            "options": dict(entry.options),
+            "circuits": list(entry.options.get(CONF_CIRCUITS) or []),
+            "rooms": list(entry.options.get(CONF_ROOMS) or []),
+            "thresholds": dict(entry.options.get(CONF_THRESHOLDS) or {}),
+        },
+    )
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/config/save",
+        vol.Optional("data"): dict,
+        vol.Optional("options"): dict,
+    }
+)
+@websocket_api.require_admin
+@websocket_api.async_response
+async def ws_config_set(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Konfiguration schreiben und neu laden. Nur Admin."""
+    runtime = _runtime(hass)
+    if runtime is None:
+        connection.send_error(msg["id"], "not_setup", "Heizungsanalyse ist nicht eingerichtet")
+        return
+    entry = runtime.entry
+    new_data = dict(entry.data)
+    if msg.get("data"):
+        new_data.update(msg["data"])
+    new_options = dict(entry.options)
+    if msg.get("options"):
+        new_options.update(msg["options"])
+    hass.config_entries.async_update_entry(entry, data=new_data, options=new_options)
+    await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
     connection.send_result(msg["id"], {"ok": True})

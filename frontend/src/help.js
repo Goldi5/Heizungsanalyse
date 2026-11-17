@@ -94,6 +94,22 @@ const HELP = {
     de: "Das Protokoll hält Start, Auswertung, Quellen, Hinweise, Konfiguration, Inventar, Dashboard und Kartenfehler fest. Höchstens 2000 Einträge oder 30 Tage. Einträge lassen sich nach Kategorie, Stufe und Text filtern, nach Tag gruppiert aufklappen und als JSON exportieren.",
     en: "The log keeps start, analysis, sources, findings, configuration, inventory, dashboard and card errors. At most 2000 entries or 30 days. Entries can be filtered by category, level and text, grouped by day, expanded and exported as JSON.",
   },
+  cfg_sources: {
+    de: "Pflicht- und optionale Quellen. Änderungen werden nach dem Speichern übernommen; die Integration lädt neu. Leere Felder bleiben ungenutzt.",
+    en: "Mandatory and optional sources. Changes apply after saving; the integration reloads. Empty fields stay unused.",
+  },
+  cfg_circuits: {
+    de: "Heizkreise als JSON. Jeder Eintrag braucht id und name; type ist buffer, radiators, underfloor oder dhw.",
+    en: "Heating circuits as JSON. Each entry needs id and name; type is buffer, radiators, underfloor or dhw.",
+  },
+  cfg_rooms: {
+    de: "Räume als JSON. climate_entity optional; ohne Thermostat kein Komfort-Finding.",
+    en: "Rooms as JSON. climate_entity optional; without a thermostat no comfort finding.",
+  },
+  cfg_thresholds: {
+    de: "Schwellen der Findings. Startwerte sind Platzhalter.",
+    en: "Finding thresholds. Starting values are placeholders.",
+  },
   sources: {
     de: "Welche Sensoren zugeordnet sind. Fehlende optionale Sensoren schalten Auswertungen nicht frei – ergänzen lässt sich das unter Konfigurieren.",
     en: "Which sensors are mapped. Missing optional sensors leave analyses locked – add them under Configure.",

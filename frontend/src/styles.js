@@ -142,5 +142,14 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
   .logrow .cat { display:none; }
   .search { width:100%; margin-left:0; }
 }
+
+.srcrow { display:grid; grid-template-columns: minmax(180px, 1fr) 2fr; gap:8px; align-items:center; padding:6px 0; border-top:1px solid var(--hz-line); }
+.srcrow:first-of-type { border-top:0; }
+.srcrow label { font-size:.78rem; color:var(--hz-mut); font-weight:600; word-break:break-all; }
+.srcrow input { font:inherit; font-size:.85rem; padding:6px 10px; border-radius:10px; border:1px solid var(--hz-line); background:var(--hz-card); color:var(--hz-ink); }
+.cfggroup { margin-top:10px; }
+.cfggroup .h { margin-bottom:6px; }
+.cfgjson { width:100%; min-height:160px; font-family:ui-monospace,monospace; font-size:.78rem; padding:10px; border-radius:12px; border:1px solid var(--hz-line); background:var(--hz-soft); color:var(--hz-ink); resize:vertical; }
+
 .flash { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--hz-ink); color:var(--hz-card); padding:9px 16px; border-radius:999px; font-size:.85rem; font-weight:600; z-index:9; }
 `;
