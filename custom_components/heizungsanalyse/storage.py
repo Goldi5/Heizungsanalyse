@@ -175,6 +175,7 @@ class InventoryStore:
                 "flow_c": sample.flow_c,
                 "target_flow_c": sample.target_flow_c,
                 "dhw_heat_kwh": sample.dhw_heat_kwh,
+                "dhw_power_kwh": sample.dhw_power_kwh,
             }
             if rollups.get(sample.day.isoformat()) != values:
                 rollups[sample.day.isoformat()] = values

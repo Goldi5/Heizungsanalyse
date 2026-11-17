@@ -61,12 +61,25 @@
           "dhw_heat_entity": "Warmwasserwärme (kWh)",
           "flow_entity": "Vorlauftemperatur (Ist)",
           "target_flow_entity": "Vorlauftemperatur (Soll)",
-          "return_entity": "Rücklauftemperatur",
+          "return_entity": "Rücklauftemperatur der Wärmepumpe",
           "buffer_entity": "Puffertemperatur",
           "defrost_entity": "Abtauung-Status",
           "aux_heater_entity": "Heizstab/NHZ-Status",
           "compressor_starts_entity": "Verdichterstarts",
-          "compressor_runtime_entity": "Verdichter-Laufzeit"
+          "compressor_runtime_entity": "Verdichter-Laufzeit",
+          "compressor_runtime_extra_entity": "Verdichter-Laufzeit, zweiter Zähler (z. B. Warmwasser)",
+          "hp_flow_entity": "Vorlauftemperatur der Wärmepumpe",
+          "volume_flow_entity": "Volumenstrom der Wärmepumpe",
+          "power_now_entity": "Elektrische Leistung jetzt (W/kW)",
+          "dhw_power_entity": "Warmwasser-Strom (kWh)"
+        },
+        "data_description": {
+          "compressor_runtime_extra_entity": "Wird zur ersten Laufzeit addiert, wenn die Anlage Heizung und Warmwasser getrennt zählt.",
+          "hp_flow_entity": "Austritt der Wärmepumpe (nicht Puffer). Mit dem Rücklauf ergibt das die Spreizung.",
+          "volume_flow_entity": "Mit der Spreizung ergibt das die Wärmeleistung in kW.",
+          "power_now_entity": "Momentane Stromaufnahme; zusammen mit der Wärmeleistung der COP jetzt.",
+          "dhw_power_entity": "Für den COP inklusive Warmwasser und den Abgleich mit einem Gesamtzähler als Ersatzquelle.",
+          "return_entity": "Eintritt der Wärmepumpe. Zusammen mit dem WP-Vorlauf ergibt das die Spreizung."
         }
       },
       "add_circuit": {
@@ -121,7 +134,9 @@
           "defrost_hours_per_day": "Abtauung (h/Tag)",
           "cop_curve_deviation": "COP-Kennlinie (0-1)",
           "mixer_pulses_per_day": "Mischer-Impulse pro Tag",
-          "power_source_deviation": "Stromquellen-Abweichung (0-1)"
+          "power_source_deviation": "Stromquellen-Abweichung (0-1)",
+          "spread_min_k": "Spreizung mindestens (K)",
+          "spread_max_k": "Spreizung höchstens (K)"
         }
       }
     },

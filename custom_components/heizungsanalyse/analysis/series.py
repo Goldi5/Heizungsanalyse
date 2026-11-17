@@ -54,6 +54,7 @@ def build_samples(
     dhw_heat: dict[date, float] | None = None,
     aux_hours: dict[date, float] | None = None,
     defrost_hours: dict[date, float] | None = None,
+    dhw_power: dict[date, float] | None = None,
 ) -> list[DaySample]:
     """Tagesproben aus den vorhandenen Reihen zusammensetzen.
 
@@ -78,6 +79,7 @@ def build_samples(
                 dhw_heat_kwh=(dhw_heat or {}).get(day),
                 aux_hours=(aux_hours or {}).get(day),
                 defrost_hours=(defrost_hours or {}).get(day),
+                dhw_power_kwh=(dhw_power or {}).get(day),
             )
         )
     return samples

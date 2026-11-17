@@ -1,3 +1,30 @@
+## 0.4.0 – 2026-11-17
+
+### Neu
+- **Neue optionale Quellen** (Konfigurieren → Optionale Quellen):
+  WP-Vorlauf, Volumenstrom, Leistung jetzt (W/kW), Warmwasser-Strom (kWh) und
+  ein zweiter Laufzeit-Zähler. „Rücklauftemperatur“ ist jetzt ausdrücklich der
+  Rücklauf der Wärmepumpe.
+- **Spreizung** (WP-Vorlauf − WP-Rücklauf, nur Stunden mit laufendem
+  Verdichter): Median, Tagesverlauf und Hinweis **F14**, wenn sie dauerhaft
+  unter 3 K (Volumenstrom hoch, Pumpe prüfen) oder über 8 K liegt. Beide
+  Grenzen sind einstellbar.
+- **„Jetzt“-Kachel** in der Ansicht Anlage: Wärmeleistung aus Volumenstrom ×
+  Spreizung, Stromaufnahme, COP jetzt und Spreizung, dazu „Verdichter läuft/aus“.
+- **Puffer-Ladung**: wie weit der WP-Vorlauf über dem Puffer-Soll lädt
+  (Tagesverlauf, Median) – getrennt von der Regelgüte des Puffers (F01).
+- **COP inklusive Warmwasser** unter dem COP der letzten 7 Tage, sobald
+  Warmwasser-Wärme und -Strom zugeordnet sind. Damit vergleicht F13 einen
+  Gesamtzähler (z. B. Netzmessung) als Ersatzquelle mit Heiz- plus
+  Warmwasser-Strom statt nur mit dem Heizstrom.
+- **Zwei Laufzeit-Zähler** (z. B. Heizung und Warmwasser) werden addiert.
+- Anlagen-Check: Spreizung als elfte Prüfung.
+
+### Behoben
+- Quellen-Check meldete die Stromzähler als „unpassend“ (erwartete W/kW statt
+  kWh) und An/Aus-Sensoren als „keine Statistik“. Jetzt: Zähler = Energie,
+  An/Aus-Sensoren „aus Verlauf“.
+
 ## 0.3.3 – 2026-11-17
 
 ### Behoben

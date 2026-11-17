@@ -48,6 +48,9 @@ export const STYLES = `
 .lvl { font-weight:800; font-size:1.25rem; }
 .spark { width:100%; height:36px; display:block; margin:8px 0 6px; }
 .cbox { width:100%; min-width:0; }
+.lvgrid { display:grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap:10px; margin-top:10px; }
+.lv { background:var(--hz-soft); border-radius:12px; padding:10px 12px; }
+.lv .big { font-size:1.5rem; margin-top:2px; }
 .chart { width:100%; height:auto; display:block; margin-top:8px; }
 .chart text { font-size:11px; fill:var(--hz-mut); font-family:inherit; }
 .chart .unit { font-weight:700; }

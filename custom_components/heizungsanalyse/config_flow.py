@@ -25,11 +25,14 @@ from .const import (
     CONF_CLIMATE_ENTITY,
     CONF_COMPRESSOR_ENTITY,
     CONF_COMPRESSOR_RUNTIME_ENTITY,
+    CONF_COMPRESSOR_RUNTIME_EXTRA_ENTITY,
     CONF_COMPRESSOR_STARTS_ENTITY,
     CONF_DEFROST_ENTITY,
     CONF_DHW_HEAT_ENTITY,
+    CONF_DHW_POWER_ENTITY,
     CONF_FLOW_ENTITY,
     CONF_HEAT_ENTITY,
+    CONF_HP_FLOW_ENTITY,
     CONF_ID,
     CONF_MIXER_CLOSE_ENTITY,
     CONF_MIXER_OPEN_ENTITY,
@@ -37,6 +40,7 @@ from .const import (
     CONF_OUTDOOR_ENTITY,
     CONF_POWER_ENTITY,
     CONF_POWER_FALLBACK_ENTITY,
+    CONF_POWER_NOW_ENTITY,
     CONF_PUMP_ENTITY,
     CONF_RETURN_ENTITY,
     CONF_ROOMS,
@@ -45,6 +49,7 @@ from .const import (
     CONF_THRESHOLDS,
     CONF_TYPE,
     CONF_VALVE_POSITION_ENTITY,
+    CONF_VOLUME_FLOW_ENTITY,
     DOMAIN,
     NAME,
     OPTIONAL_SOURCES,
@@ -65,6 +70,8 @@ _THRESHOLD_FIELDS: tuple[tuple[str, float, float, float], ...] = (
     ("cop_curve_deviation", 0, 1, 0.05),
     ("mixer_pulses_per_day", 0, 200, 1),
     ("power_source_deviation", 0, 1, 0.05),
+    ("spread_min_k", 0, 10, 0.5),
+    ("spread_max_k", 0, 20, 0.5),
 )
 
 
@@ -133,9 +140,9 @@ def _validate_sources(hass, data: dict[str, Any]) -> dict[str, str]:
     for key, value in data.items():
         if not value:
             continue
-        if key in (CONF_POWER_FALLBACK_ENTITY, CONF_DHW_HEAT_ENTITY):
+        if key in (CONF_POWER_FALLBACK_ENTITY, CONF_DHW_HEAT_ENTITY, CONF_DHW_POWER_ENTITY):
             error = validate_energy(hass, value)
-        elif key in (CONF_FLOW_ENTITY, CONF_TARGET_FLOW_ENTITY, CONF_RETURN_ENTITY, CONF_BUFFER_ENTITY):
+        elif key in (CONF_FLOW_ENTITY, CONF_TARGET_FLOW_ENTITY, CONF_RETURN_ENTITY, CONF_BUFFER_ENTITY, CONF_HP_FLOW_ENTITY):
             error = validate_temperature(hass, value)
         else:
             error = validate_status(hass, value)
@@ -250,6 +257,11 @@ class HeizungsanalyseOptionsFlow(OptionsFlowWithReload):
             (CONF_AUX_HEATER_ENTITY, _status()),
             (CONF_COMPRESSOR_STARTS_ENTITY, _status()),
             (CONF_COMPRESSOR_RUNTIME_ENTITY, _status()),
+            (CONF_COMPRESSOR_RUNTIME_EXTRA_ENTITY, _status()),
+            (CONF_HP_FLOW_ENTITY, _temperature()),
+            (CONF_VOLUME_FLOW_ENTITY, _entity(SENSOR_DOMAIN, SensorDeviceClass.VOLUME_FLOW_RATE)),
+            (CONF_POWER_NOW_ENTITY, _entity(SENSOR_DOMAIN, SensorDeviceClass.POWER)),
+            (CONF_DHW_POWER_ENTITY, _energy()),
         ):
             marker, option_selector = _optional(key, current, option_selector)
             fields[marker] = option_selector

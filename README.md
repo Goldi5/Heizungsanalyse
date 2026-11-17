@@ -32,7 +32,7 @@ Bilder mit Beispieldaten. Details: [Dashboard](docs/dashboard.md).
 
 ## Status
 
-Version 0.3.3. Alle Analysestufen sind vorhanden: Repo-Gerüst (M0),
+Version 0.4.0. Alle Analysestufen sind vorhanden: Repo-Gerüst (M0),
 Einrichtung (M1), Kennzahlen (M2), Inventar und Dienste (M3), Raum- und
 Kreisanalyse (M4), Findings (M5), Doku (M6), die dokumentierte Schnittstelle
 zu raumklima-2 (M7), das selbst angelegte Dashboard (M8–M12) sowie
@@ -56,6 +56,7 @@ HACS-Validierung und Dashboard-Tests (Node).
 | M10 | Websocket `summary` – alle Daten in einem Aufruf | erledigt (0.2.0) |
 | M11 | Ansichten: Anlage, Effizienz, Räume & Kreise, Vorher/Nachher, Inventar, Protokoll | erledigt (0.3.0) |
 | M12 | „?“-Hilfe, Hell/Dunkel, DE/EN, Handy-Layout | erledigt (0.2.0) |
+| M13 | Hydraulik: Spreizung, Wärmeleistung, COP jetzt, Puffer-Ladung, COP mit Warmwasser | erledigt (0.4.0) |
 | M13 | Ereignisprotokoll, Diagnose, Debug-Spur, Reiter „Protokoll“ | erledigt (0.3.0) |
 
 ## Voraussetzungen

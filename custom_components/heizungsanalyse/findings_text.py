@@ -68,6 +68,14 @@ TEXTS: dict[str, dict[str, dict[str, str]]] = {
             "text": "Die Integration rechnet mit der Ersatzstromquelle.",
             "suggestion": "Primärquelle wiederherstellen; die Kennzahlen sind bis dahin als Ersatz gekennzeichnet.",
         },
+        "spread_low": {
+            "text": "Die Spreizung der Wärmepumpe liegt im Median bei {spread} K (unter {threshold} K).",
+            "suggestion": "Volumenstrom ist eher hoch: Pumpenstufe bzw. Pumpen-Sollwert prüfen. Zu kleine Spreizung kostet Pumpenstrom und begünstigt Takten.",
+        },
+        "spread_high": {
+            "text": "Die Spreizung der Wärmepumpe liegt im Median bei {spread} K (über {threshold} K).",
+            "suggestion": "Volumenstrom ist eher knapp: Filter, Ventile und Pumpe prüfen. Große Spreizung erhöht den nötigen Vorlauf und senkt den COP.",
+        },
         "power_source_deviation": {
             "text": "Primär- und Ersatzstromquelle weichen {deviation} % voneinander ab (Schwelle {threshold} %).",
             "suggestion": "Messpunkte abgleichen; eine Quelle schätzt, die andere misst.",
@@ -129,6 +137,14 @@ TEXTS: dict[str, dict[str, dict[str, str]]] = {
         "power_source_fallback": {
             "text": "The integration is using the fallback power source.",
             "suggestion": "Restore the primary source; metrics are flagged as fallback meanwhile.",
+        },
+        "spread_low": {
+            "text": "The heat pump spread has a median of {spread} K (below {threshold} K).",
+            "suggestion": "Volume flow is rather high: check pump stage or pump setpoint. A small spread costs pump power and favours cycling.",
+        },
+        "spread_high": {
+            "text": "The heat pump spread has a median of {spread} K (above {threshold} K).",
+            "suggestion": "Volume flow is rather low: check filters, valves and pump. A large spread raises the required flow temperature and lowers COP.",
         },
         "power_source_deviation": {
             "text": "Primary and fallback power sources deviate {deviation} % (threshold {threshold} %).",

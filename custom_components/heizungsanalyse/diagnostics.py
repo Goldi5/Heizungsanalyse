@@ -116,7 +116,10 @@ async def _source_checks(hass: HomeAssistant, entities: dict[str, str]) -> list[
             status = "not_found"
         elif state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
             status = "unavailable"
-        elif not daily:
+        elif kind == "binary" and not daily:
+            # An/Aus-Sensoren haben keine Langzeitstatistik; ausgewertet wird der Zustandsverlauf
+            status = "history"
+        elif not daily and not hourly:
             status = "no_statistics"
         else:
             expected = {"energy": ENERGY_UNITS, "power": POWER_UNITS, "temperature": TEMPERATURE_UNITS}.get(kind)

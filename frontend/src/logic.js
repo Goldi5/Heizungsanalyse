@@ -45,6 +45,7 @@ export const CHECK_NAMES = {
   defrost: "Abtauen",
   aux: "Heizstab",
   dhw: "Warmwasser",
+  spread: "Spreizung",
 };
 
 // Lineare Regression y = a + b*x (für die COP-Kennlinie)

@@ -2,6 +2,18 @@
 import { getLang } from "./i18n.js";
 
 const HELP = {
+  live: {
+    de: "Momentanwerte der Wärmepumpe: Wärmeleistung = Volumenstrom × Spreizung × 4,19 kJ/(kg·K), Strom aus der Leistungsmessung, COP jetzt = Wärme ÷ Strom. Nur sinnvoll, solange der Verdichter läuft; kurz nach dem Start schwanken die Werte stark.",
+    en: "Live heat pump values: heat output = volume flow × spread × 4.19 kJ/(kg·K), power from the power reading, COP now = heat ÷ power. Only meaningful while the compressor runs; right after start-up the values fluctuate.",
+  },
+  spread: {
+    de: "Spreizung = WP-Vorlauf minus WP-Rücklauf, nur in Stunden, in denen der Verdichter lief. Üblich sind 3–8 K. Kleiner heißt: viel Volumenstrom, Pumpe arbeitet mehr als nötig und die Wärmepumpe taktet leichter. Größer heißt: zu wenig Volumenstrom, die Wärmepumpe muss heißer fahren.",
+    en: "Spread = heat pump flow minus heat pump return, only in hours when the compressor ran. 3–8 K is typical. Smaller means a lot of volume flow, the pump works harder than needed and the heat pump cycles more easily. Larger means too little flow, the heat pump has to run hotter.",
+  },
+  overshoot: {
+    de: "Wie weit der Vorlauf der Wärmepumpe über dem Puffer-Soll liegt, während sie lädt. Ein paar Kelvin sind nötig, damit der Puffer überhaupt warm wird. Liegt der Wert dauerhaft deutlich höher, lädt die Anlage heißer als nötig – das kostet COP.",
+    en: "How far the heat pump flow exceeds the buffer target while charging. A few kelvin are needed for the buffer to warm up at all. If the value stays clearly higher, the system charges hotter than needed – which costs COP.",
+  },
   score: {
     de: "Ein einfacher Gesamtwert: 100 Punkte, minus 15 je Warnung und minus 5 je Hinweis. Er sagt nur, wie viele Regeln anschlagen – nicht, wie effizient die Anlage absolut ist. In den ersten Tagen steht „Lernt noch“. Laufen COP oder Vorlauf-Prüfung nicht oder weniger als 70 % der Prüfungen, steht „Eingeschränkt“: Was nicht geprüft wird, kann auch nicht gut sein. Darunter steht, welche Prüfung fehlt und warum.",
     en: "A simple overall value: 100 points, minus 15 per warning and minus 5 per note. It only reflects how many rules fire – not how efficient the system is in absolute terms. The first days show “still learning”. If the COP or flow check is not running, or fewer than 70 % of checks, it shows “limited”: what is not checked cannot be called good. Below it lists which check is missing and why.",

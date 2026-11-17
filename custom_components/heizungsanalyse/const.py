@@ -92,6 +92,13 @@ CONF_AUX_HEATER_ENTITY: Final = "aux_heater_entity"
 CONF_COMPRESSOR_STARTS_ENTITY: Final = "compressor_starts_entity"
 CONF_COMPRESSOR_RUNTIME_ENTITY: Final = "compressor_runtime_entity"
 
+# Wärmepumpen-Hydraulik und Warmwasser-Strom (0.4.0)
+CONF_HP_FLOW_ENTITY: Final = "hp_flow_entity"
+CONF_VOLUME_FLOW_ENTITY: Final = "volume_flow_entity"
+CONF_POWER_NOW_ENTITY: Final = "power_now_entity"
+CONF_DHW_POWER_ENTITY: Final = "dhw_power_entity"
+CONF_COMPRESSOR_RUNTIME_EXTRA_ENTITY: Final = "compressor_runtime_extra_entity"
+
 OPTIONAL_SOURCES: Final = (
     CONF_POWER_FALLBACK_ENTITY,
     CONF_DHW_HEAT_ENTITY,
@@ -103,6 +110,11 @@ OPTIONAL_SOURCES: Final = (
     CONF_AUX_HEATER_ENTITY,
     CONF_COMPRESSOR_STARTS_ENTITY,
     CONF_COMPRESSOR_RUNTIME_ENTITY,
+    CONF_HP_FLOW_ENTITY,
+    CONF_VOLUME_FLOW_ENTITY,
+    CONF_POWER_NOW_ENTITY,
+    CONF_DHW_POWER_ENTITY,
+    CONF_COMPRESSOR_RUNTIME_EXTRA_ENTITY,
 )
 
 # --- Heizkreise und Räume -------------------------------------------------------

@@ -24,6 +24,7 @@ Ereignis `heizungsanalyse_findings`, wenn sich das Ergebnis ändert.
 | F11 | Mischer-Impulse pro Tag eines Kreises über Schwelle | info | Stichproben Mischer |
 | F12 | Pflichtquelle liefert keine Langzeitstatistik | info | Tagesabfrage |
 | F13 | Ersatzstromquelle aktiv oder Abweichung Primär/Ersatz über Schwelle | warning | Tagesmengen |
+| F14 | Spreizung der Wärmepumpe (WP-Vorlauf − WP-Rücklauf, nur Laufstunden) im Median unter `spread_min_k` oder über `spread_max_k`, ab 24 Laufstunden | info | Stundenstatistik + Verdichterlauf |
 
 F09 ist eine Näherung: die Statistik eines Binärsensors liefert Stunden, keine
 Schaltvorgänge. Deshalb heißt die Regel "Abtau-Stunden", nicht "Abtauungen".
@@ -44,6 +45,8 @@ Standardeinstellungen (Platzhalter, im Optionsdialog änderbar):
 | `cop_curve_deviation` | 0.15 |
 | `mixer_pulses_per_day` | 12.0 |
 | `power_source_deviation` | 0.15 |
+| `spread_min_k` | 3.0 |
+| `spread_max_k` | 8.0 |
 
 Die Werte sind Startpunkte aus dem Arbeitsauftrag und mit realen Daten zu
 kalibrieren. Eine Schwelle zu erhöhen entfernt Hinweise, sie verbessert die

@@ -17,6 +17,7 @@ from .analysis.findings import Finding
 from .analysis.heating_curve import CurveBin
 from .analysis.periods import summarize, within
 from .analysis.types import DaySample
+from .analysis.hydraulics import cop_with_dhw
 from .findings_text import render
 
 SERIES_DAYS = 400
@@ -45,6 +46,8 @@ TITLES: dict[str, dict[str, str]] = {
         "missing_statistics": "Langzeitstatistik fehlt",
         "power_source_fallback": "Ersatz-Stromquelle aktiv",
         "power_source_deviation": "Stromquellen weichen ab",
+        "spread_low": "Spreizung klein",
+        "spread_high": "Spreizung groß",
     },
     "en": {
         "flow_deviation": "Flow temperature above target",
@@ -62,6 +65,8 @@ TITLES: dict[str, dict[str, str]] = {
         "missing_statistics": "Long-term statistics missing",
         "power_source_fallback": "Fallback power source active",
         "power_source_deviation": "Power sources deviate",
+        "spread_low": "Small spread",
+        "spread_high": "Large spread",
     },
 }
 
@@ -89,7 +94,7 @@ def _r(value: float | None, digits: int = 2) -> float | None:
 
 # Prüfungen, die der Anlagen-Check abdeckt. Die ersten beiden sind Pflicht für
 # eine gute Note: ohne COP und Vorlauf-Abweichung ist „Sehr gut“ nicht belegbar.
-CHECKS: tuple[str, ...] = ("cop", "flow", "starts", "runtime", "rooms", "pumps", "mixer", "defrost", "aux", "dhw")
+CHECKS: tuple[str, ...] = ("cop", "flow", "starts", "runtime", "rooms", "pumps", "mixer", "defrost", "aux", "dhw", "spread")
 KEY_CHECKS = ("cop", "flow")
 MIN_COVERAGE = 0.7
 MIN_ROOM_SAMPLES = 144
@@ -120,6 +125,11 @@ def coverage(snapshot: Any, circuits: Sequence[Mapping[str, Any]], sources: Mapp
         row("defrost", any(s.defrost_hours is not None for s in recent), bool(sources.get("defrost_entity"))),
         row("aux", any(s.aux_hours is not None for s in recent), bool(sources.get("aux_heater_entity"))),
         row("dhw", any(s.dhw_heat_kwh is not None for s in recent), bool(sources.get("dhw_heat_entity"))),
+        row(
+            "spread",
+            int(((getattr(snapshot, "hydraulics", {}) or {}).get("spread") or {}).get("hours") or 0) > 0,
+            bool(sources.get("hp_flow_entity") and sources.get("return_entity")),
+        ),
     ]
 
 
@@ -357,6 +367,9 @@ def build_summary(
                 "hours": getattr(deviation, "count", 0),
                 "compressor_filtered": bool(snapshot.compressor_filtered),
             },
+            "cop_total_short": cop_with_dhw(snapshot.samples, 7),
+            "cop_total_long": cop_with_dhw(snapshot.samples, 30),
+            "hydraulics": dict(getattr(snapshot, "hydraulics", {}) or {}),
             "days_with_data": snapshot.days_with_data,
             "power_source": snapshot.power_source,
         },

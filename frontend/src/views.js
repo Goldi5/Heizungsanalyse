@@ -86,7 +86,7 @@ export function viewAnlage(d, ui) {
     `<div class="c">${head(title, key, ui)}<div class="big">${value}${unit ? `<small>${unit}</small>` : ""}</div>${spark}${p}</div>`;
 
   const kpis = `<div class="kpis">
-    ${kpi("cop", t("COP 7 Tage"), fmt(cop, 1), cop != null && k.cop_long.value != null ? esc(t("30 T: {v}", { v: fmt(k.cop_long.value, 1) })) : "", sparkline(last30.map((r) => r.cop), "var(--hz-ok)"), copPill)}
+    ${kpi("cop", t("COP 7 Tage"), fmt(cop, 1), cop != null && k.cop_long.value != null ? esc(t("30 T: {v}", { v: fmt(k.cop_long.value, 1) })) : "", sparkline(last30.map((r) => r.cop), "var(--hz-ok)"), copPill + (k.cop_total_short && k.cop_total_short.value != null ? `<div class="muted" style="margin-top:6px">${esc(t("inkl. Warmwasser {v}", { v: fmt(k.cop_total_short.value, 1) }))}</div>` : ""))}
     ${kpi("starts", t("Starts / Tag"), fmt(k.starts_per_day, 0), th.starts_per_day ? esc(t("Schwelle {v}", { v: fmt(th.starts_per_day, 0) })) : "", sparkline(last30.map((r) => r.starts), "var(--hz-warn)", { kind: "bar", ref: th.starts_per_day }), k.starts_per_day == null ? pill("mut", t("keine Daten")) : pill(startsTone, startsTone === "bad" ? t("über der Schwelle") : t("im grünen Bereich")))}
     ${kpi("runtime", t("Laufzeit / Zyklus"), fmt(k.runtime_per_cycle, 0), t("min"), sparkline(last30.map((r) => r.cycle_min), "var(--hz-cool)"), k.runtime_per_cycle == null ? pill("mut", t("keine Daten")) : pill(runTone, runTone === "bad" ? t("unter der Schwelle") : t("im grünen Bereich")))}
     ${kpi("flow", t("Vorlauf Ist − Soll"), signed(flow), "K", sparkline(last30.map((r) => (r.flow != null && r.target_flow != null ? r.flow - r.target_flow : null)), "var(--hz-bad)", { ref: 0 }), flow == null ? pill("mut", t("keine Daten")) : pill(flowTone, flow > 1 ? t("Vorlauf zu warm → Kurve prüfen") : flow < -1 ? t("Vorlauf zu kalt") : t("passt")))}
@@ -103,10 +103,31 @@ export function viewAnlage(d, ui) {
   const curve = copCurveCard(d, ui, fit);
   const energy = energyCard(d, ui, 30);
   const missing = missingCard(d);
+  const liveCard = liveNow(d, ui);
 
   return `<div class="grid hero">${scoreCard}${kpis}</div>
     <div class="grid g2"><div class="c">${head(t("Hinweise mit Beleg"), "findings", ui)}${findings}</div>${curve}</div>
-    <div class="grid g2">${energy}${missing || ""}</div>`;
+    <div class="grid g2">${energy}${liveCard || missing || ""}</div>
+    ${liveCard && missing ? `<div class="grid g2">${missing}</div>` : ""}`;
+}
+
+// Momentanwerte der Wärmepumpe (WP-Vorlauf/-Rücklauf, Volumenstrom, Leistung)
+function liveNow(d, ui) {
+  const h = (d.kpis && d.kpis.hydraulics) || {};
+  const lv = h.live;
+  if (!lv || (lv.spread == null && lv.power_kw == null)) return "";
+  const tile = (label, value, unit, tone = "") =>
+    `<div class="lv"><div class="muted">${esc(t(label))}</div><div class="big ${tone}">${value}<small>${esc(unit)}</small></div></div>`;
+  const state = lv.running === true ? pill("ok", t("Verdichter läuft")) : lv.running === false ? pill("mut", t("Verdichter aus")) : "";
+  const sp = h.spread || {};
+  return `<div class="c">${head(t("Jetzt"), "live", ui)}<div class="row" style="margin-top:6px">${state}</div>
+    <div class="lvgrid">
+      ${tile("Wärmeleistung", fmt(lv.heat_kw, 1), "kW")}
+      ${tile("Strom", fmt(lv.power_kw, 2), "kW")}
+      ${tile("COP jetzt", fmt(lv.cop, 1), "")}
+      ${tile("Spreizung", fmt(lv.spread, 1), "K")}
+    </div>
+    ${sp.median != null ? `<div class="fd" style="margin-top:8px">${esc(t("Spreizung im Lauf (7 Tage): Median {m} K, {n} Stunden", { m: fmt(sp.median, 1), n: sp.hours }))}</div>` : ""}</div>`;
 }
 
 function copCurveCard(d, ui, fit) {
@@ -194,8 +215,22 @@ export function viewEffizienz(d, ui) {
     ? `<div class="c">${head(t("Warmwasseranteil"), "dhw", ui)}<div class="big">${fmt(heat ? (dhw / heat) * 100 : null, 0)}<small>%</small></div><div class="meter"><i style="width:${heat ? Math.min(100, (dhw / heat) * 100) : 0}%;background:var(--hz-vio)"></i></div><div class="muted" style="margin-top:8px">${fmt(dhw, 0)} / ${fmt(heat, 0)} kWh</div></div>`
     : "";
 
+  const hy = (d.kpis && d.kpis.hydraulics) || {};
+  const dailyRows = (map, key) => Object.entries(map || {}).map(([day, v]) => ({ day, [key]: v }));
+  const spreadRows = dailyRows(hy.spread_daily, "spread");
+  const overRows = dailyRows(hy.overshoot_daily, "over");
+  const spreadCard = spreadRows.length
+    ? `<div class="c">${head(t("Spreizung"), "spread", ui, esc(t("WP-Vorlauf − WP-Rücklauf, nur Laufstunden")))}${box(ui, "spread", () => timeChart(spreadRows, [{ key: "spread", kind: "line", color: "var(--hz-vio)", axis: "l", digits: 1 }], { unitL: "K", refL: th.spread_min_k }))}
+      <div class="legend"><span>${esc(t("Median {m} K · Ziel {a}–{b} K", { m: fmt(hy.spread && hy.spread.median, 1), a: fmt(th.spread_min_k, 0), b: fmt(th.spread_max_k, 0) }))}</span></div></div>`
+    : "";
+  const overCard = overRows.length
+    ? `<div class="c">${head(t("Puffer-Ladung"), "overshoot", ui, esc(t("WP-Vorlauf − Puffer-Soll")))}${box(ui, "overshoot", () => timeChart(overRows, [{ key: "over", kind: "line", color: "var(--hz-heat)", axis: "l", digits: 1 }], { unitL: "K", refL: 0 }))}
+      <div class="legend"><span>${esc(t("Median {m} K über Puffer-Soll", { m: fmt(hy.overshoot && hy.overshoot.median, 1) }))}</span></div></div>`
+    : "";
+
   return `<div class="row">${seg}</div>
     <div class="grid g2">${copLine}${curve}</div>
+    ${spreadCard || overCard ? `<div class="grid g2">${spreadCard}${overCard}</div>` : ""}
     <div class="grid g3">${cycling}${cycle}${defrost}${dhwCard}</div>
     <div class="grid g2">${energyCard(d, ui, days)}</div>`;
 }
@@ -321,8 +356,10 @@ export function viewInventar(d, ui) {
   const labels = {
     power_entity: "Strom", heat_entity: "Wärme", outdoor_entity: "Außentemperatur", compressor_entity: "Verdichter",
     power_fallback_entity: "Strom (Ersatz)", dhw_heat_entity: "Warmwasser", flow_entity: "Vorlauf", target_flow_entity: "Soll-Vorlauf",
-    return_entity: "Rücklauf", buffer_entity: "Puffer", defrost_entity: "Abtauen", aux_heater_entity: "Heizstab",
+    return_entity: "WP-Rücklauf", buffer_entity: "Puffer", defrost_entity: "Abtauen", aux_heater_entity: "Heizstab",
     compressor_starts_entity: "Starts", compressor_runtime_entity: "Laufzeit",
+    compressor_runtime_extra_entity: "Laufzeit (2. Zähler)", hp_flow_entity: "WP-Vorlauf", volume_flow_entity: "Volumenstrom",
+    power_now_entity: "Leistung jetzt", dhw_power_entity: "Warmwasser-Strom",
   };
   const src = Object.entries(d.sources || {})
     .map(([k, ok]) => `<div class="src"><span>${esc(labels[k] ? t(labels[k]) : k)}</span>${pill(ok ? "ok" : "mut", ok ? t("verbunden") : t("fehlt"))}</div>`)
@@ -358,6 +395,7 @@ const RANGES_LOG = [
 const SOURCE_STATUS = {
   ok: ["ok", "ok"],
   no_statistics: ["warn", "keine Statistik"],
+  history: ["ok", "aus Verlauf"],
   unit_mismatch: ["bad", "unpassend"],
   state_class_mismatch: ["bad", "unpassend"],
   format: ["warn", "Format"],

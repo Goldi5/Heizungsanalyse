@@ -6,7 +6,7 @@ berechnet die Kennzahlen der Analyseschicht. Er steuert nichts.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 import logging
 from time import perf_counter
@@ -29,6 +29,14 @@ from .analysis.event_log import (
 )
 from .analysis.findings import Finding, FindingsInput, Thresholds, evaluate, signature
 from .analysis.heating_curve import CurveBin, DeviationResult, curve_bins, deviation
+from .analysis.hydraulics import (
+    daily_median as hourly_daily_median,
+    live as hydraulics_live,
+    overshoot_hours,
+    power_kw,
+    spread_hours,
+    spread_stats,
+)
 from .analysis.onoff import (
     as_on,
     grid,
@@ -50,11 +58,14 @@ from .const import (
     CONF_CLIMATE_ENTITY,
     CONF_COMPRESSOR_ENTITY,
     CONF_COMPRESSOR_RUNTIME_ENTITY,
+    CONF_COMPRESSOR_RUNTIME_EXTRA_ENTITY,
     CONF_COMPRESSOR_STARTS_ENTITY,
     CONF_DEFROST_ENTITY,
     CONF_DHW_HEAT_ENTITY,
+    CONF_DHW_POWER_ENTITY,
     CONF_FLOW_ENTITY,
     CONF_HEAT_ENTITY,
+    CONF_HP_FLOW_ENTITY,
     CONF_ID,
     CONF_MIXER_CLOSE_ENTITY,
     CONF_MIXER_OPEN_ENTITY,
@@ -62,11 +73,14 @@ from .const import (
     CONF_OUTDOOR_ENTITY,
     CONF_POWER_ENTITY,
     CONF_POWER_FALLBACK_ENTITY,
+    CONF_POWER_NOW_ENTITY,
     CONF_PUMP_ENTITY,
+    CONF_RETURN_ENTITY,
     CONF_ROOMS,
     CONF_TARGET_FLOW_ENTITY,
     CONF_THRESHOLDS,
     CONF_VALVE_POSITION_ENTITY,
+    CONF_VOLUME_FLOW_ENTITY,
     COP_LONG_DAYS,
     COP_SHORT_DAYS,
     DEVIATION_DAYS,
@@ -100,15 +114,22 @@ TEMPERATURE_UNITS = frozenset({"°C", "K"})
 SOURCE_KINDS: dict[str, str] = {
     CONF_HEAT_ENTITY: "energy",
     CONF_DHW_HEAT_ENTITY: "energy",
-    CONF_POWER_ENTITY: "power",
-    CONF_POWER_FALLBACK_ENTITY: "power",
+    # Strom-Quellen sind Zähler (kWh) – „power“ meint die Momentanleistung
+    CONF_POWER_ENTITY: "energy",
+    CONF_POWER_FALLBACK_ENTITY: "energy",
+    CONF_DHW_POWER_ENTITY: "energy",
+    CONF_POWER_NOW_ENTITY: "power",
+    CONF_HP_FLOW_ENTITY: "temperature",
+    CONF_RETURN_ENTITY: "temperature",
+    CONF_VOLUME_FLOW_ENTITY: "volume_flow",
+    CONF_COMPRESSOR_RUNTIME_EXTRA_ENTITY: "counter",
     CONF_OUTDOOR_ENTITY: "temperature",
     CONF_FLOW_ENTITY: "temperature",
     CONF_TARGET_FLOW_ENTITY: "temperature",
     CONF_BUFFER_ENTITY: "temperature",
     CONF_COMPRESSOR_ENTITY: "binary",
-    CONF_COMPRESSOR_STARTS_ENTITY: "binary",
-    CONF_COMPRESSOR_RUNTIME_ENTITY: "binary",
+    CONF_COMPRESSOR_STARTS_ENTITY: "counter",
+    CONF_COMPRESSOR_RUNTIME_ENTITY: "counter",
     CONF_DEFROST_ENTITY: "binary",
     CONF_AUX_HEATER_ENTITY: "binary",
 }
@@ -136,9 +157,17 @@ class AnalysisSnapshot:
     rankings: dict[str, object]
     findings: list[Finding]
     thresholds: Thresholds
+    hydraulics: dict = field(default_factory=dict)
 
 
 EMPTY_COP = CopResult(None, 0.0, 0.0, 0, None)
+
+
+def _add(first: float | None, second: float | None) -> float | None:
+    """Summe zweier Mengen; fehlt die zweite, bleibt die erste."""
+    if first is None:
+        return None
+    return round(first + (second or 0.0), 1)
 
 
 def _hours_by_day(values) -> dict:
@@ -189,6 +218,7 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
         self._spans: dict[str, list[tuple[datetime, datetime]]] = {}
         self._history_start: datetime | None = None
         self._backfilled = False
+        self._hydraulics: dict = {}
         self.last_duration_ms = 0.0
         self.last_error: str | None = None
 
@@ -261,6 +291,8 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
         flow_id = self._entity(CONF_FLOW_ENTITY)
         target_flow_id = self._entity(CONF_TARGET_FLOW_ENTITY)
         buffer_id = self._entity(CONF_BUFFER_ENTITY)
+        dhw_power_id = self._entity(CONF_DHW_POWER_ENTITY)
+        runtime2_id = self._entity(CONF_COMPRESSOR_RUNTIME_EXTRA_ENTITY)
 
         wanted = {
             heat_id,
@@ -275,6 +307,8 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
             buffer_id,
             aux_id,
             defrost_id,
+            dhw_power_id,
+            runtime2_id,
         }
         daily = await async_read_daily(self.hass, wanted, HISTORY_DAYS)
         await self._refresh_history(dt_util.utcnow())
@@ -286,15 +320,17 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
             power=energy_by_day(daily.get(power_id, [])) if power_id else {},
             outdoor=mean_by_day(daily.get(outdoor_id, [])),
             starts=(counter_by_day(daily.get(starts_id, [])) if starts_id else {}) or self._history_starts(compressor_id),
-            runtime=(counter_by_day(daily.get(runtime_id, [])) if runtime_id else {}) or self._history_hours(compressor_id),
+            runtime=self._runtime_by_day(daily, runtime_id, runtime2_id) or self._history_hours(compressor_id),
             flow=mean_by_day(daily.get(flow_id, [])) if flow_id else {},
             target_flow=mean_by_day(daily.get(target_flow_id, [])) if target_flow_id else {},
             dhw_heat=energy_by_day(daily.get(dhw_id, [])) if dhw_id else {},
             aux_hours=(_hours_by_day(daily.get(aux_id, [])) if aux_id else {}) or self._history_hours(aux_id),
             defrost_hours=(_hours_by_day(daily.get(defrost_id, [])) if defrost_id else {}) or self._history_hours(defrost_id),
+            dhw_power=energy_by_day(daily.get(dhw_power_id, [])) if dhw_power_id else {},
         )
 
         hours, compressor_filtered = await self._read_hours(flow_id, target_flow_id, compressor_id)
+        self._hydraulics = await self._read_hydraulics(target_flow_id, compressor_id)
         self._flow_hours = hours
         self._source_counts = {key: len(rows) for key, rows in daily.items()}
         self._source_counts.update({f"{key}:hour": len(rows) for key, rows in daily.items() if key in (flow_id, target_flow_id)})
@@ -340,6 +376,7 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
             rankings=rank_rooms_with_circuits(room_stats, circuit_of),
             findings=findings,
             thresholds=thresholds,
+            hydraulics=self._hydraulics,
         )
 
     async def _evaluate_findings(
@@ -399,8 +436,15 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
             missing_statistics=[entity_id for entity_id in (heat_id, primary_id) if entity_id and not daily.get(entity_id)],
             unavailable_hours=self._unavailable_hours(mandatory),
             power_source=power_source,
-            primary_energy=_energy_total(daily.get(primary_id, [])),
+            primary_energy=_add(
+                _energy_total(daily.get(primary_id, [])),
+                _energy_total(daily.get(self._entity(CONF_DHW_POWER_ENTITY), []))
+                if self._entity(CONF_DHW_POWER_ENTITY)
+                else None,
+            ),
             fallback_energy=_energy_total(daily.get(fallback_id, [])) if fallback_id else None,
+            spread_median=(self._hydraulics.get("spread") or {}).get("median"),
+            spread_hours=int((self._hydraulics.get("spread") or {}).get("hours") or 0),
         )
         findings = evaluate(results, thresholds)
         await self._log_findings(findings)
@@ -496,7 +540,11 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
                     )
             if status != "ok" or state is None:
                 continue
-            if not daily.get(entity_id):
+            # Binärsensoren, Momentanwerte und WP-Temperaturen werden nicht als Tageswert gelesen
+            hourly_only = {self._entity(CONF_HP_FLOW_ENTITY), self._entity(CONF_RETURN_ENTITY)}
+            if kind in ("binary", "power", "volume_flow") or entity_id in hourly_only:
+                pass
+            elif not daily.get(entity_id):
                 if entity_id not in self._no_statistics:
                     self._no_statistics.add(entity_id)
                     await self.log.async_add(
@@ -912,6 +960,66 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
                 params={"rooms": len(readings), "pumps": len(samples), "mixer": len(mixer)},
                 details={"rooms": len(readings), "pumps": len(samples), "mixer": len(mixer)},
             )
+
+    def _runtime_by_day(self, daily: dict, first_id: str | None, second_id: str | None) -> dict:
+        """Laufzeit je Tag; ein zweiter Zähler (z. B. Warmwasser) wird addiert."""
+        first = counter_by_day(daily.get(first_id, [])) if first_id else {}
+        second = counter_by_day(daily.get(second_id, [])) if second_id else {}
+        if not first:
+            return dict(second)
+        return {day: round(value + second.get(day, 0.0), 3) for day, value in first.items()}
+
+    async def _read_hydraulics(self, target_flow_id: str | None, compressor_id: str | None) -> dict:
+        """Spreizung, Puffer-Ladung und Momentanwerte der Wärmepumpe."""
+        hp_flow_id = self._entity(CONF_HP_FLOW_ENTITY)
+        return_id = self._entity(CONF_RETURN_ENTITY)
+        volume_id = self._entity(CONF_VOLUME_FLOW_ENTITY)
+        power_now_id = self._entity(CONF_POWER_NOW_ENTITY)
+        if not hp_flow_id:
+            return {}
+        wanted = {hp_flow_id, return_id, target_flow_id, compressor_id}
+        hourly = await async_read_hourly(self.hass, wanted, DEVIATION_DAYS)
+
+        def means(entity_id: str | None) -> dict:
+            if not entity_id:
+                return {}
+            return {value.hour: value.mean for value in hourly.get(entity_id, []) if value.mean is not None}
+
+        flow = means(hp_flow_id)
+        running = means(compressor_id)
+        if not running and compressor_id and self._spans.get(compressor_id) is not None:
+            running = share_per_hour(self._spans[compressor_id], flow.keys())
+        tz = dt_util.get_default_time_zone()
+        result: dict = {"filtered": bool(running)}
+        if return_id:
+            spreads = spread_hours(flow, means(return_id), running)
+            result["spread"] = spread_stats(spreads).as_dict()
+            result["spread_daily"] = {day.isoformat(): value for day, value in sorted(hourly_daily_median(spreads, tz).items())}
+        if target_flow_id:
+            over = overshoot_hours(flow, means(target_flow_id), running)
+            result["overshoot"] = spread_stats(over).as_dict()
+            result["overshoot_daily"] = {day.isoformat(): value for day, value in sorted(hourly_daily_median(over, tz).items())}
+
+        def state_value(entity_id: str | None) -> tuple[float | None, str | None]:
+            if not entity_id:
+                return None, None
+            state = self.hass.states.get(entity_id)
+            if state is None or state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+                return None, None
+            return _as_float(state.state), state.attributes.get("unit_of_measurement")
+
+        flow_now, _ = state_value(hp_flow_id)
+        return_now, _ = state_value(return_id)
+        volume_now, _ = state_value(volume_id)
+        power_value, power_unit = state_value(power_now_id)
+        result["live"] = hydraulics_live(
+            hp_flow=flow_now,
+            hp_return=return_now,
+            volume_l_min=volume_now,
+            power=power_kw(power_value, power_unit),
+            running=self._on_off(compressor_id),
+        )
+        return result
 
     async def _read_hours(
         self,

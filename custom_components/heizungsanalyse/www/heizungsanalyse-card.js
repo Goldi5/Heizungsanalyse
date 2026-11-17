@@ -1,10 +1,29 @@
-/* Heizungsanalyse 0.3.3 - gebaut aus frontend/src (npm run build). Nicht von Hand bearbeiten. */
+/* Heizungsanalyse 0.4.0 - gebaut aus frontend/src (npm run build). Nicht von Hand bearbeiten. */
 (() => {
   // src/version.js
-  var HA_VERSION = "0.3.3";
+  var HA_VERSION = "0.4.0";
 
   // src/i18n.js
   var EN = {
+    "WP-Rücklauf": "HP return",
+    "Warmwasser-Strom": "Hot water power",
+    "Leistung jetzt": "Power now",
+    "Volumenstrom": "Volume flow",
+    "WP-Vorlauf": "HP flow",
+    "Laufzeit (2. Zähler)": "Run time (2nd counter)",
+    "Median {m} K über Puffer-Soll": "Median {m} K above buffer target",
+    "WP-Vorlauf − Puffer-Soll": "HP flow − buffer target",
+    "Puffer-Ladung": "Buffer charging",
+    "Median {m} K · Ziel {a}–{b} K": "Median {m} K · target {a}–{b} K",
+    "WP-Vorlauf − WP-Rücklauf, nur Laufstunden": "HP flow − HP return, running hours only",
+    "Spreizung im Lauf (7 Tage): Median {m} K, {n} Stunden": "Spread while running (7 days): median {m} K, {n} hours",
+    "COP jetzt": "COP now",
+    "Wärmeleistung": "Heat output",
+    "Verdichter aus": "Compressor off",
+    "Verdichter läuft": "Compressor running",
+    "Jetzt": "Now",
+    "inkl. Warmwasser {v}": "incl. hot water {v}",
+    "aus Verlauf": "from history",
     "Mischer": "Mixer",
     "kein Sensor": "no sensor",
     "noch keine Daten": "no data yet",
@@ -264,7 +283,8 @@
     mixer: "Mischer",
     defrost: "Abtauen",
     aux: "Heizstab",
-    dhw: "Warmwasser"
+    dhw: "Warmwasser",
+    spread: "Spreizung"
   };
   function linearFit(points) {
     const pts = points.filter((p) => p && Number.isFinite(p.x) && Number.isFinite(p.y));
@@ -388,6 +408,9 @@
 .lvl { font-weight:800; font-size:1.25rem; }
 .spark { width:100%; height:36px; display:block; margin:8px 0 6px; }
 .cbox { width:100%; min-width:0; }
+.lvgrid { display:grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap:10px; margin-top:10px; }
+.lv { background:var(--hz-soft); border-radius:12px; padding:10px 12px; }
+.lv .big { font-size:1.5rem; margin-top:2px; }
 .chart { width:100%; height:auto; display:block; margin-top:8px; }
 .chart text { font-size:11px; fill:var(--hz-mut); font-family:inherit; }
 .chart .unit { font-weight:700; }
@@ -503,6 +526,18 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
 
   // src/help.js
   var HELP = {
+    live: {
+      de: "Momentanwerte der Wärmepumpe: Wärmeleistung = Volumenstrom × Spreizung × 4,19 kJ/(kg·K), Strom aus der Leistungsmessung, COP jetzt = Wärme ÷ Strom. Nur sinnvoll, solange der Verdichter läuft; kurz nach dem Start schwanken die Werte stark.",
+      en: "Live heat pump values: heat output = volume flow × spread × 4.19 kJ/(kg·K), power from the power reading, COP now = heat ÷ power. Only meaningful while the compressor runs; right after start-up the values fluctuate."
+    },
+    spread: {
+      de: "Spreizung = WP-Vorlauf minus WP-Rücklauf, nur in Stunden, in denen der Verdichter lief. Üblich sind 3–8 K. Kleiner heißt: viel Volumenstrom, Pumpe arbeitet mehr als nötig und die Wärmepumpe taktet leichter. Größer heißt: zu wenig Volumenstrom, die Wärmepumpe muss heißer fahren.",
+      en: "Spread = heat pump flow minus heat pump return, only in hours when the compressor ran. 3–8 K is typical. Smaller means a lot of volume flow, the pump works harder than needed and the heat pump cycles more easily. Larger means too little flow, the heat pump has to run hotter."
+    },
+    overshoot: {
+      de: "Wie weit der Vorlauf der Wärmepumpe über dem Puffer-Soll liegt, während sie lädt. Ein paar Kelvin sind nötig, damit der Puffer überhaupt warm wird. Liegt der Wert dauerhaft deutlich höher, lädt die Anlage heißer als nötig – das kostet COP.",
+      en: "How far the heat pump flow exceeds the buffer target while charging. A few kelvin are needed for the buffer to warm up at all. If the value stays clearly higher, the system charges hotter than needed – which costs COP."
+    },
     score: {
       de: "Ein einfacher Gesamtwert: 100 Punkte, minus 15 je Warnung und minus 5 je Hinweis. Er sagt nur, wie viele Regeln anschlagen – nicht, wie effizient die Anlage absolut ist. In den ersten Tagen steht „Lernt noch“. Laufen COP oder Vorlauf-Prüfung nicht oder weniger als 70 % der Prüfungen, steht „Eingeschränkt“: Was nicht geprüft wird, kann auch nicht gut sein. Darunter steht, welche Prüfung fehlt und warum.",
       en: "A simple overall value: 100 points, minus 15 per warning and minus 5 per note. It only reflects how many rules fire – not how efficient the system is in absolute terms. The first days show “still learning”. If the COP or flow check is not running, or fewer than 70 % of checks, it shows “limited”: what is not checked cannot be called good. Below it lists which check is missing and why."
@@ -856,7 +891,7 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     const flowTone = flow == null ? "mut" : Math.abs(flow) <= 1 ? "ok" : Math.abs(flow) < (th.flow_deviation_k ?? 5) ? "warn" : "bad";
     const kpi = (key, title, value, unit, spark, p) => `<div class="c">${head(title, key, ui)}<div class="big">${value}${unit ? `<small>${unit}</small>` : ""}</div>${spark}${p}</div>`;
     const kpis = `<div class="kpis">
-    ${kpi("cop", t("COP 7 Tage"), fmt(cop, 1), cop != null && k.cop_long.value != null ? esc(t("30 T: {v}", { v: fmt(k.cop_long.value, 1) })) : "", sparkline(last30.map((r) => r.cop), "var(--hz-ok)"), copPill)}
+    ${kpi("cop", t("COP 7 Tage"), fmt(cop, 1), cop != null && k.cop_long.value != null ? esc(t("30 T: {v}", { v: fmt(k.cop_long.value, 1) })) : "", sparkline(last30.map((r) => r.cop), "var(--hz-ok)"), copPill + (k.cop_total_short && k.cop_total_short.value != null ? `<div class="muted" style="margin-top:6px">${esc(t("inkl. Warmwasser {v}", { v: fmt(k.cop_total_short.value, 1) }))}</div>` : ""))}
     ${kpi("starts", t("Starts / Tag"), fmt(k.starts_per_day, 0), th.starts_per_day ? esc(t("Schwelle {v}", { v: fmt(th.starts_per_day, 0) })) : "", sparkline(last30.map((r) => r.starts), "var(--hz-warn)", { kind: "bar", ref: th.starts_per_day }), k.starts_per_day == null ? pill("mut", t("keine Daten")) : pill(startsTone, startsTone === "bad" ? t("über der Schwelle") : t("im grünen Bereich")))}
     ${kpi("runtime", t("Laufzeit / Zyklus"), fmt(k.runtime_per_cycle, 0), t("min"), sparkline(last30.map((r) => r.cycle_min), "var(--hz-cool)"), k.runtime_per_cycle == null ? pill("mut", t("keine Daten")) : pill(runTone, runTone === "bad" ? t("unter der Schwelle") : t("im grünen Bereich")))}
     ${kpi("flow", t("Vorlauf Ist − Soll"), signed(flow), "K", sparkline(last30.map((r) => r.flow != null && r.target_flow != null ? r.flow - r.target_flow : null), "var(--hz-bad)", { ref: 0 }), flow == null ? pill("mut", t("keine Daten")) : pill(flowTone, flow > 1 ? t("Vorlauf zu warm → Kurve prüfen") : flow < -1 ? t("Vorlauf zu kalt") : t("passt")))}
@@ -867,9 +902,27 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     const curve = copCurveCard(d, ui, fit);
     const energy = energyCard(d, ui, 30);
     const missing = missingCard(d);
+    const liveCard = liveNow(d, ui);
     return `<div class="grid hero">${scoreCard}${kpis}</div>
     <div class="grid g2"><div class="c">${head(t("Hinweise mit Beleg"), "findings", ui)}${findings}</div>${curve}</div>
-    <div class="grid g2">${energy}${missing || ""}</div>`;
+    <div class="grid g2">${energy}${liveCard || missing || ""}</div>
+    ${liveCard && missing ? `<div class="grid g2">${missing}</div>` : ""}`;
+  }
+  function liveNow(d, ui) {
+    const h = d.kpis && d.kpis.hydraulics || {};
+    const lv = h.live;
+    if (!lv || lv.spread == null && lv.power_kw == null) return "";
+    const tile = (label, value, unit, tone = "") => `<div class="lv"><div class="muted">${esc(t(label))}</div><div class="big ${tone}">${value}<small>${esc(unit)}</small></div></div>`;
+    const state = lv.running === true ? pill("ok", t("Verdichter läuft")) : lv.running === false ? pill("mut", t("Verdichter aus")) : "";
+    const sp = h.spread || {};
+    return `<div class="c">${head(t("Jetzt"), "live", ui)}<div class="row" style="margin-top:6px">${state}</div>
+    <div class="lvgrid">
+      ${tile("Wärmeleistung", fmt(lv.heat_kw, 1), "kW")}
+      ${tile("Strom", fmt(lv.power_kw, 2), "kW")}
+      ${tile("COP jetzt", fmt(lv.cop, 1), "")}
+      ${tile("Spreizung", fmt(lv.spread, 1), "K")}
+    </div>
+    ${sp.median != null ? `<div class="fd" style="margin-top:8px">${esc(t("Spreizung im Lauf (7 Tage): Median {m} K, {n} Stunden", { m: fmt(sp.median, 1), n: sp.hours }))}</div>` : ""}</div>`;
   }
   function copCurveCard(d, ui, fit) {
     const rows = d.series.filter((r) => r.cop != null && r.outdoor != null && r.cop < 12);
@@ -945,8 +998,17 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     const heat = rows.reduce((s, r) => s + (r.heat || 0), 0);
     const dhw = rows.reduce((s, r) => s + (r.dhw || 0), 0);
     const dhwCard = rows.some((r) => r.dhw != null) ? `<div class="c">${head(t("Warmwasseranteil"), "dhw", ui)}<div class="big">${fmt(heat ? dhw / heat * 100 : null, 0)}<small>%</small></div><div class="meter"><i style="width:${heat ? Math.min(100, dhw / heat * 100) : 0}%;background:var(--hz-vio)"></i></div><div class="muted" style="margin-top:8px">${fmt(dhw, 0)} / ${fmt(heat, 0)} kWh</div></div>` : "";
+    const hy = d.kpis && d.kpis.hydraulics || {};
+    const dailyRows = (map, key) => Object.entries(map || {}).map(([day, v]) => ({ day, [key]: v }));
+    const spreadRows = dailyRows(hy.spread_daily, "spread");
+    const overRows = dailyRows(hy.overshoot_daily, "over");
+    const spreadCard = spreadRows.length ? `<div class="c">${head(t("Spreizung"), "spread", ui, esc(t("WP-Vorlauf − WP-Rücklauf, nur Laufstunden")))}${box(ui, "spread", () => timeChart(spreadRows, [{ key: "spread", kind: "line", color: "var(--hz-vio)", axis: "l", digits: 1 }], { unitL: "K", refL: th.spread_min_k }))}
+      <div class="legend"><span>${esc(t("Median {m} K · Ziel {a}–{b} K", { m: fmt(hy.spread && hy.spread.median, 1), a: fmt(th.spread_min_k, 0), b: fmt(th.spread_max_k, 0) }))}</span></div></div>` : "";
+    const overCard = overRows.length ? `<div class="c">${head(t("Puffer-Ladung"), "overshoot", ui, esc(t("WP-Vorlauf − Puffer-Soll")))}${box(ui, "overshoot", () => timeChart(overRows, [{ key: "over", kind: "line", color: "var(--hz-heat)", axis: "l", digits: 1 }], { unitL: "K", refL: 0 }))}
+      <div class="legend"><span>${esc(t("Median {m} K über Puffer-Soll", { m: fmt(hy.overshoot && hy.overshoot.median, 1) }))}</span></div></div>` : "";
     return `<div class="row">${seg}</div>
     <div class="grid g2">${copLine}${curve}</div>
+    ${spreadCard || overCard ? `<div class="grid g2">${spreadCard}${overCard}</div>` : ""}
     <div class="grid g3">${cycling}${cycle}${defrost}${dhwCard}</div>
     <div class="grid g2">${energyCard(d, ui, days)}</div>`;
   }
@@ -1056,12 +1118,17 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
       dhw_heat_entity: "Warmwasser",
       flow_entity: "Vorlauf",
       target_flow_entity: "Soll-Vorlauf",
-      return_entity: "Rücklauf",
+      return_entity: "WP-Rücklauf",
       buffer_entity: "Puffer",
       defrost_entity: "Abtauen",
       aux_heater_entity: "Heizstab",
       compressor_starts_entity: "Starts",
-      compressor_runtime_entity: "Laufzeit"
+      compressor_runtime_entity: "Laufzeit",
+      compressor_runtime_extra_entity: "Laufzeit (2. Zähler)",
+      hp_flow_entity: "WP-Vorlauf",
+      volume_flow_entity: "Volumenstrom",
+      power_now_entity: "Leistung jetzt",
+      dhw_power_entity: "Warmwasser-Strom"
     };
     const src = Object.entries(d.sources || {}).map(([k, ok]) => `<div class="src"><span>${esc(labels[k] ? t(labels[k]) : k)}</span>${pill(ok ? "ok" : "mut", ok ? t("verbunden") : t("fehlt"))}</div>`).join("");
     return `<div class="grid g2">
@@ -1093,6 +1160,7 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
   var SOURCE_STATUS = {
     ok: ["ok", "ok"],
     no_statistics: ["warn", "keine Statistik"],
+    history: ["ok", "aus Verlauf"],
     unit_mismatch: ["bad", "unpassend"],
     state_class_mismatch: ["bad", "unpassend"],
     format: ["warn", "Format"],

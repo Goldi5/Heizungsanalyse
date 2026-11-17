@@ -34,6 +34,8 @@ class Thresholds:
     cop_curve_deviation: float = 0.15
     mixer_pulses_per_day: float = 12.0
     power_source_deviation: float = 0.15
+    spread_min_k: float = 3.0
+    spread_max_k: float = 8.0
 
     @classmethod
     def from_options(cls, options: Mapping[str, Any] | None) -> Thresholds:
@@ -106,6 +108,8 @@ class FindingsInput:
     power_source: str | None = None
     primary_energy: float | None = None
     fallback_energy: float | None = None
+    spread_median: float | None = None
+    spread_hours: int = 0
 
 
 def _mean(values: Sequence[float]) -> float | None:
@@ -386,6 +390,31 @@ def _power_source(results: FindingsInput, thresholds: Thresholds) -> list[Findin
     ]
 
 
+# Mindestens ein Tag Laufstunden, bevor die Spreizung bewertet wird
+MIN_SPREAD_HOURS = 24
+
+
+def _spread(results: FindingsInput, thresholds: Thresholds) -> list[Finding]:
+    median = results.spread_median
+    if median is None or results.spread_hours < MIN_SPREAD_HOURS:
+        return []
+    if median < thresholds.spread_min_k:
+        key, threshold = "spread_low", thresholds.spread_min_k
+    elif median > thresholds.spread_max_k:
+        key, threshold = "spread_high", thresholds.spread_max_k
+    else:
+        return []
+    return [
+        Finding(
+            id="F14",
+            severity=SEVERITY_INFO,
+            key=key,
+            params={"spread": round(median, 1), "threshold": threshold},
+            evidence={"median_k": round(median, 2), "hours": results.spread_hours},
+        )
+    ]
+
+
 RULES = (
     _flow_deviation,
     _cycling,
@@ -399,6 +428,7 @@ RULES = (
     _mixer,
     _missing_statistics,
     _power_source,
+    _spread,
 )
 
 

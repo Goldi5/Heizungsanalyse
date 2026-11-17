@@ -57,10 +57,15 @@
     "key": "dhw",
     "active": true,
     "reason": null
+   },
+   {
+    "key": "spread",
+    "active": true,
+    "reason": null
    }
   ],
-  "active": 10,
-  "total": 10
+  "active": 11,
+  "total": 11
  },
  "kpis": {
   "cop_short": {
@@ -85,6 +90,58 @@
    "hours": 158,
    "compressor_filtered": true
   },
+  "cop_total_short": {
+   "value": 3.42,
+   "days": 7,
+   "heat_kwh": 628.9,
+   "power_kwh": 183.9
+  },
+  "cop_total_long": {
+   "value": 3.57,
+   "days": 30,
+   "heat_kwh": 2146.1,
+   "power_kwh": 601.1
+  },
+  "hydraulics": {
+   "filtered": true,
+   "spread": {
+    "median": 2.6,
+    "p10": 1.9,
+    "p90": 3.4,
+    "hours": 96
+   },
+   "spread_daily": {
+    "2026-11-10": 2.3,
+    "2026-11-11": 2.4,
+    "2026-11-12": 2.5,
+    "2026-11-13": 2.6,
+    "2026-11-14": 2.7,
+    "2026-11-15": 2.8,
+    "2026-11-16": 2.9
+   },
+   "overshoot": {
+    "median": 3.8,
+    "p10": 2.1,
+    "p90": 5.0,
+    "hours": 96
+   },
+   "overshoot_daily": {
+    "2026-11-10": 4.2,
+    "2026-11-11": 4.1,
+    "2026-11-12": 4.0,
+    "2026-11-13": 3.9,
+    "2026-11-14": 3.8,
+    "2026-11-15": 3.7,
+    "2026-11-16": 3.6
+   },
+   "live": {
+    "spread": 2.3,
+    "heat_kw": 3.21,
+    "power_kw": 0.6,
+    "cop": 5.35,
+    "running": true
+   }
+  },
   "days_with_data": 120,
   "power_source": "primary"
  },
@@ -98,7 +155,9 @@
   "defrost_hours_per_day": 2.0,
   "cop_curve_deviation": 0.15,
   "mixer_pulses_per_day": 12.0,
-  "power_source_deviation": 0.15
+  "power_source_deviation": 0.15,
+  "spread_min_k": 3.0,
+  "spread_max_k": 8.0
  },
  "findings": [
   {
@@ -2274,6 +2333,10 @@
   }
  },
  "sources": {
+  "hp_flow_entity": true,
+  "volume_flow_entity": true,
+  "power_now_entity": true,
+  "dhw_power_entity": true,
   "power_entity": true,
   "heat_entity": true,
   "outdoor_entity": true,
@@ -2285,13 +2348,11 @@
   "aux_heater_entity": true,
   "compressor_starts_entity": true,
   "compressor_runtime_entity": true,
-  "return_entity": false,
+  "return_entity": true,
   "buffer_entity": false,
   "power_fallback_entity": false
  },
- "missing": [
-  "spread"
- ],
+ "missing": [],
  "configured": true,
  "last_update_success": true
 }

@@ -44,6 +44,7 @@ class DaySample:
     dhw_heat_kwh: float | None = None
     aux_hours: float | None = None
     defrost_hours: float | None = None
+    dhw_power_kwh: float | None = None
 
 
 @dataclass(slots=True)

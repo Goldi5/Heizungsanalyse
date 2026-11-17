@@ -61,12 +61,25 @@
           "dhw_heat_entity": "Domestic hot water energy (kWh)",
           "flow_entity": "Flow temperature (actual)",
           "target_flow_entity": "Flow temperature (target)",
-          "return_entity": "Return temperature",
+          "return_entity": "Heat pump return temperature",
           "buffer_entity": "Buffer temperature",
           "defrost_entity": "Defrost status",
           "aux_heater_entity": "Auxiliary heater status",
           "compressor_starts_entity": "Compressor starts",
-          "compressor_runtime_entity": "Compressor runtime"
+          "compressor_runtime_entity": "Compressor runtime",
+          "compressor_runtime_extra_entity": "Compressor runtime, second counter (e.g. hot water)",
+          "hp_flow_entity": "Heat pump flow temperature",
+          "volume_flow_entity": "Heat pump volume flow",
+          "power_now_entity": "Electrical power now (W/kW)",
+          "dhw_power_entity": "Hot water electricity (kWh)"
+        },
+        "data_description": {
+          "compressor_runtime_extra_entity": "Added to the first runtime when the system counts heating and hot water separately.",
+          "hp_flow_entity": "Heat pump outlet (not the buffer). Together with the return this gives the spread.",
+          "volume_flow_entity": "Together with the spread this gives the heat output in kW.",
+          "power_now_entity": "Current power draw; with the heat output this gives the COP now.",
+          "dhw_power_entity": "For the COP including hot water and for cross-checking a total meter as fallback source.",
+          "return_entity": "Heat pump inlet. Together with the heat pump flow this gives the spread."
         }
       },
       "add_circuit": {
@@ -121,7 +134,9 @@
           "defrost_hours_per_day": "Defrost (h/day)",
           "cop_curve_deviation": "COP curve (0-1)",
           "mixer_pulses_per_day": "Mixer pulses per day",
-          "power_source_deviation": "Power sources deviation (0-1)"
+          "power_source_deviation": "Power sources deviation (0-1)",
+          "spread_min_k": "Spread at least (K)",
+          "spread_max_k": "Spread at most (K)"
         }
       }
     },

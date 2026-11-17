@@ -26,6 +26,7 @@ def samples_from_rollups(rollups: Mapping[str, Mapping[str, Any]]) -> list[DaySa
                 flow_c=values.get("flow_c"),
                 target_flow_c=values.get("target_flow_c"),
                 dhw_heat_kwh=values.get("dhw_heat_kwh"),
+                dhw_power_kwh=values.get("dhw_power_kwh"),
             )
         )
     return sorted(samples, key=lambda sample: sample.day)
