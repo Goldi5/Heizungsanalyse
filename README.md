@@ -12,10 +12,11 @@ Test prueft den Quelltext auf steuernde Aufrufe.
 
 ## Status
 
-Frueher Entwicklungsstand, alle Analysestufen vorhanden: Repo-Geruest (M0),
+Version 0.1.0. Alle Analysestufen sind vorhanden: Repo-Geruest (M0),
 Einrichtung (M1), Kennzahlen (M2), Inventar und Dienste (M3), Raum- und
-Kreisanalyse (M4), Findings (M5) sowie Doku und Dashboard-Beispiel (M6). Ein
-GitHub-Release steht noch aus, weil das Repo bisher kein Remote hat.
+Kreisanalyse (M4), Findings (M5) sowie Doku und Dashboard-Beispiel (M6). Der
+Tag `v0.1.0` ist lokal gesetzt; das Veroeffentlichen ueber GitHub steht aus,
+weil das Repo noch kein Remote hat.
 
 | Phase | Inhalt | Stand |
 |---|---|---|
@@ -25,7 +26,7 @@ GitHub-Release steht noch aus, weil das Repo bisher kein Remote hat.
 | M3 | Geraeteinventar, Aenderungsverlauf, Services | erledigt |
 | M4 | Raum- und Kreisanalyse | erledigt |
 | M5 | Findings-Engine | erledigt |
-| M6 | Doku, Dashboard-Beispiel, Release 0.1.0 | Doku erledigt, Release offen |
+| M6 | Doku, Dashboard-Beispiel, Release 0.1.0 | erledigt (Tag lokal) |
 | M7 | Zusammenspiel mit raumklima-2 | offen |
 
 ## Voraussetzungen

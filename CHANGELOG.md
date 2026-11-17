@@ -1,3 +1,25 @@
+## 0.1.0 – 2026-11-17
+
+Erste Fassung fuer HACS (benutzerdefiniertes Repository). Die Zwischenstaende
+0.1.0b0 bis 0.7.0b0 waren Phasenmarker waehrend der Umsetzung.
+
+### Enthalten
+- Einrichtung ueber die UI mit Pflichtquellen, optionalen Quellen, Heizkreisen,
+  Raeumen und Schwellen.
+- Kennzahlen aus der Recorder-Statistik: COP (7/30 Tage), Starts pro Tag,
+  Laufzeit je Zyklus, Vorlauf-Abweichung, Tage mit Daten.
+- Geraeteinventar mit Aenderungsverlauf und Roll-ups; Dienste
+  `update_inventory`, `log_change`, `compare_periods`, `export_report`.
+- Raum- und Kreisanalyse aus Stichproben, inklusive Raeumen ohne Ventilposition.
+- Findings F01 bis F13 mit konfigurierbaren Schwellen, Sensor und Ereignis.
+- Anonymisierte Diagnostics, Dokumentation und Dashboard-Beispiel.
+
+### Bekannte Grenzen
+- Raum- und Kreiswerte sind stichprobenbasiert und beginnen nach einem Neustart
+  neu.
+- Schwellen sind Platzhalter und mit realen Daten zu kalibrieren.
+- Livisi-Thermostate liefern keine Ventilposition.
+
 ## 0.7.0b0 – 2026-11-17
 
 ### Neu
