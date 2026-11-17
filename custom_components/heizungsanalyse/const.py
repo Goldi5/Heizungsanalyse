@@ -127,12 +127,15 @@ CONF_NAME: Final = "name"
 CONF_ID: Final = "id"
 CONF_TYPE: Final = "type"
 CONF_TEMPERATURE_ENTITY: Final = "temperature_entity"
+CONF_ENERGY_PRICE: Final = "energy_price_eur_per_kwh"
+CONF_CO2_FACTOR: Final = "co2_kg_per_kwh"
 CONF_PUMP_ENTITY: Final = "pump_entity"
 CONF_MIXER_OPEN_ENTITY: Final = "mixer_open_entity"
 CONF_MIXER_CLOSE_ENTITY: Final = "mixer_close_entity"
 CONF_CIRCUIT: Final = "circuit"
 CONF_CLIMATE_ENTITY: Final = "climate_entity"
 CONF_VALVE_POSITION_ENTITY: Final = "valve_position_entity"
+CONF_ROOM_TYPE: Final = "room_type"
 
 CIRCUIT_TYPES: Final = ("buffer", "radiators", "underfloor", "dhw")
 
@@ -149,6 +152,7 @@ SERVICE_LOG_CHANGE: Final = "log_change"
 SERVICE_COMPARE_PERIODS: Final = "compare_periods"
 SERVICE_EXPORT_REPORT: Final = "export_report"
 SERVICE_EXPORT_PLANT_SHEET: Final = "export_plant_sheet"
+SERVICE_SUGGEST_HEATING_CURVE: Final = "suggest_heating_curve"
 SERVICE_REFRESH: Final = "refresh"
 
 CONF_THRESHOLDS: Final = "thresholds"
@@ -156,6 +160,21 @@ CONF_THRESHOLDS: Final = "thresholds"
 EVENT_INVENTORY_CHANGED: Final = f"{DOMAIN}_inventory_changed"
 EVENT_PERIOD_COMPARISON: Final = f"{DOMAIN}_period_comparison"
 EVENT_FINDINGS: Final = f"{DOMAIN}_findings"
+EVENT_ALERT: Final = f"{DOMAIN}_alert"
 
 DEFAULT_COMPARE_DAYS: Final = 14
 REPORT_CHANGE_LIMIT: Final = 20
+
+
+ROOM_TYPES: Final = ("living", "kitchen", "bedroom", "bathroom", "office", "hallway", "guest", "child", "utility")
+ROOM_TYPE_TARGETS: Final = {
+    "living": (20.0, 17.0, 23.0),
+    "kitchen": (19.0, 16.0, 22.0),
+    "bedroom": (17.0, 15.0, 20.0),
+    "bathroom": (22.0, 19.0, 24.0),
+    "office": (20.0, 17.0, 23.0),
+    "hallway": (18.0, 15.0, 21.0),
+    "guest": (18.0, 16.0, 21.0),
+    "child": (20.0, 18.0, 23.0),
+    "utility": (17.0, 15.0, 20.0),
+}

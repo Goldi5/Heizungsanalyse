@@ -57,7 +57,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: HeizungsanalyseConfigEnt
     trace = install_debug_trace(hass, store)
     await trace.async_load()
 
-    coordinator = HeizungsanalyseCoordinator(hass, entry, log=log)
+    coordinator = HeizungsanalyseCoordinator(hass, entry, log=log, store=store)
     await coordinator.async_config_entry_first_refresh()
 
     await store.async_save_rollups(coordinator.data.samples)

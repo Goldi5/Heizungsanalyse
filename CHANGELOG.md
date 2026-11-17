@@ -1,3 +1,16 @@
+## 0.6.0 – 2026-11-17
+
+### Neu
+- **Heizkurvenvorschlag** (Service `suggest_heating_curve`, Finding F16):
+  Offset/Steigung aus Vorlauf-Abweichung, geschätzter COP-Gewinn, Konfidenz.
+- **Wunschtemperaturen** (Finding F17): Plausibilitätsprüfung pro Raum.
+- **Fehleranalyse Live** (Findings F18 COP-Einbruch, F19 Vorlauf-Spitzen).
+- **Jahresauswertung**: Heizgradtage, wetterbereinigter Jahres-COP, Kosten
+  und CO₂ (Preis/CO₂-Faktor über Optionen), automatische Bewertung von
+  Änderungen nach 7 Tagen (Verdict im Speicher + Protokoll).
+- **Alerts**: Event `heizungsanalyse_alert` bei neuen Warnungen.
+- **Einstellungsseite** und **Anlagenschema** im Dashboard (0.5.0).
+
 ## 0.5.0 – 2026-11-17
 
 ### Neu

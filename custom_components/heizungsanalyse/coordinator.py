@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 import logging
 from time import perf_counter
+from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import STATE_OFF, STATE_UNAVAILABLE, STATE_UNKNOWN
@@ -86,6 +87,7 @@ from .const import (
     COP_SHORT_DAYS,
     DEVIATION_DAYS,
     DOMAIN,
+    EVENT_ALERT,
     EVENT_FINDINGS,
     HEATING_UP_MAX_MINUTES,
     HEATING_UP_TOLERANCE,
@@ -191,7 +193,7 @@ def _as_float(value) -> float | None:
 class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
     """Aggregiert die Statistik in festen Zeitfenstern."""
 
-    def __init__(self, hass: HomeAssistant, entry: ConfigEntry, *, log: EventLog | None = None) -> None:
+    def __init__(self, hass: HomeAssistant, entry: ConfigEntry, *, log: EventLog | None = None, store: Any = None) -> None:
         super().__init__(
             hass,
             _LOGGER,
@@ -200,6 +202,7 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
         )
         self.entry = entry
         self.log = log
+        self.store = store
         self._rooms = RoomTracker(window_days=ROOM_WINDOW_DAYS)
         self._circuit_tracker = CircuitTracker(window_days=ROOM_WINDOW_DAYS)
         self._mixer_tracker = MixerTracker(window_days=ROOM_WINDOW_DAYS)
@@ -334,6 +337,7 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
         hours, compressor_filtered = await self._read_hours(flow_id, target_flow_id, compressor_id, dhw_op_id)
         self._hydraulics = await self._read_hydraulics(target_flow_id, compressor_id, dhw_op_id)
         self._flow_hours = hours
+        await self._evaluate_change_outcomes(samples)
         self._source_counts = {key: len(rows) for key, rows in daily.items()}
         self._source_counts.update({f"{key}:hour": len(rows) for key, rows in daily.items() if key in (flow_id, target_flow_id)})
         await self._log_sources(daily)
@@ -409,6 +413,8 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
         recent = samples[-COP_SHORT_DAYS:]
         outdoor = [sample.outdoor_c for sample in recent if sample.outdoor_c is not None]
 
+        cop_long = cop_window(samples, days=COP_LONG_DAYS, source=power_source)
+
         return_id = self._entity(CONF_RETURN_ENTITY)
         return_values = [value.mean for value in daily.get(return_id, []) if value.mean is not None] if return_id else []
         return_values = return_values[-COP_SHORT_DAYS:]
@@ -421,6 +427,7 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
         results = FindingsInput(
             cop=cop_short.cop,
             cop_days=cop_short.days,
+            cop_long=cop_long.cop,
             cop_trend=trend,
             outdoor_mean=sum(outdoor) / len(outdoor) if outdoor else None,
             deviation_median=self._deviation_median(flow_hours),
@@ -699,6 +706,12 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
                 EVENT_FINDINGS,
                 {"count": len(findings), "findings": [finding.as_dict() for finding in findings]},
             )
+            warnings = [f for f in findings if f.severity == "warning"]
+            if warnings:
+                self.hass.bus.async_fire(
+                    EVENT_ALERT,
+                    {"count": len(warnings), "findings": [f.as_dict() for f in warnings]},
+                )
         self._findings_signature = current
 
     def _duplicate_pairs(self, daily: dict[str, list], entity_ids) -> list[tuple[str, str]]:
@@ -755,6 +768,69 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
 
     def _circuits_config(self) -> list[dict]:
         return list(self.entry.options.get(CONF_CIRCUITS) or [])
+
+    async def _evaluate_change_outcomes(self, samples: list[DaySample]) -> None:
+        """Änderungen, die 7+ Tage alt sind, bewerten und speichern."""
+        if self.store is None:
+            return
+        try:
+            from .analysis.periods import summarize, within
+        except Exception:  # noqa: BLE001
+            return
+        changes = await self.store.async_change_log(limit=50)
+        existing = {str(e.get("ts")) for e in await self.store.async_evaluations()}
+        now = dt_util.utcnow()
+        for change in changes:
+            ts = change.get("ts")
+            if not ts or str(ts) in existing:
+                continue
+            try:
+                logged = dt_util.parse_datetime(str(ts))
+            except (TypeError, ValueError):
+                continue
+            if logged is None:
+                continue
+            day = dt_util.as_local(logged).date()
+            if (now.date() - day).days < 7:
+                continue
+            before = within(samples, day - timedelta(days=7), day - timedelta(days=1))
+            after = within(samples, day, day + timedelta(days=6))
+            if not before or not after:
+                continue
+            b = summarize(before)
+            a = summarize(after)
+            if b.get("cop") is None or a.get("cop") is None:
+                continue
+            diff = round(a["cop"] - b["cop"], 2)
+            if abs(diff) < 0.05:
+                verdict = "gleich"
+            elif diff > 0:
+                verdict = "besser"
+            else:
+                verdict = "schlechter"
+            entry = {
+                "ts": ts,
+                "day": day.isoformat(),
+                "object": change.get("object"),
+                "field": change.get("field"),
+                "before_cop": b["cop"],
+                "after_cop": a["cop"],
+                "verdict": verdict,
+                "diff": diff,
+                "days_before": b.get("days", 0),
+                "days_after": a.get("days", 0),
+            }
+            await self.store.async_add_evaluation(entry)
+            existing.add(str(ts))
+            if self.log is not None:
+                await self.log.async_add(
+                    "info",
+                    "config",
+                    f"Änderung {change.get('object')}.{change.get('field')} bewertet: {verdict} ({diff:+.2f} COP)",
+                    key="change.evaluated",
+                    params={"object": change.get("object"), "field": change.get("field"), "verdict": verdict, "diff": diff},
+                    details=entry,
+                )
 
     def _track(self, now: datetime) -> None:
         """Aktuelle Zustände als Stichprobe sichern (nur lesend)."""

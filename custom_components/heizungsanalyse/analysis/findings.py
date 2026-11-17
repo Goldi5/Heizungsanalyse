@@ -19,6 +19,18 @@ from .types import DaySample
 SEVERITY_WARNING = "warning"
 SEVERITY_INFO = "info"
 
+ROOM_TYPE_TARGETS: dict[str, tuple[float, float, float]] = {
+    "living": (20.0, 17.0, 23.0),
+    "kitchen": (19.0, 16.0, 22.0),
+    "bedroom": (17.0, 15.0, 20.0),
+    "bathroom": (22.0, 19.0, 24.0),
+    "office": (20.0, 17.0, 23.0),
+    "hallway": (18.0, 15.0, 21.0),
+    "guest": (18.0, 16.0, 21.0),
+    "child": (20.0, 18.0, 23.0),
+    "utility": (17.0, 15.0, 20.0),
+}
+
 
 @dataclass(slots=True, frozen=True)
 class Thresholds:
@@ -90,6 +102,7 @@ class FindingsInput:
 
     cop: float | None = None
     cop_days: int = 0
+    cop_long: float | None = None
     cop_trend: Sequence[CopBin] = ()
     outdoor_mean: float | None = None
     deviation_median: float | None = None
@@ -99,6 +112,7 @@ class FindingsInput:
     runtime_per_cycle: float | None = None
     room_stats: Mapping[str, RoomDeviation] = field(default_factory=dict)
     room_names: Mapping[str, str] = field(default_factory=dict)
+    room_types: Mapping[str, str] = field(default_factory=dict)
     circuit_stats: Mapping[str, CircuitStats] = field(default_factory=dict)
     circuit_names: Mapping[str, str] = field(default_factory=dict)
     mixer_stats: Mapping[str, MixerStats] = field(default_factory=dict)
@@ -434,6 +448,85 @@ def _spread(results: FindingsInput, thresholds: Thresholds) -> list[Finding]:
     ]
 
 
+
+def _heating_curve_suggestion(results: FindingsInput, thresholds: Thresholds) -> list[Finding]:
+    median = results.deviation_median
+    if median is None or results.deviation_hours < 168:
+        return []
+    if abs(median) < 1.5:
+        return []
+    suggested = round(-median, 1)
+    gain = round(abs(median) * 2.5, 1)
+    severity = SEVERITY_INFO if abs(median) < 2.0 else SEVERITY_WARNING
+    return [
+        Finding(
+            id="F16",
+            severity=severity,
+            key="heating_curve_adjust",
+            params={"median": round(median, 1), "suggested": suggested, "gain": gain},
+            evidence={"median_k": round(median, 2), "hours": results.deviation_hours, "p90_k": results.deviation_p90},
+        )
+    ]
+
+
+
+def _room_target_plausible(results: FindingsInput, thresholds: Thresholds) -> list[Finding]:
+    findings: list[Finding] = []
+    for room_id, stats in (results.room_stats or {}).items():
+        median = getattr(stats, "median", None)
+        if median is None:
+            continue
+        if abs(median) < 3.0:
+            continue
+        name = results.room_names.get(room_id, room_id)
+        findings.append(
+            Finding(
+                id="F17",
+                severity=SEVERITY_INFO,
+                key="room_target_check",
+                params={"room": name, "deviation": round(median, 1)},
+                evidence={"median_k": round(median, 2), "samples": getattr(stats, "samples", 0)},
+            )
+        )
+    return findings
+
+
+
+def _cop_drop(results: FindingsInput, thresholds: Thresholds) -> list[Finding]:
+    if results.cop is None or results.cop_long is None or results.cop_days < 7:
+        return []
+    drop = results.cop_long - results.cop
+    if drop < 0.5:
+        return []
+    return [
+        Finding(
+            id="F18",
+            severity=SEVERITY_WARNING if drop >= 1.0 else SEVERITY_INFO,
+            key="cop_drop",
+            params={"cop": round(results.cop, 2), "cop_long": round(results.cop_long, 2), "drop": round(drop, 2)},
+            evidence={"cop_7d": round(results.cop, 2), "cop_30d": round(results.cop_long, 2)},
+        )
+    ]
+
+
+def _flow_spike(results: FindingsInput, thresholds: Thresholds) -> list[Finding]:
+    p90 = results.deviation_p90
+    if p90 is None or results.deviation_hours < 168:
+        return []
+    limit = thresholds.flow_deviation_k * 2
+    if p90 <= limit:
+        return []
+    return [
+        Finding(
+            id="F19",
+            severity=SEVERITY_WARNING if p90 > limit * 1.5 else SEVERITY_INFO,
+            key="flow_spike",
+            params={"p90": round(p90, 1), "threshold": round(limit, 1)},
+            evidence={"p90_k": round(p90, 2), "hours": results.deviation_hours},
+        )
+    ]
+
+
 RULES = (
     _flow_deviation,
     _cycling,
@@ -449,6 +542,10 @@ RULES = (
     _power_source,
     _spread,
     _return_temp,
+    _heating_curve_suggestion,
+    _room_target_plausible,
+    _cop_drop,
+    _flow_spike,
 )
 
 

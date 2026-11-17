@@ -277,6 +277,10 @@
     "export_plant_sheet": {
       "name": "Export plant sheet",
       "description": "Markdown plant sheet with layout and settings."
+    },
+    "suggest_heating_curve": {
+      "name": "Suggest heating curve",
+      "description": "Suggestion from flow deviation."
     }
   }
 }

@@ -76,6 +76,7 @@ class InventoryStore:
                 "rollups": dict(stored.get("rollups") or {}),
                 "dashboard": dict(stored.get("dashboard") or {}),
                 "log": list(stored.get("log") or []),
+                "evaluations": list(stored.get("evaluations") or []),
                 "trace": list(stored.get("trace") or []),
                 "config_snapshot": dict(stored.get("config_snapshot") or {}),
             }
@@ -283,6 +284,15 @@ class InventoryStore:
             await self._store.async_save(self._data)
 
     # --------------------------------------------------- Konfigurations-Snapshot
+
+    async def async_evaluations(self) -> list[dict[str, Any]]:
+        return list((await self.async_load()).get("evaluations") or [])
+
+    async def async_add_evaluation(self, entry: dict[str, Any]) -> None:
+        data = await self.async_load()
+        data.setdefault("evaluations", []).append(entry)
+        data["evaluations"] = data["evaluations"][-200:]
+        await self.async_save()
 
     async def async_config_snapshot(self) -> dict[str, Any]:
         return dict((await self.async_load())["config_snapshot"])

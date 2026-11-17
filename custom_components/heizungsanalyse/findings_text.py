@@ -84,6 +84,22 @@ TEXTS: dict[str, dict[str, dict[str, str]]] = {
             "text": "Primär- und Ersatzstromquelle weichen {deviation} % voneinander ab (Schwelle {threshold} %).",
             "suggestion": "Messpunkte abgleichen; eine Quelle schätzt, die andere misst.",
         },
+        "heating_curve_adjust": {
+            "text": "Der Vorlauf liegt im Median {median} K neben Soll. Vorschlag: Heizkurve um {suggested} K anpassen (ca. {gain} % COP).",
+            "suggestion": "Heizkurve im Regler anpassen und 7 Tage beobachten; Vorher/Nachher-Vergleich nutzen.",
+        },
+        "room_target_check": {
+            "text": "Raum {room} weicht im Median {deviation} K vom Soll ab – Sollwert oder Heizkurve prüfen.",
+            "suggestion": "Zieltemperatur und Ventilstellung prüfen; bei dauerhafter Abweichung Soll anpassen.",
+        },
+        "cop_drop": {
+            "text": "COP der letzten 7 Tage ({cop}) liegt {drop} unter dem 30-Tage-Wert ({cop_long}).",
+            "suggestion": "Verbrauch, Außentemperatur und Abtauvorgänge prüfen; plötzlicher Einbruch deutet auf Störung.",
+        },
+        "flow_spike": {
+            "text": "Vorlauf-Spitzen (p90 {p90} K) überschreiten das Doppelte der Schwelle ({threshold} K).",
+            "suggestion": "Vorlauf-Regelung und Mischer prüfen; Spitzen kosten COP.",
+        },
     },
     "en": {
         "flow_deviation": {

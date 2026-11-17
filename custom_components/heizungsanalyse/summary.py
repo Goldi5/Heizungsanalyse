@@ -46,6 +46,10 @@ TITLES: dict[str, dict[str, str]] = {
         "missing_statistics": "Langzeitstatistik fehlt",
         "power_source_fallback": "Ersatz-Stromquelle aktiv",
         "power_source_deviation": "Stromquellen weichen ab",
+        "heating_curve_adjust": "Heizkurve anpassen",
+        "room_target_check": "Raum-Sollwert prüfen",
+        "cop_drop": "COP-Einbruch",
+        "flow_spike": "Vorlauf-Spitzen",
         "spread_low": "Spreizung klein",
         "spread_high": "Spreizung groß",
     },
@@ -65,6 +69,10 @@ TITLES: dict[str, dict[str, str]] = {
         "missing_statistics": "Long-term statistics missing",
         "power_source_fallback": "Fallback power source active",
         "power_source_deviation": "Power sources deviate",
+        "heating_curve_adjust": "Adjust heating curve",
+        "room_target_check": "Check room setpoint",
+        "cop_drop": "COP drop",
+        "flow_spike": "Flow peaks",
         "spread_low": "Small spread",
         "spread_high": "Large spread",
     },
@@ -305,6 +313,8 @@ def build_summary(
     inventory: Mapping[str, Any],
     to_local_day,
     generated: datetime | None = None,
+    energy_price: float | None = None,
+    co2_factor: float | None = None,
 ) -> dict[str, Any]:
     """Antwort für ``heizungsanalyse/summary``.
 
@@ -346,6 +356,14 @@ def build_summary(
             }
         )
 
+    # Jahresauswertung: Heizgradtage, Kosten und CO2
+    degree_days = round(sum(max(0.0, 18.0 - (s.outdoor_c or 0)) for s in history if s.outdoor_c is not None), 1)
+    total_power = sum(s.power_kwh or 0 for s in history)
+    total_heat = sum(s.heat_kwh or 0 for s in history)
+    annual_cost = round(total_power * energy_price, 2) if energy_price else None
+    annual_co2 = round(total_power * co2_factor, 1) if co2_factor else None
+    annual_cop = round(total_heat / total_power, 2) if total_power > 0 else None
+
     missing = sorted({unlock for key, unlocks in UNLOCKS.items() if not sources.get(key) for unlock in unlocks})
     deviation = snapshot.deviation
     findings = list(snapshot.findings)
@@ -384,6 +402,16 @@ def build_summary(
         "inventory": dict(inventory),
         "sources": {key: bool(value) for key, value in sources.items()},
         "missing": missing,
+        "annual": {
+            "heating_degree_days": degree_days,
+            "total_power_kwh": round(total_power, 1),
+            "total_heat_kwh": round(total_heat, 1),
+            "cop": annual_cop,
+            "cost_eur": annual_cost,
+            "co2_kg": annual_co2,
+            "energy_price": energy_price,
+            "co2_factor": co2_factor,
+        },
     }
 
 

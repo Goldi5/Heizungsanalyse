@@ -95,3 +95,11 @@ export_plant_sheet:
     Kennzahlen, Inventar, Schwellen und Hinweisen – zum Ausdrucken und
     Abgleichen beim hydraulischen Abgleich.
   fields: {}
+
+suggest_heating_curve:
+  name: Heizkurve vorschlagen
+  description: >-
+    Schlägt Heizkurven-Parameter (Offset, Steigung) aus der Vorlauf-Abweichung
+    vor. Rein lesend – die Integration steuert nichts. Rückgabe enthält
+    geschätzten COP-Gewinn und Konfidenz.
+  fields: {}

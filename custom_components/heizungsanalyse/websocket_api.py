@@ -12,6 +12,8 @@ import voluptuous as vol
 from .analysis.periods import merge_samples, samples_from_rollups
 from .const import (
     CONF_CIRCUITS,
+    CONF_CO2_FACTOR,
+    CONF_ENERGY_PRICE,
     CONF_ROOMS,
     CONF_THRESHOLDS,
     DASHBOARD_ICON,
@@ -67,6 +69,8 @@ async def ws_summary(hass: HomeAssistant, connection: websocket_api.ActiveConnec
     inventory = await runtime.store.async_inventory()
     sources = {key: entry.data.get(key) for key in MANDATORY_SOURCES}
     sources |= {key: entry.options.get(key) for key in OPTIONAL_SOURCES}
+    energy_price = runtime.entry.options.get(CONF_ENERGY_PRICE)
+    co2_factor = runtime.entry.options.get(CONF_CO2_FACTOR)
     result = build_summary(
         snapshot,
         version=VERSION,
@@ -80,6 +84,8 @@ async def ws_summary(hass: HomeAssistant, connection: websocket_api.ActiveConnec
         inventory=inventory,
         to_local_day=lambda value: local_day(value, _to_day),
         generated=dt_util.now(),
+        energy_price=energy_price,
+        co2_factor=co2_factor,
     )
     result["configured"] = True
     result["last_update_success"] = bool(runtime.coordinator.last_update_success)

@@ -31,6 +31,7 @@ from .const import (
     SERVICE_EXPORT_REPORT,
     SERVICE_LOG_CHANGE,
     SERVICE_REFRESH,
+    SERVICE_SUGGEST_HEATING_CURVE,
     SERVICE_UPDATE_INVENTORY,
 )
 from .report import render_json, render_markdown, render_plant_sheet
@@ -74,6 +75,8 @@ EXPORT_SCHEMA = vol.Schema(
 )
 
 PLANT_SHEET_SCHEMA = vol.Schema({})
+
+SUGGEST_SCHEMA = vol.Schema({})
 
 
 def _runtime(hass: HomeAssistant) -> Any:
@@ -227,6 +230,15 @@ async def _handle_export_plant_sheet(call: ServiceCall) -> ServiceResponse:
     return {"format": "markdown", "report": body}
 
 
+async def _handle_suggest_heating_curve(call: ServiceCall) -> ServiceResponse:
+    runtime = _runtime(call.hass)
+    hours = getattr(runtime.coordinator, "_flow_hours", []) or []
+    from .analysis.curve_suggestion import suggest_curve
+
+    suggestion = suggest_curve(hours)
+    return {"suggestion": suggestion.as_dict()}
+
+
 async def async_setup_services(hass: HomeAssistant) -> None:
     """Dienste einmalig registrieren."""
     if hass.services.has_service(DOMAIN, SERVICE_UPDATE_INVENTORY):
@@ -258,6 +270,13 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         SERVICE_REFRESH,
         _handle_refresh,
         schema=REFRESH_SCHEMA,
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_SUGGEST_HEATING_CURVE,
+        _handle_suggest_heating_curve,
+        schema=SUGGEST_SCHEMA,
         supports_response=SupportsResponse.OPTIONAL,
     )
     hass.services.async_register(

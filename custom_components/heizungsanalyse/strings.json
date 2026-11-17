@@ -277,6 +277,10 @@
     "export_plant_sheet": {
       "name": "Anlagenblatt exportieren",
       "description": "Markdown-Anlagenblatt mit Aufbau und Einstellungen."
+    },
+    "suggest_heating_curve": {
+      "name": "Heizkurve vorschlagen",
+      "description": "Vorschlag aus Vorlauf-Abweichung."
     }
   }
 }
