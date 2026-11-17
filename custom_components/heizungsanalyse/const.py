@@ -140,13 +140,15 @@ CIRCUIT_TYPES: Final = ("buffer", "radiators", "underfloor", "dhw")
 INVENTORY_FIELDS: Final = {
     "pumps": ("manufacturer", "model", "control_mode", "setting", "power_w", "notes"),
     "thermostats": ("model", "valve_preset", "room", "notes"),
-    "hydraulics": ("buffer_volume_l", "hydraulic_separator", "bypass_valve", "notes"),
+    "hydraulics": ("buffer_volume_l", "hydraulic_separator", "bypass_valve", "pump_stage", "mixer_setting", "notes"),
+    "radiators": ("circuit", "room", "valve_preset", "nominal_flow_l_min", "measured_flow_l_min", "measured_spread_k", "notes"),
 }
 
 SERVICE_UPDATE_INVENTORY: Final = "update_inventory"
 SERVICE_LOG_CHANGE: Final = "log_change"
 SERVICE_COMPARE_PERIODS: Final = "compare_periods"
 SERVICE_EXPORT_REPORT: Final = "export_report"
+SERVICE_EXPORT_PLANT_SHEET: Final = "export_plant_sheet"
 SERVICE_REFRESH: Final = "refresh"
 
 CONF_THRESHOLDS: Final = "thresholds"

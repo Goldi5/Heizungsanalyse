@@ -138,7 +138,8 @@
           "mixer_pulses_per_day": "Mischer-Impulse pro Tag",
           "power_source_deviation": "Stromquellen-Abweichung (0-1)",
           "spread_min_k": "Spreizung mindestens (K)",
-          "spread_max_k": "Spreizung höchstens (K)"
+          "spread_max_k": "Spreizung höchstens (K)",
+          "return_temp_max_c": "Rücklauf max. (°C)"
         }
       }
     },
@@ -272,6 +273,10 @@
     "refresh": {
       "name": "Jetzt neu berechnen",
       "description": "Wertet die vorhandenen Daten erneut aus. Die Integration liest dabei nur; es wird kein Gerät geschaltet."
+    },
+    "export_plant_sheet": {
+      "name": "Anlagenblatt exportieren",
+      "description": "Markdown-Anlagenblatt mit Aufbau und Einstellungen."
     }
   }
 }

@@ -73,6 +73,7 @@ _THRESHOLD_FIELDS: tuple[tuple[str, float, float, float], ...] = (
     ("power_source_deviation", 0, 1, 0.05),
     ("spread_min_k", 0, 10, 0.5),
     ("spread_max_k", 0, 20, 0.5),
+    ("return_temp_max_c", 0, 80, 1),
 )
 
 

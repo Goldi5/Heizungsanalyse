@@ -17,19 +17,23 @@ import voluptuous as vol
 
 from .analysis.periods import compare_periods, merge_samples, samples_from_rollups, summarize
 from .const import (
+    CONF_CIRCUITS,
+    CONF_ROOMS,
     DEFAULT_COMPARE_DAYS,
     DOMAIN,
     EVENT_INVENTORY_CHANGED,
     EVENT_PERIOD_COMPARISON,
     INVENTORY_FIELDS,
-    REPORT_CHANGE_LIMIT,
+    MANDATORY_SOURCES,
+    OPTIONAL_SOURCES,
     SERVICE_COMPARE_PERIODS,
+    SERVICE_EXPORT_PLANT_SHEET,
     SERVICE_EXPORT_REPORT,
     SERVICE_LOG_CHANGE,
     SERVICE_REFRESH,
     SERVICE_UPDATE_INVENTORY,
 )
-from .report import render_json, render_markdown
+from .report import render_json, render_markdown, render_plant_sheet
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -68,6 +72,8 @@ EXPORT_SCHEMA = vol.Schema(
         vol.Optional("format", default="markdown"): vol.In(["markdown", "json"]),
     }
 )
+
+PLANT_SHEET_SCHEMA = vol.Schema({})
 
 
 def _runtime(hass: HomeAssistant) -> Any:
@@ -168,7 +174,7 @@ async def _handle_export_report(call: ServiceCall) -> ServiceResponse:
     runtime = _runtime(call.hass)
     metrics = summarize(runtime.coordinator.data.samples)
     inventory = await runtime.store.async_inventory()
-    changes = await runtime.store.async_change_log(limit=REPORT_CHANGE_LIMIT)
+    changes = await runtime.store.async_change_log(limit=20)
     report_format = call.data["format"]
 
     if report_format == "json":
@@ -188,6 +194,37 @@ async def _handle_refresh(call: ServiceCall) -> ServiceResponse:
     runtime = _runtime(call.hass)
     await runtime.coordinator.async_request_refresh()
     return {"ok": True, "last_duration_ms": runtime.coordinator.last_duration_ms}
+
+
+async def _handle_export_plant_sheet(call: ServiceCall) -> ServiceResponse:
+    runtime = _runtime(call.hass)
+    snapshot = runtime.coordinator.data
+    inventory = await runtime.store.async_inventory()
+    entry = runtime.entry
+    sources = {key: entry.data.get(key) for key in MANDATORY_SOURCES}
+    sources |= {key: entry.options.get(key) for key in OPTIONAL_SOURCES}
+    circuits = list(entry.options.get(CONF_CIRCUITS) or [])
+    rooms = list(entry.options.get(CONF_ROOMS) or [])
+    metrics = {
+        "days": snapshot.days_with_data,
+        "cop": snapshot.cop_short.cop,
+        "heat_kwh": round(sum(s.heat_kwh or 0 for s in snapshot.samples[-7:]), 1),
+        "power_kwh": round(sum(s.power_kwh or 0 for s in snapshot.samples[-7:]), 1),
+        "starts_per_day": snapshot.starts_per_day,
+        "runtime_per_cycle_min": snapshot.runtime_per_cycle,
+    }
+    findings = [{"id": f.id, "severity": f.severity, "key": f.key, "text": f.key} for f in snapshot.findings]
+    body = render_plant_sheet(
+        title="Heizungsanalyse",
+        sources=sources,
+        circuits=circuits,
+        rooms=rooms,
+        inventory=inventory,
+        metrics=metrics,
+        findings=findings,
+        thresholds=snapshot.thresholds.as_dict(),
+    )
+    return {"format": "markdown", "report": body}
 
 
 async def async_setup_services(hass: HomeAssistant) -> None:
@@ -221,6 +258,13 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         SERVICE_REFRESH,
         _handle_refresh,
         schema=REFRESH_SCHEMA,
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_EXPORT_PLANT_SHEET,
+        _handle_export_plant_sheet,
+        schema=PLANT_SHEET_SCHEMA,
         supports_response=SupportsResponse.OPTIONAL,
     )
     hass.services.async_register(

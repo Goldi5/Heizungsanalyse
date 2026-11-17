@@ -76,6 +76,10 @@ TEXTS: dict[str, dict[str, dict[str, str]]] = {
             "text": "Die Spreizung der Wärmepumpe liegt im Median bei {spread} K (über {threshold} K).",
             "suggestion": "Volumenstrom ist eher knapp: Filter, Ventile und Pumpe prüfen. Große Spreizung erhöht den nötigen Vorlauf und senkt den COP.",
         },
+        "return_temp_high": {
+            "text": "Die Rücklauftemperatur liegt im Median bei {value} °C (Schwelle {threshold} °C).",
+            "suggestion": "Rücklauf ist zu warm: hydraulischen Abgleich und Ventilstellungen prüfen, ggf. Pumpenstufe senken.",
+        },
         "power_source_deviation": {
             "text": "Primär- und Ersatzstromquelle weichen {deviation} % voneinander ab (Schwelle {threshold} %).",
             "suggestion": "Messpunkte abgleichen; eine Quelle schätzt, die andere misst.",

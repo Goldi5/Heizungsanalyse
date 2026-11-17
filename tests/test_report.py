@@ -58,3 +58,26 @@ def test_json_roundtrip() -> None:
 
     assert data["metrics"]["cop"] == 3.8
     assert data["findings"][0]["id"] == "F01"
+
+
+def test_plant_sheet_has_sections() -> None:
+    from hz.report import render_plant_sheet
+
+    text = render_plant_sheet(
+        title="Heizungsanalyse",
+        sources={"power_entity": "sensor.wp_strom"},
+        circuits=[{"id": "hk1", "name": "HK1", "type": "buffer", "has_pump": True, "has_mixer": False, "rooms": ["Bad"]}],
+        rooms=[{"id": "bad", "name": "Bad", "circuit": "hk1", "climate_entity": "climate.bad", "valve_available": True}],
+        inventory={"pumps": {"p1": {"model": "X"}}, "radiators": {"r1": {"circuit": "hk1", "room": "bad", "valve_preset": 3}}, "thermostats": {}, "hydraulics": {}},
+        metrics=METRICS,
+        findings=[],
+        thresholds={"flow_deviation_k": 2.0},
+    )
+
+    assert "# Heizungsanalyse – Anlagenblatt" in text
+    assert "## Heizkreise" in text
+    assert "## Räume" in text
+    assert "## Pumpen" in text
+    assert "## Heizkörper" in text
+    assert "valve_preset" not in text
+    assert "r1" in text

@@ -138,7 +138,8 @@
           "mixer_pulses_per_day": "Mixer pulses per day",
           "power_source_deviation": "Power sources deviation (0-1)",
           "spread_min_k": "Spread at least (K)",
-          "spread_max_k": "Spread at most (K)"
+          "spread_max_k": "Spread at most (K)",
+          "return_temp_max_c": "Return max. (°C)"
         }
       }
     },
@@ -272,6 +273,10 @@
     "refresh": {
       "name": "Recalculate now",
       "description": "Re-evaluates the existing data. The integration only reads; it never switches a device."
+    },
+    "export_plant_sheet": {
+      "name": "Export plant sheet",
+      "description": "Markdown plant sheet with layout and settings."
     }
   }
 }

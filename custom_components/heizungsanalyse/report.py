@@ -112,3 +112,97 @@ def render_json(
         ensure_ascii=False,
         default=str,
     )
+
+def render_plant_sheet(
+    *,
+    title: str,
+    sources: Mapping[str, Any],
+    circuits: Sequence[Mapping[str, Any]],
+    rooms: Sequence[Mapping[str, Any]],
+    inventory: Mapping[str, Any],
+    metrics: Mapping[str, Any],
+    findings: Sequence[Mapping[str, Any]] | None = None,
+    thresholds: Mapping[str, Any] | None = None,
+) -> str:
+    """Anlagenblatt: Aufbau, Einstellungen, Messwerte – zum Ausdrucken/Abgleichen."""
+    findings = findings or []
+    lines: list[str] = [f"# {title} – Anlagenblatt", "", "Rein beobachtende Auswertung. Keine Handlungsanweisung an die Anlage.", ""]
+
+    lines.append("## Datenquellen")
+    lines.append("")
+    for key, value in (sources or {}).items():
+        if not value:
+            continue
+        lines.append(f"- `{key}`: {value}")
+    lines.append("")
+
+    lines.append("## Heizkreise")
+    lines.append("")
+    lines.append("| Kreis | Typ | Pumpe | Mischer | Räume |")
+    lines.append("|---|---|---|---|---|")
+    for circuit in circuits or []:
+        rooms_ = ", ".join(circuit.get("rooms") or [])
+        lines.append(
+            f"| {circuit.get('name', circuit.get('id'))} | {circuit.get('type') or '-'} | "
+            f"{'ja' if circuit.get('has_pump') else 'nein'} | {'ja' if circuit.get('has_mixer') else 'nein'} | {rooms_ or '-'} |"
+        )
+    lines.append("")
+
+    lines.append("## Räume")
+    lines.append("")
+    lines.append("| Raum | Kreis | Thermostat | Ventilwert |")
+    lines.append("|---|---|---|---|")
+    for room in rooms or []:
+        lines.append(
+            f"| {room.get('name', room.get('id'))} | {room.get('circuit') or '-'} | "
+            f"{room.get('climate_entity') or '-'} | {'ja' if room.get('valve_available') else 'nein'} |"
+        )
+    lines.append("")
+
+    lines.append("## Kennzahlen")
+    lines.append("")
+    lines.extend(_metrics_table(metrics))
+    lines.append("")
+
+    for section, label in (("pumps", "Pumpen"), ("thermostats", "Thermostate"), ("hydraulics", "Hydraulik"), ("radiators", "Heizkörper")):
+        entries = (inventory or {}).get(section) or {}
+        if isinstance(entries, dict) and entries:
+            lines.append(f"## {label}")
+            lines.append("")
+            if section == "radiators":
+                lines.append("| ID | Kreis | Raum | Ventilpreset | Soll-Durchfluss (l/min) | Ist-Durchfluss (l/min) | Spreizung (K) |")
+                lines.append("|---|---|---|---|---|---|---|")
+                for key, values in entries.items():
+                    lines.append(
+                        f"| {key} | {values.get('circuit', '-')} | {values.get('room', '-')} | "
+                        f"{values.get('valve_preset', '-')} | {values.get('nominal_flow_l_min', '-')} | "
+                        f"{values.get('measured_flow_l_min', '-')} | {values.get('measured_spread_k', '-')} |"
+                    )
+            elif section == "hydraulics":
+                fields = ", ".join(f"{k}={v}" for k, v in entries.items() if v not in (None, ""))
+                lines.append(f"- {fields or 'keine Angaben'}")
+            else:
+                for key, values in entries.items():
+                    fields = ", ".join(f"{name}={value}" for name, value in (values or {}).items() if value not in (None, ""))
+                    lines.append(f"- `{section}.{key}`: {fields or 'keine Angaben'}")
+            lines.append("")
+
+    if thresholds:
+        lines.append("## Schwellen")
+        lines.append("")
+        for key, value in thresholds.items():
+            lines.append(f"- `{key}`: {value}")
+        lines.append("")
+
+    lines.append("## Hinweise")
+    lines.append("")
+    if findings:
+        for item in findings:
+            lines.append(f"- [{item.get('severity', 'info')}] {item.get('id')}: {item.get('text', item.get('key', ''))}")
+    else:
+        lines.append("- Keine Hinweise.")
+    lines.append("")
+    lines.append("---")
+    lines.append("Erstellt aus den gespeicherten Daten der Heizungsanalyse. Änderungen am Inventar über `heizungsanalyse.update_inventory`.")
+    lines.append("")
+    return "\n".join(lines)

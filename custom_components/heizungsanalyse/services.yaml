@@ -87,3 +87,11 @@ refresh:
   description: >-
     Wertet die vorhandenen Daten erneut aus. Die Integration liest dabei nur;
     es wird kein Gerät geschaltet.
+
+export_plant_sheet:
+  name: Anlagenblatt exportieren
+  description: >-
+    Erstellt ein Markdown-Anlagenblatt mit Pumpen, Heizkreisen, Räumen,
+    Kennzahlen, Inventar, Schwellen und Hinweisen – zum Ausdrucken und
+    Abgleichen beim hydraulischen Abgleich.
+  fields: {}

@@ -203,6 +203,22 @@ async def test_export_report_json(hass: HomeAssistant) -> None:
     assert data["metrics"]["cop"] is not None
 
 
+async def test_export_plant_sheet(hass: HomeAssistant) -> None:
+    await _setup(hass)
+
+    response = await hass.services.async_call(
+        DOMAIN,
+        "export_plant_sheet",
+        {},
+        blocking=True,
+        return_response=True,
+    )
+
+    assert response["format"] == "markdown"
+    assert "Anlagenblatt" in response["report"]
+    assert "## Heizkreise" in response["report"]
+
+
 async def test_services_require_entry(hass: HomeAssistant) -> None:
     with pytest.raises(ServiceValidationError):
         await hass.services.async_call(

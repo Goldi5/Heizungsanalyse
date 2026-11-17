@@ -409,6 +409,15 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
         recent = samples[-COP_SHORT_DAYS:]
         outdoor = [sample.outdoor_c for sample in recent if sample.outdoor_c is not None]
 
+        return_id = self._entity(CONF_RETURN_ENTITY)
+        return_values = [value.mean for value in daily.get(return_id, []) if value.mean is not None] if return_id else []
+        return_values = return_values[-COP_SHORT_DAYS:]
+        return_temp_median = None
+        if return_values:
+            ordered = sorted(return_values)
+            mid = len(ordered) // 2
+            return_temp_median = ordered[mid] if len(ordered) % 2 else (ordered[mid - 1] + ordered[mid]) / 2
+
         results = FindingsInput(
             cop=cop_short.cop,
             cop_days=cop_short.days,
@@ -447,6 +456,7 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
             fallback_energy=_energy_total(daily.get(fallback_id, [])) if fallback_id else None,
             spread_median=(self._hydraulics.get("spread") or {}).get("median"),
             spread_hours=int((self._hydraulics.get("spread") or {}).get("hours") or 0),
+            return_temp_median=return_temp_median,
         )
         findings = evaluate(results, thresholds)
         await self._log_findings(findings)

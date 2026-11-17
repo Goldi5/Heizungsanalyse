@@ -36,6 +36,7 @@ class Thresholds:
     power_source_deviation: float = 0.15
     spread_min_k: float = 3.0
     spread_max_k: float = 8.0
+    return_temp_max_c: float = 45.0
 
     @classmethod
     def from_options(cls, options: Mapping[str, Any] | None) -> Thresholds:
@@ -110,6 +111,7 @@ class FindingsInput:
     fallback_energy: float | None = None
     spread_median: float | None = None
     spread_hours: int = 0
+    return_temp_median: float | None = None
 
 
 def _mean(values: Sequence[float]) -> float | None:
@@ -390,6 +392,23 @@ def _power_source(results: FindingsInput, thresholds: Thresholds) -> list[Findin
     ]
 
 
+def _return_temp(results: FindingsInput, thresholds: Thresholds) -> list[Finding]:
+    value = results.return_temp_median
+    if value is None:
+        return []
+    if value <= thresholds.return_temp_max_c:
+        return []
+    return [
+        Finding(
+            id="F15",
+            severity=SEVERITY_INFO,
+            key="return_temp_high",
+            params={"value": round(value, 1), "threshold": thresholds.return_temp_max_c},
+            evidence={"return_temp_c": round(value, 2)},
+        )
+    ]
+
+
 # Mindestens ein Tag Laufstunden, bevor die Spreizung bewertet wird
 MIN_SPREAD_HOURS = 24
 
@@ -429,6 +448,7 @@ RULES = (
     _missing_statistics,
     _power_source,
     _spread,
+    _return_temp,
 )
 
 
