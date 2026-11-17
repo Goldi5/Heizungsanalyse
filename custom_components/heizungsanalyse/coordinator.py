@@ -62,6 +62,7 @@ from .const import (
     CONF_COMPRESSOR_STARTS_ENTITY,
     CONF_DEFROST_ENTITY,
     CONF_DHW_HEAT_ENTITY,
+    CONF_DHW_OPERATION_ENTITY,
     CONF_DHW_POWER_ENTITY,
     CONF_FLOW_ENTITY,
     CONF_HEAT_ENTITY,
@@ -329,8 +330,9 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
             dhw_power=energy_by_day(daily.get(dhw_power_id, [])) if dhw_power_id else {},
         )
 
-        hours, compressor_filtered = await self._read_hours(flow_id, target_flow_id, compressor_id)
-        self._hydraulics = await self._read_hydraulics(target_flow_id, compressor_id)
+        dhw_op_id = self._entity(CONF_DHW_OPERATION_ENTITY)
+        hours, compressor_filtered = await self._read_hours(flow_id, target_flow_id, compressor_id, dhw_op_id)
+        self._hydraulics = await self._read_hydraulics(target_flow_id, compressor_id, dhw_op_id)
         self._flow_hours = hours
         self._source_counts = {key: len(rows) for key, rows in daily.items()}
         self._source_counts.update({f"{key}:hour": len(rows) for key, rows in daily.items() if key in (flow_id, target_flow_id)})
@@ -845,6 +847,7 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
             self.entry.data.get(CONF_COMPRESSOR_ENTITY),
             self._entity(CONF_DEFROST_ENTITY),
             self._entity(CONF_AUX_HEATER_ENTITY),
+            self._entity(CONF_DHW_OPERATION_ENTITY),
         }
         for circuit in self._circuits_config():
             ids |= {circuit.get(CONF_PUMP_ENTITY), circuit.get(CONF_MIXER_OPEN_ENTITY), circuit.get(CONF_MIXER_CLOSE_ENTITY)}
@@ -969,7 +972,7 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
             return dict(second)
         return {day: round(value + second.get(day, 0.0), 3) for day, value in first.items()}
 
-    async def _read_hydraulics(self, target_flow_id: str | None, compressor_id: str | None) -> dict:
+    async def _read_hydraulics(self, target_flow_id: str | None, compressor_id: str | None, dhw_op_id: str | None = None) -> dict:
         """Spreizung, Puffer-Ladung und Momentanwerte der Wärmepumpe."""
         hp_flow_id = self._entity(CONF_HP_FLOW_ENTITY)
         return_id = self._entity(CONF_RETURN_ENTITY)
@@ -996,7 +999,15 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
             result["spread"] = spread_stats(spreads).as_dict()
             result["spread_daily"] = {day.isoformat(): value for day, value in sorted(hourly_daily_median(spreads, tz).items())}
         if target_flow_id:
-            over = overshoot_hours(flow, means(target_flow_id), running)
+            dhw_running = dict(running) if running else {}
+            if dhw_op_id:
+                dhw_series = means(dhw_op_id)
+                if not dhw_series and dhw_op_id in (self._spans or {}):
+                    dhw_series = share_per_hour(self._spans[dhw_op_id], flow.keys())
+                for hour in list(dhw_series):
+                    if dhw_series.get(hour, 0.0) > 0.5:
+                        dhw_running[hour] = 0.0
+            over = overshoot_hours(flow, means(target_flow_id), dhw_running if dhw_running else running)
             result["overshoot"] = spread_stats(over).as_dict()
             result["overshoot_daily"] = {day.isoformat(): value for day, value in sorted(hourly_daily_median(over, tz).items())}
 
@@ -1026,6 +1037,7 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
         flow_id: str | None,
         target_flow_id: str | None,
         compressor_id: str | None,
+        dhw_op_id: str | None = None,
     ) -> tuple[list[HourSample], bool]:
         """Stundenwerte für die Vorlauf-Abweichung.
 
@@ -1036,7 +1048,7 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
         if not flow_id or not target_flow_id:
             return [], False
 
-        wanted = {flow_id, target_flow_id, compressor_id}
+        wanted = {flow_id, target_flow_id, compressor_id, dhw_op_id}
         hourly = await async_read_hourly(self.hass, wanted, DEVIATION_DAYS)
 
         flow = {value.hour: value.mean for value in hourly.get(flow_id, []) if value.mean is not None}
@@ -1049,9 +1061,21 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
             compressor = share_per_hour(self._spans[compressor_id], flow.keys())
         filtered = bool(compressor)
 
+        dhw_op: dict = {}
+        if dhw_op_id:
+            rows = hourly.get(dhw_op_id, [])
+            if rows:
+                dhw_op = {value.hour: value.mean for value in rows if value.mean is not None}
+            elif dhw_op_id in (self._spans or {}):
+                dhw_op = share_per_hour(self._spans[dhw_op_id], flow.keys())
+        dhw_filtered = bool(dhw_op)
+
         hours: list[HourSample] = []
         for hour, flow_c in flow.items():
             if hour not in target:
+                continue
+            if dhw_filtered and dhw_op.get(hour, 0.0) > 0.5:
+                # Warmwasser-Ladung: Vorlauf ist dann nicht der Puffer-Sollwert
                 continue
             running = None
             if compressor:

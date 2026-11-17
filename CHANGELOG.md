@@ -1,3 +1,18 @@
+## 0.4.1 – 2026-11-17
+
+### Neu
+- **Warmwasserbetrieb als optionale Quelle** (`dhw_operation_entity`): binärer
+  Sensor, der anzeigt, wann die Wärmepumpe Warmwasser lädt. Die Stunden mit
+  Warmwasser-Ladung werden aus der Puffer-Ladung (Overshoot) und aus der
+  Vorlauf-Abweichung herausgerechnet, damit die 50-°C-Ladung den Puffer nicht
+  verfälscht.
+- **Aufheizzeit korrigiert**: Scheinbare 0-minütige Aufheizungen aus dem
+  nachgetragenen Verlauf werden nicht mehr als Messwert gezählt.
+
+### Behoben
+- `heating_up_times` ignoriert Aufheizversuche mit 0 Minuten Dauer (Rechen-
+  fehler nach Neustart/Backfill).
+
 ## 0.4.0 – 2026-11-17
 
 ### Neu

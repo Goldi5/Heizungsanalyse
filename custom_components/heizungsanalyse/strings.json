@@ -71,7 +71,8 @@
           "hp_flow_entity": "Vorlauftemperatur der Wärmepumpe",
           "volume_flow_entity": "Volumenstrom der Wärmepumpe",
           "power_now_entity": "Elektrische Leistung jetzt (W/kW)",
-          "dhw_power_entity": "Warmwasser-Strom (kWh)"
+          "dhw_power_entity": "Warmwasser-Strom (kWh)",
+          "dhw_operation_entity": "Warmwasserbetrieb (binary)"
         },
         "data_description": {
           "compressor_runtime_extra_entity": "Wird zur ersten Laufzeit addiert, wenn die Anlage Heizung und Warmwasser getrennt zählt.",
@@ -79,7 +80,8 @@
           "volume_flow_entity": "Mit der Spreizung ergibt das die Wärmeleistung in kW.",
           "power_now_entity": "Momentane Stromaufnahme; zusammen mit der Wärmeleistung der COP jetzt.",
           "dhw_power_entity": "Für den COP inklusive Warmwasser und den Abgleich mit einem Gesamtzähler als Ersatzquelle.",
-          "return_entity": "Eintritt der Wärmepumpe. Zusammen mit dem WP-Vorlauf ergibt das die Spreizung."
+          "return_entity": "Eintritt der Wärmepumpe. Zusammen mit dem WP-Vorlauf ergibt das die Spreizung.",
+          "dhw_operation_entity": "Aktiv, während die Wärmepumpe Warmwasser lädt. Dient zum Herausrechnen der Warmwasser-Ladung aus der Puffer-Ladung."
         }
       },
       "add_circuit": {

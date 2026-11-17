@@ -71,7 +71,8 @@
           "hp_flow_entity": "Heat pump flow temperature",
           "volume_flow_entity": "Heat pump volume flow",
           "power_now_entity": "Electrical power now (W/kW)",
-          "dhw_power_entity": "Hot water electricity (kWh)"
+          "dhw_power_entity": "Hot water electricity (kWh)",
+          "dhw_operation_entity": "DHW operation (binary)"
         },
         "data_description": {
           "compressor_runtime_extra_entity": "Added to the first runtime when the system counts heating and hot water separately.",
@@ -79,7 +80,8 @@
           "volume_flow_entity": "Together with the spread this gives the heat output in kW.",
           "power_now_entity": "Current power draw; with the heat output this gives the COP now.",
           "dhw_power_entity": "For the COP including hot water and for cross-checking a total meter as fallback source.",
-          "return_entity": "Heat pump inlet. Together with the heat pump flow this gives the spread."
+          "return_entity": "Heat pump inlet. Together with the heat pump flow this gives the spread.",
+          "dhw_operation_entity": "Active while the heat pump charges domestic hot water. Used to exclude DHW charging from buffer overshoot."
         }
       },
       "add_circuit": {

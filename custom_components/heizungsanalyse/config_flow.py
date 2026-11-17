@@ -29,6 +29,7 @@ from .const import (
     CONF_COMPRESSOR_STARTS_ENTITY,
     CONF_DEFROST_ENTITY,
     CONF_DHW_HEAT_ENTITY,
+    CONF_DHW_OPERATION_ENTITY,
     CONF_DHW_POWER_ENTITY,
     CONF_FLOW_ENTITY,
     CONF_HEAT_ENTITY,
@@ -262,6 +263,7 @@ class HeizungsanalyseOptionsFlow(OptionsFlowWithReload):
             (CONF_VOLUME_FLOW_ENTITY, _entity(SENSOR_DOMAIN, SensorDeviceClass.VOLUME_FLOW_RATE)),
             (CONF_POWER_NOW_ENTITY, _entity(SENSOR_DOMAIN, SensorDeviceClass.POWER)),
             (CONF_DHW_POWER_ENTITY, _energy()),
+            (CONF_DHW_OPERATION_ENTITY, _status()),
         ):
             marker, option_selector = _optional(key, current, option_selector)
             fields[marker] = option_selector

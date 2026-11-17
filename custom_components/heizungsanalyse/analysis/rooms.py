@@ -118,7 +118,7 @@ def heating_up_times(
             start = None
             goal = None
             continue
-        if reading.current_c >= goal - tolerance:
+        if reading.current_c >= goal - tolerance and elapsed > 0:
             results.append(round(elapsed, 1))
             start = None
             goal = None
