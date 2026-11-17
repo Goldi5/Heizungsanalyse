@@ -151,5 +151,26 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
 .cfggroup .h { margin-bottom:6px; }
 .cfgjson { width:100%; min-height:160px; font-family:ui-monospace,monospace; font-size:.78rem; padding:10px; border-radius:12px; border:1px solid var(--hz-line); background:var(--hz-soft); color:var(--hz-ink); resize:vertical; }
 
+
+.schema { display:grid; gap:12px; }
+.srow { display:flex; justify-content:center; }
+.sbox { background:var(--hz-card); border:1px solid var(--hz-line); border-radius:14px; padding:12px 16px; min-width:150px; text-align:center; box-shadow:0 1px 2px rgba(16,24,40,.04); }
+.swp { border-color:var(--hz-heat); }
+.spuffer { border-color:var(--hz-cool); }
+.scirc { border-color:var(--hz-ok); }
+.stitle { font-weight:700; font-size:.9rem; }
+.sval { font-size:1.1rem; font-weight:800; margin-top:4px; }
+.smut { color:var(--hz-mut); font-size:.74rem; margin-top:2px; }
+.sarrow { text-align:center; color:var(--hz-mut); font-size:1.4rem; margin:4px 0; }
+.sarrowh { text-align:center; color:var(--hz-mut); font-size:1.4rem; margin:0 8px; align-self:center; }
+.scircuits { display:flex; flex-wrap:wrap; gap:16px; justify-content:center; }
+.scircuit { display:grid; gap:8px; justify-items:center; }
+.srooms { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+.sroom { background:var(--hz-soft); border-radius:10px; padding:6px 10px; min-width:90px; text-align:center; font-size:.78rem; }
+.sroom .snm { font-weight:700; }
+.sroom .sval { font-size:.78rem; font-weight:600; margin-top:2px; }
+.sroom .smut { font-size:.7rem; }
+.slegend { color:var(--hz-mut); font-size:.78rem; text-align:center; margin-top:8px; }
+
 .flash { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--hz-ink); color:var(--hz-card); padding:9px 16px; border-radius:999px; font-size:.85rem; font-weight:600; z-index:9; }
 `;

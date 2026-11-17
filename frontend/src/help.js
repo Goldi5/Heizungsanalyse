@@ -110,6 +110,10 @@ const HELP = {
     de: "Schwellen der Findings. Startwerte sind Platzhalter.",
     en: "Finding thresholds. Starting values are placeholders.",
   },
+  schema: {
+    de: "Schematische Darstellung von Wärmepumpe, Puffer und Heizkreisen mit Live-Werten. Dient der Orientierung; keine Steuerung.",
+    en: "Schematic of heat pump, buffer and circuits with live values. For orientation only; no control.",
+  },
   sources: {
     de: "Welche Sensoren zugeordnet sind. Fehlende optionale Sensoren schalten Auswertungen nicht frei – ergänzen lässt sich das unter Konfigurieren.",
     en: "Which sensors are mapped. Missing optional sensors leave analyses locked – add them under Configure.",

@@ -4,7 +4,7 @@ import { helpText } from "./help.js";
 import { binChart, ring, scatterChart, sparkline, timeChart, withWidth } from "./charts.js";
 import { CHECK_NAMES, SCORE_LEVEL, binByOutdoor, dayLabel, esc, fmt, kpiTone, linearFit, rangeRows, signed, trend, weatherAdjusted } from "./logic.js";
 
-export const VIEWS = ["anlage", "effizienz", "raeume", "vergleich", "inventar", "protokoll", "einstellungen"];
+export const VIEWS = ["anlage", "effizienz", "raeume", "vergleich", "inventar", "protokoll", "einstellungen", "schema"];
 
 // Kopf einer Kachel mit „?“
 function head(title, key, ui, sub = "") {
@@ -585,6 +585,50 @@ export function viewEinstellungen(d, ui) {
 }
 
 
+export function viewSchema(d, ui, live) {
+  const k = d.kpis || {};
+  const hyd = d.hydraulics || {};
+  const rooms = d.rooms || [];
+  const circuits = d.circuits || [];
+  const byCircuit = {};
+  for (const r of rooms) {
+    const cid = r.circuit || "none";
+    (byCircuit[cid] = byCircuit[cid] || []).push(r);
+  }
+  const circuitBoxes = circuits.map((c) => {
+    const rs = byCircuit[c.id] || [];
+    const idle = c.pump && c.pump.idle_share != null ? (c.pump.idle_share * 100).toFixed(0) + " %" : "–";
+    const roomBoxes = rs.map((r) => {
+      const lv = live[r.climate_entity] || {};
+      const cur = lv.current != null ? lv.current : "–";
+      const tgt = lv.target != null ? lv.target : "–";
+      const dev = r.deviation && r.deviation.median != null ? (r.deviation.median > 0 ? "+" : "") + r.deviation.median.toFixed(1) : "–";
+      return `<div class="sroom"><div class="snm">${esc(r.name)}</div><div class="sval">${esc(String(cur))} / ${esc(String(tgt))} °C</div><div class="smut">${esc(dev)} K</div></div>`;
+    }).join("");
+    return `<div class="scircuit">
+      <div class="sbox scirc"><div class="stitle">${esc(c.name)}</div><div class="smut">${esc(c.type || "")}</div><div class="sval">Pumpe ${esc(idle)}</div></div>
+      <div class="sarrow">↓</div>
+      <div class="srooms">${roomBoxes || `<div class="smut">${esc(t("keine Räume"))}</div>`}</div>
+    </div>`;
+  }).join(`<div class="sarrowh">→</div>`);
+  const cop = k.cop_short && k.cop_short.value != null ? k.cop_short.value.toFixed(1) : "–";
+  const flow = k.flow_deviation ? k.flow_deviation.median : null;
+  const flowTxt = flow != null ? (flow > 0 ? "+" : "") + flow.toFixed(1) + " K" : "–";
+  return `<div class="schema">
+    <div class="srow">
+      <div class="sbox swp"><div class="stitle">${esc(t("Waermepumpe"))}</div><div class="sval">COP ${esc(cop)}</div><div class="smut">Vorlauf ${esc(flowTxt)}</div></div>
+    </div>
+    <div class="sarrow">↓</div>
+    <div class="srow">
+      <div class="sbox spuffer"><div class="stitle">${esc(t("Puffer"))}</div><div class="smut">${esc(t("Puffer-Soll Vorlauf"))}</div></div>
+    </div>
+    <div class="sarrow">↓</div>
+    <div class="scircuits">${circuitBoxes || `<div class="smut">${esc(t("Keine Heizkreise."))}</div>`}</div>
+    <div class="slegend">${esc(t("Werte: Ist / Soll °C, Abweichung zum Soll."))}</div>
+  </div>`;
+}
+
+
 export function renderView(view, d, ui, live) {
   switch (view) {
     case "effizienz": return viewEffizienz(d, ui);
@@ -593,6 +637,7 @@ export function renderView(view, d, ui, live) {
     case "inventar": return viewInventar(d, ui);
     case "protokoll": return viewProtokoll(d, ui);
     case "einstellungen": return viewEinstellungen(d, ui);
+    case "schema": return viewSchema(d, ui, live);
     default: return viewAnlage(d, ui);
   }
 }

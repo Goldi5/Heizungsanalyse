@@ -239,7 +239,12 @@
     "Raeume": "Rooms",
     "Schwellen": "Thresholds",
     "Speichern laedt die Integration neu.": "Saving reloads the integration.",
-    "JSON-Fehler: {e}": "JSON error: {e}"
+    "JSON-Fehler: {e}": "JSON error: {e}",
+    "Waermepumpe": "Heat pump",
+    "Puffer-Soll Vorlauf": "Buffer target flow",
+    "keine Räume": "no rooms",
+    "Keine Heizkreise.": "No heating circuits.",
+    "Werte: Ist / Soll °C, Abweichung zum Soll.": "Values: actual / target °C, deviation from target."
   };
   var lang = "de";
   function setLang(hass) {
@@ -519,6 +524,27 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
 .cfggroup .h { margin-bottom:6px; }
 .cfgjson { width:100%; min-height:160px; font-family:ui-monospace,monospace; font-size:.78rem; padding:10px; border-radius:12px; border:1px solid var(--hz-line); background:var(--hz-soft); color:var(--hz-ink); resize:vertical; }
 
+
+.schema { display:grid; gap:12px; }
+.srow { display:flex; justify-content:center; }
+.sbox { background:var(--hz-card); border:1px solid var(--hz-line); border-radius:14px; padding:12px 16px; min-width:150px; text-align:center; box-shadow:0 1px 2px rgba(16,24,40,.04); }
+.swp { border-color:var(--hz-heat); }
+.spuffer { border-color:var(--hz-cool); }
+.scirc { border-color:var(--hz-ok); }
+.stitle { font-weight:700; font-size:.9rem; }
+.sval { font-size:1.1rem; font-weight:800; margin-top:4px; }
+.smut { color:var(--hz-mut); font-size:.74rem; margin-top:2px; }
+.sarrow { text-align:center; color:var(--hz-mut); font-size:1.4rem; margin:4px 0; }
+.sarrowh { text-align:center; color:var(--hz-mut); font-size:1.4rem; margin:0 8px; align-self:center; }
+.scircuits { display:flex; flex-wrap:wrap; gap:16px; justify-content:center; }
+.scircuit { display:grid; gap:8px; justify-items:center; }
+.srooms { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+.sroom { background:var(--hz-soft); border-radius:10px; padding:6px 10px; min-width:90px; text-align:center; font-size:.78rem; }
+.sroom .snm { font-weight:700; }
+.sroom .sval { font-size:.78rem; font-weight:600; margin-top:2px; }
+.sroom .smut { font-size:.7rem; }
+.slegend { color:var(--hz-mut); font-size:.78rem; text-align:center; margin-top:8px; }
+
 .flash { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--hz-ink); color:var(--hz-card); padding:9px 16px; border-radius:999px; font-size:.85rem; font-weight:600; z-index:9; }
 `;
 
@@ -650,6 +676,10 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     cfg_thresholds: {
       de: "Schwellen der Findings. Startwerte sind Platzhalter.",
       en: "Finding thresholds. Starting values are placeholders."
+    },
+    schema: {
+      de: "Schematische Darstellung von Wärmepumpe, Puffer und Heizkreisen mit Live-Werten. Dient der Orientierung; keine Steuerung.",
+      en: "Schematic of heat pump, buffer and circuits with live values. For orientation only; no control."
     },
     sources: {
       de: "Welche Sensoren zugeordnet sind. Fehlende optionale Sensoren schalten Auswertungen nicht frei – ergänzen lässt sich das unter Konfigurieren.",
@@ -862,7 +892,7 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
   }
 
   // src/views.js
-  var VIEWS = ["anlage", "effizienz", "raeume", "vergleich", "inventar", "protokoll", "einstellungen"];
+  var VIEWS = ["anlage", "effizienz", "raeume", "vergleich", "inventar", "protokoll", "einstellungen", "schema"];
   function head(title, key, ui, sub = "") {
     const open = ui.help === key;
     return `<div class="h">${esc(title)}${sub ? ` <span class="sub">${sub}</span>` : ""}<button class="q ${open ? "on" : ""}" data-help="${key}" aria-label="?">?</button></div>${open ? `<div class="help">${esc(helpText(key))}</div>` : ""}`;
@@ -1366,6 +1396,48 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     </div>
   </div>`;
   }
+  function viewSchema(d, ui, live) {
+    const k = d.kpis || {};
+    const hyd = d.hydraulics || {};
+    const rooms = d.rooms || [];
+    const circuits = d.circuits || [];
+    const byCircuit = {};
+    for (const r of rooms) {
+      const cid = r.circuit || "none";
+      (byCircuit[cid] = byCircuit[cid] || []).push(r);
+    }
+    const circuitBoxes = circuits.map((c) => {
+      const rs = byCircuit[c.id] || [];
+      const idle = c.pump && c.pump.idle_share != null ? (c.pump.idle_share * 100).toFixed(0) + " %" : "–";
+      const roomBoxes = rs.map((r) => {
+        const lv = live[r.climate_entity] || {};
+        const cur = lv.current != null ? lv.current : "–";
+        const tgt = lv.target != null ? lv.target : "–";
+        const dev = r.deviation && r.deviation.median != null ? (r.deviation.median > 0 ? "+" : "") + r.deviation.median.toFixed(1) : "–";
+        return `<div class="sroom"><div class="snm">${esc(r.name)}</div><div class="sval">${esc(String(cur))} / ${esc(String(tgt))} °C</div><div class="smut">${esc(dev)} K</div></div>`;
+      }).join("");
+      return `<div class="scircuit">
+      <div class="sbox scirc"><div class="stitle">${esc(c.name)}</div><div class="smut">${esc(c.type || "")}</div><div class="sval">Pumpe ${esc(idle)}</div></div>
+      <div class="sarrow">↓</div>
+      <div class="srooms">${roomBoxes || `<div class="smut">${esc(t("keine Räume"))}</div>`}</div>
+    </div>`;
+    }).join(`<div class="sarrowh">→</div>`);
+    const cop = k.cop_short && k.cop_short.value != null ? k.cop_short.value.toFixed(1) : "–";
+    const flow = k.flow_deviation ? k.flow_deviation.median : null;
+    const flowTxt = flow != null ? (flow > 0 ? "+" : "") + flow.toFixed(1) + " K" : "–";
+    return `<div class="schema">
+    <div class="srow">
+      <div class="sbox swp"><div class="stitle">${esc(t("Waermepumpe"))}</div><div class="sval">COP ${esc(cop)}</div><div class="smut">Vorlauf ${esc(flowTxt)}</div></div>
+    </div>
+    <div class="sarrow">↓</div>
+    <div class="srow">
+      <div class="sbox spuffer"><div class="stitle">${esc(t("Puffer"))}</div><div class="smut">${esc(t("Puffer-Soll Vorlauf"))}</div></div>
+    </div>
+    <div class="sarrow">↓</div>
+    <div class="scircuits">${circuitBoxes || `<div class="smut">${esc(t("Keine Heizkreise."))}</div>`}</div>
+    <div class="slegend">${esc(t("Werte: Ist / Soll °C, Abweichung zum Soll."))}</div>
+  </div>`;
+  }
   function renderView(view, d, ui, live) {
     switch (view) {
       case "effizienz":
@@ -1380,6 +1452,8 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
         return viewProtokoll(d, ui);
       case "einstellungen":
         return viewEinstellungen(d, ui);
+      case "schema":
+        return viewSchema(d, ui, live);
       default:
         return viewAnlage(d, ui);
     }
@@ -1715,7 +1789,8 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     { view: "vergleich", title: "Vorher / Nachher", icon: "mdi:compare-horizontal" },
     { view: "inventar", title: "Inventar", icon: "mdi:clipboard-list-outline" },
     { view: "protokoll", title: "Protokoll", icon: "mdi:text-box-search-outline" },
-    { view: "einstellungen", title: "Einstellungen", icon: "mdi:tune-variant" }
+    { view: "einstellungen", title: "Einstellungen", icon: "mdi:tune-variant" },
+    { view: "schema", title: "Schema", icon: "mdi:sitemap-outline" }
   ];
   function buildDashboard(config = {}) {
     return {

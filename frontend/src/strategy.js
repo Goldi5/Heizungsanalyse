@@ -9,6 +9,7 @@ const VIEW_DEFS = [
   { view: "inventar", title: "Inventar", icon: "mdi:clipboard-list-outline" },
   { view: "protokoll", title: "Protokoll", icon: "mdi:text-box-search-outline" },
   { view: "einstellungen", title: "Einstellungen", icon: "mdi:tune-variant" },
+  { view: "schema", title: "Schema", icon: "mdi:sitemap-outline" },
 ];
 
 export function buildDashboard(config = {}) {

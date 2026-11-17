@@ -236,6 +236,11 @@ export const EN = {
   "Schwellen": "Thresholds",
   "Speichern laedt die Integration neu.": "Saving reloads the integration.",
   "JSON-Fehler: {e}": "JSON error: {e}",
+  "Waermepumpe": "Heat pump",
+  "Puffer-Soll Vorlauf": "Buffer target flow",
+  "keine Räume": "no rooms",
+  "Keine Heizkreise.": "No heating circuits.",
+  "Werte: Ist / Soll °C, Abweichung zum Soll.": "Values: actual / target °C, deviation from target.",
 };
 
 let lang = "de";
