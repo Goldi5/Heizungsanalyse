@@ -10,7 +10,7 @@ export class HeizungsanalyseCard extends HTMLElement {
   setConfig(config) {
     this._config = { view: "anlage", ...(config || {}) };
     if (!VIEWS.includes(this._config.view)) this._config.view = "anlage";
-    this._ui = { help: null, range: 90, form: false, widths: {}, logCat: "", logLevel: "", logQ: "", logHours: 168, logOpen: null, cfgMsg: null };
+    this._ui = { help: null, range: 90, form: false, widths: {}, logCat: "", logLevel: "", logQ: "", logHours: 168, logOpen: null, cfgMsg: null, invForm: false };
     this._log = [];
     this._cfgData = null;
     this._cfgSuggestion = null;
@@ -104,11 +104,12 @@ export class HeizungsanalyseCard extends HTMLElement {
   async _loadDiag() {
     if (!this._hass) return;
     try {
-      this._diag = await this._hass.callWS({ type: "heizungsanalyse/diagnostics" });
+      this._diag = await this._hass.callWS({ type: "heizungsanalyse/status" });
       this._diagError = null;
     } catch (e) {
       this._diagError = e && (e.message || e.code) ? e.message || e.code : String(e);
       this._diag = null;
+      this._reportTrace("status failed: " + this._diagError);
     }
   }
 
@@ -243,7 +244,7 @@ export class HeizungsanalyseCard extends HTMLElement {
   _click(e) {
     const el = e.target.closest("[data-help],[data-range],[data-act],[data-log-cat],[data-log-level],[data-log-range],[data-log-open],[data-nav]");
     if (!el) return;
-    if (el.dataset.nav) { this._hass.navigate(`/heizungsanalyse/${el.dataset.nav}`); return; }
+    if (el.dataset.nav) { window.history.pushState(null, "", `/heizungs-analyse/${el.dataset.nav}`); window.dispatchEvent(new CustomEvent("location-changed")); return; }
     if (el.dataset.help) this._ui.help = this._ui.help === el.dataset.help ? null : el.dataset.help;
     else if (el.dataset.range) this._ui.range = Number(el.dataset.range);
     else if (el.dataset.logCat !== undefined) { this._ui.logCat = this._ui.logCat === el.dataset.logCat && el.dataset.logCat ? "" : el.dataset.logCat; this._loadLog(true); return; }
@@ -257,6 +258,8 @@ export class HeizungsanalyseCard extends HTMLElement {
     else if (el.dataset.act === "log-copy") return void this._copy();
     else if (el.dataset.act === "log-refresh") return void this._refresh();
     else if (el.dataset.act === "cfg-save") return void this._saveConfig();
+    else if (el.dataset.act === "inv-open") this._ui.invForm = true;
+    else if (el.dataset.act === "inv-close") this._ui.invForm = false;
     this._render();
   }
 
@@ -271,6 +274,24 @@ export class HeizungsanalyseCard extends HTMLElement {
   async _submit(e) {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(e.target).entries());
+    if (e.target.dataset.form === "inventory") {
+      const section = data.section;
+      const object = (data.object || "").trim();
+      if (!object) { this._flash(t("Objekt fehlt")); return; }
+      const full = object.includes(".") ? object : `${section}.${object}`;
+      let values = {};
+      try { values = data.values ? JSON.parse(data.values) : {}; } catch (err) { this._flash(t("JSON-Fehler: {e}", { e: err.message || err })); return; }
+      try {
+        await this._hass.callService("heizungsanalyse", "update_inventory", { object: full, values, note: data.note || undefined });
+        this._ui.invForm = false;
+        invalidate();
+        await this._load(true);
+        this._flash(t("Gespeichert"));
+      } catch (err) {
+        this._flash(t("Fehler: {e}", { e: err.message || err }));
+      }
+      return;
+    }
     const payload = { object: data.object.trim(), field: data.field.trim() };
     for (const k of ["old_value", "new_value", "note"]) if (data[k] && data[k].trim()) payload[k] = data[k].trim();
     try {

@@ -382,9 +382,26 @@ export function viewInventar(d, ui) {
   const src = Object.entries(d.sources || {})
     .map(([k, ok]) => `<div class="src"><span>${esc(labels[k] ? t(labels[k]) : k)}</span>${pill(ok ? "ok" : "mut", ok ? t("verbunden") : t("fehlt"))}</div>`)
     .join("");
+  const editor = ui.invForm ? `<form class="log invform" data-form="inventory">
+      <label>${esc(t("Bereich"))}
+        <select name="section">
+          <option value="pumps">${esc(t("Pumpen"))}</option>
+          <option value="thermostats">${esc(t("Thermostate"))}</option>
+          <option value="hydraulics">${esc(t("Hydraulik"))}</option>
+          <option value="radiators">${esc(t("Heizkörper"))}</option>
+        </select>
+      </label>
+      <label>${esc(t("Objekt"))}<input name="object" placeholder="pumps.hk2"></label>
+      <label style="grid-column:1/-1">${esc(t("Werte (JSON)"))}<input name="values" placeholder='{"model":"Alpha2","setting":"Stufe 2"}'></label>
+      <label>${esc(t("Notiz"))}<input name="note"></label>
+      <div class="row"><button class="btn primary" type="submit">${esc(t("Speichern"))}</button><button class="btn ghost" type="button" data-act="inv-close">${esc(t("Abbrechen"))}</button></div>
+    </form>` : `<div class="row"><button class="btn" data-act="inv-open">+ ${esc(t("Eintrag hinzufügen"))}</button></div>`;
+
   return `<div class="grid g2">
-    <div class="grid">${section("pumps", "Pumpen")}${section("thermostats", "Thermostate")}${section("hydraulics", "Hydraulik")}
-      <div class="c">${head(t("Inventar"), "inventory", ui)}<div class="row" style="margin-top:10px"><button class="btn" data-act="report">${esc(t("Bericht herunterladen"))}</button></div></div></div>
+    <div class="grid">${section("pumps", "Pumpen")}${section("thermostats", "Thermostate")}${section("hydraulics", "Hydraulik")}${section("radiators", "Heizkörper")}
+      <div class="c">${head(t("Inventar"), "inventory", ui)}${editor}
+        <div class="row" style="margin-top:10px"><button class="btn" data-act="report">${esc(t("Bericht herunterladen"))}</button></div>
+      </div></div>
     <div class="c">${head(t("Datenquellen"), "sources", ui)}${src}</div></div>`;
 }
 

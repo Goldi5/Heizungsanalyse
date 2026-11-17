@@ -255,6 +255,12 @@ export const EN = {
   "hoch": "high",
   "mittel": "medium",
   "niedrig": "low",
+  "Bereich": "Section",
+  "Eintrag hinzufügen": "Add entry",
+  "Heizkörper": "Radiators",
+  "Objekt": "Object",
+  "Objekt fehlt": "Object missing",
+  "Werte (JSON)": "Values (JSON)",
 };
 
 let lang = "de";

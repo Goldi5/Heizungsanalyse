@@ -50,6 +50,7 @@ def async_register(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_config_get)
     websocket_api.async_register_command(hass, ws_config_set)
     websocket_api.async_register_command(hass, ws_suggest_curve)
+    websocket_api.async_register_command(hass, ws_status)
     websocket_api.async_register_command(hass, ws_log)
     websocket_api.async_register_command(hass, ws_diagnostics)
     websocket_api.async_register_command(hass, ws_trace)
@@ -285,3 +286,65 @@ async def ws_suggest_curve(hass: HomeAssistant, connection: websocket_api.Active
     hours = getattr(runtime.coordinator, "_flow_hours", []) or []
     suggestion = suggest_curve(hours)
     connection.send_result(msg["id"], {"suggestion": suggestion.as_dict()})
+
+
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/status"})
+@websocket_api.async_response
+async def ws_status(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Minimaler Status fuer das Protokoll (kein Admin noetig)."""
+    runtime = _runtime(hass)
+    if runtime is None:
+        connection.send_error(msg["id"], "not_setup", "Heizungsanalyse ist nicht eingerichtet")
+        return
+    snapshot = runtime.coordinator.data
+    data = hass.data.get("lovelace")
+    resources = getattr(data, "resources", None)
+    mode = "yaml" if resources is None or getattr(data, "resource_mode", "storage") != "storage" else "storage"
+    card_version = None
+    if resources is not None and mode == "storage":
+        try:
+            for item in resources.async_items():
+                url = str(item.get("url", ""))
+                if url.split("?")[0] == CARD_URL:
+                    card_version = url.split("?v=", 1)[1].split("-", 1)[0] if "?v=" in url else None
+                    break
+        except Exception:  # noqa: BLE001
+            card_version = None
+    storage = runtime.coordinator.runtime_diagnostics()
+    rollups = await runtime.store.async_rollups()
+    log_entries = await runtime.log.async_last_hours(48)
+    source_checks = []
+    for key, value in {**{k: runtime.entry.data.get(k) for k in MANDATORY_SOURCES},
+                        **{k: runtime.entry.options.get(k) for k in OPTIONAL_SOURCES}}.items():
+        if not value:
+            continue
+        st = hass.states.get(value)
+        status = "not_found" if st is None else ("unavailable" if st.state in ("unavailable", "unknown") else "ok")
+        source_checks.append({
+            "entity": value, "kind": "source", "state": None if st is None else st.state,
+            "unit": None if st is None else st.attributes.get("unit_of_measurement"),
+            "state_class": None if st is None else st.attributes.get("state_class"),
+            "daily_rows": 0, "hourly_rows": 0, "daily_last": None, "status": status,
+            "advice": "" if status == "ok" else "Quelle prüfen.",
+        })
+    connection.send_result(
+        msg["id"],
+        {
+            "versions": {
+                "integration": VERSION,
+                "homeassistant": getattr(__import__("homeassistant.const", fromlist=["__version__"]), "__version__", None),
+                "card": {"version": card_version, "backend": VERSION, "matches": card_version == VERSION if card_version else None},
+            },
+            "runtime": {
+                "run_index": storage.get("run_index", 0),
+                "last_duration_ms": storage.get("last_duration_ms", 0),
+                "next_run": storage.get("next_run"),
+                "last_update_success": storage.get("last_update_success", True),
+                "last_error": storage.get("last_error"),
+            },
+            "storage": {"rollups": len(rollups), "log_entries": len(log_entries)},
+            "summary": {"kpis": {"days_with_data": snapshot.days_with_data}},
+            "source_checks": source_checks,
+            "log": log_entries,
+        },
+    )

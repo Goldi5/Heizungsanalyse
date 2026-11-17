@@ -1,7 +1,7 @@
-/* Heizungsanalyse 0.7.0b0 - gebaut aus frontend/src (npm run build). Nicht von Hand bearbeiten. */
+/* Heizungsanalyse 0.7.0b1 - gebaut aus frontend/src (npm run build). Nicht von Hand bearbeiten. */
 (() => {
   // src/version.js
-  var HA_VERSION = "0.7.0b0";
+  var HA_VERSION = "0.7.0b1";
 
   // src/i18n.js
   var EN = {
@@ -258,7 +258,13 @@
     "Vorschlag Offset": "Suggested offset",
     "hoch": "high",
     "mittel": "medium",
-    "niedrig": "low"
+    "niedrig": "low",
+    "Bereich": "Section",
+    "Eintrag hinzufügen": "Add entry",
+    "Heizkörper": "Radiators",
+    "Objekt": "Object",
+    "Objekt fehlt": "Object missing",
+    "Werte (JSON)": "Values (JSON)"
   };
   var lang = "de";
   function setLang(hass) {
@@ -1264,9 +1270,25 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
       dhw_power_entity: "Warmwasser-Strom"
     };
     const src = Object.entries(d.sources || {}).map(([k, ok]) => `<div class="src"><span>${esc(labels[k] ? t(labels[k]) : k)}</span>${pill(ok ? "ok" : "mut", ok ? t("verbunden") : t("fehlt"))}</div>`).join("");
+    const editor = ui.invForm ? `<form class="log invform" data-form="inventory">
+      <label>${esc(t("Bereich"))}
+        <select name="section">
+          <option value="pumps">${esc(t("Pumpen"))}</option>
+          <option value="thermostats">${esc(t("Thermostate"))}</option>
+          <option value="hydraulics">${esc(t("Hydraulik"))}</option>
+          <option value="radiators">${esc(t("Heizkörper"))}</option>
+        </select>
+      </label>
+      <label>${esc(t("Objekt"))}<input name="object" placeholder="pumps.hk2"></label>
+      <label style="grid-column:1/-1">${esc(t("Werte (JSON)"))}<input name="values" placeholder='{"model":"Alpha2","setting":"Stufe 2"}'></label>
+      <label>${esc(t("Notiz"))}<input name="note"></label>
+      <div class="row"><button class="btn primary" type="submit">${esc(t("Speichern"))}</button><button class="btn ghost" type="button" data-act="inv-close">${esc(t("Abbrechen"))}</button></div>
+    </form>` : `<div class="row"><button class="btn" data-act="inv-open">+ ${esc(t("Eintrag hinzufügen"))}</button></div>`;
     return `<div class="grid g2">
-    <div class="grid">${section("pumps", "Pumpen")}${section("thermostats", "Thermostate")}${section("hydraulics", "Hydraulik")}
-      <div class="c">${head(t("Inventar"), "inventory", ui)}<div class="row" style="margin-top:10px"><button class="btn" data-act="report">${esc(t("Bericht herunterladen"))}</button></div></div></div>
+    <div class="grid">${section("pumps", "Pumpen")}${section("thermostats", "Thermostate")}${section("hydraulics", "Hydraulik")}${section("radiators", "Heizkörper")}
+      <div class="c">${head(t("Inventar"), "inventory", ui)}${editor}
+        <div class="row" style="margin-top:10px"><button class="btn" data-act="report">${esc(t("Bericht herunterladen"))}</button></div>
+      </div></div>
     <div class="c">${head(t("Datenquellen"), "sources", ui)}${src}</div></div>`;
   }
   var LEVELS_LOG = [
@@ -1559,7 +1581,7 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     setConfig(config) {
       this._config = { view: "anlage", ...config || {} };
       if (!VIEWS.includes(this._config.view)) this._config.view = "anlage";
-      this._ui = { help: null, range: 90, form: false, widths: {}, logCat: "", logLevel: "", logQ: "", logHours: 168, logOpen: null, cfgMsg: null };
+      this._ui = { help: null, range: 90, form: false, widths: {}, logCat: "", logLevel: "", logQ: "", logHours: 168, logOpen: null, cfgMsg: null, invForm: false };
       this._log = [];
       this._cfgData = null;
       this._cfgSuggestion = null;
@@ -1654,11 +1676,12 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     async _loadDiag() {
       if (!this._hass) return;
       try {
-        this._diag = await this._hass.callWS({ type: "heizungsanalyse/diagnostics" });
+        this._diag = await this._hass.callWS({ type: "heizungsanalyse/status" });
         this._diagError = null;
       } catch (e) {
         this._diagError = e && (e.message || e.code) ? e.message || e.code : String(e);
         this._diag = null;
+        this._reportTrace("status failed: " + this._diagError);
       }
     }
     async _loadLog(force = false) {
@@ -1793,7 +1816,8 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
       const el = e.target.closest("[data-help],[data-range],[data-act],[data-log-cat],[data-log-level],[data-log-range],[data-log-open],[data-nav]");
       if (!el) return;
       if (el.dataset.nav) {
-        this._hass.navigate(`/heizungsanalyse/${el.dataset.nav}`);
+        window.history.pushState(null, "", `/heizungs-analyse/${el.dataset.nav}`);
+        window.dispatchEvent(new CustomEvent("location-changed"));
         return;
       }
       if (el.dataset.help) this._ui.help = this._ui.help === el.dataset.help ? null : el.dataset.help;
@@ -1820,6 +1844,8 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
       else if (el.dataset.act === "log-copy") return void this._copy();
       else if (el.dataset.act === "log-refresh") return void this._refresh();
       else if (el.dataset.act === "cfg-save") return void this._saveConfig();
+      else if (el.dataset.act === "inv-open") this._ui.invForm = true;
+      else if (el.dataset.act === "inv-close") this._ui.invForm = false;
       this._render();
     }
     _input(e) {
@@ -1832,6 +1858,32 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     async _submit(e) {
       e.preventDefault();
       const data = Object.fromEntries(new FormData(e.target).entries());
+      if (e.target.dataset.form === "inventory") {
+        const section = data.section;
+        const object = (data.object || "").trim();
+        if (!object) {
+          this._flash(t("Objekt fehlt"));
+          return;
+        }
+        const full = object.includes(".") ? object : `${section}.${object}`;
+        let values = {};
+        try {
+          values = data.values ? JSON.parse(data.values) : {};
+        } catch (err) {
+          this._flash(t("JSON-Fehler: {e}", { e: err.message || err }));
+          return;
+        }
+        try {
+          await this._hass.callService("heizungsanalyse", "update_inventory", { object: full, values, note: data.note || void 0 });
+          this._ui.invForm = false;
+          invalidate();
+          await this._load(true);
+          this._flash(t("Gespeichert"));
+        } catch (err) {
+          this._flash(t("Fehler: {e}", { e: err.message || err }));
+        }
+        return;
+      }
       const payload = { object: data.object.trim(), field: data.field.trim() };
       for (const k of ["old_value", "new_value", "note"]) if (data[k] && data[k].trim()) payload[k] = data[k].trim();
       try {

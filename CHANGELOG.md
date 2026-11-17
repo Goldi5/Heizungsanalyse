@@ -1,3 +1,16 @@
+## 0.7.0b1 – 2026-11-17 (Beta)
+
+### Behoben
+- **Navigation**: `hass.navigate` existiert im Karten-Kontext nicht – Wechsel
+  jetzt über `history.pushState` + `location-changed`.
+- **Protokoll**: Statusdaten über neuen `heizungsanalyse/status`-WS (kein
+  Admin nötig); Diagnose bleibt Admin-Download.
+- **Inventar**: Bereich `radiators` ergänzt.
+
+### Neu
+- **Inventar-Editor** im Inventar-Tab: Einträge für Pumpen, Thermostate,
+  Hydraulik und Heizkörper direkt im Dashboard anlegen (JSON-Werte).
+
 ## 0.7.0b0 – 2026-11-17 (Beta)
 
 ### Neu
