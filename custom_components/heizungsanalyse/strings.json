@@ -137,11 +137,6 @@
     },
     "abort": {
       "no_circuits": "Lege zuerst einen Heizkreis an."
-    },
-    "init": {
-      "menu_options": {
-        "thresholds": "Schwellen der Hinweise"
-      }
     }
   },
   "selector": {

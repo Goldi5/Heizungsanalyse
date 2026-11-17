@@ -137,11 +137,6 @@
     },
     "abort": {
       "no_circuits": "Add a heating circuit first."
-    },
-    "init": {
-      "menu_options": {
-        "thresholds": "Finding thresholds"
-      }
     }
   },
   "selector": {
