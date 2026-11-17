@@ -93,3 +93,44 @@ Deltas aus der Langzeitstatistik und kennzeichnet die Quelle.
   Aenderungsverlauf in M3. Bis dahin gilt: entfernen und neu anlegen.
 - **Raeume ohne Thermostat** (Schlafzimmer, Livisi ohne Ventilposition) sind
   ausdruecklich zulaessig und werden als "ohne Regelung" gefuehrt.
+
+## 7. Entscheidungen und Grenzen aus M2
+
+- **Coordinator statt eigenem Listener:** `DataUpdateCoordinator` mit
+  5-Minuten-Takt. Die Statistikabfrage ist teuer genug, dass ein fester Takt
+  sinnvoll ist, und der Takt passt zur geforderten Zeitfenster-Aggregation.
+- **Zwei Aufloesungen:** Tageswerte fuer COP, Taktung und Heizkurve,
+  Stundenwerte nur fuer die Vorlauf-Abweichung (7 Tage).
+- **Vorlauf-Abweichung ohne Verdichterstatistik:** Liefert der gemappte
+  Verdichter-Status keine Langzeitstatistik (typisch fuer Text-Sensoren ohne
+  `state_class`), wird ueber alle Stunden gerechnet. Das ist am Sensor als
+  `compressor_filtered: false` sichtbar. Es wird nicht behauptet, dass nur
+  Laufzeiten eingingen.
+- **Stromquellen:** Die Primaerquelle gilt, solange sie Tagesdaten liefert;
+  sonst die Ersatzquelle. Ist keine Quelle vorhanden, bleibt der COP `unknown`
+  und das Attribut `power_source` ist `null`. Die Quelle steht an beiden
+  COP-Sensoren.
+- **Waermebegriff:** `heat_entity` ist Heizwaerme ohne Warmwasser. Der Strom
+  enthaelt in der Regel Warmwasser. Der COP ist deshalb konservativ; das steht
+  so in den Attributen (`heat_kwh`, `power_kwh`) und in der Doku.
+- **Zaehlerstaende:** Bei `state_class: total` fehlt `change`; dann wird die
+  Differenz der Tagesstaende gebildet, inklusive Reset-Erkennung. Der erste Tag
+  einer Reihe hat keinen Vorgaenger und liefert keinen Verbrauch.
+- **Keine Scheinsicherheit:** Fehlt eine Quelle, ist die Kennzahl `unknown`.
+  Es werden keine Nullen oder Ersatzwerte eingesetzt.
+
+## 8. Live-Gegenprobe zur Referenz (17.11.2026)
+
+Abruf der Tagesstatistik fuer 03.–17.11.2026 direkt aus dem Recorder der
+Ist-Instanz (nur lesend), Auswertung nach derselben Rechenregel wie die
+Integration:
+
+- Heizwaerme (Summe der Tagesaenderungen, 14 volle Tage): ca. 1 171,9 kWh
+- Strom (Heartbeat, gleiche 14 Tage): ca. 324,8 kWh
+- **COP ca. 3,61** (Tageswerte ca. 3,2 bis 3,9)
+
+Das liegt unter den ca. 3,8 aus Teil A4. Der Unterschied ist erklaerbar und
+kein Rechenfehler: A4 nannte einen anderen Zeitraum, und der Strom enthaelt
+Warmwasser, waehrend die Waerme nur Heizung umfasst. Der Referenz-Fixture
+bleibt bewusst bei den Planwerten (3,8), weil er die Abnahmebedingung aus M2
+abbildet; die Live-Zahl wird hier separat festgehalten.

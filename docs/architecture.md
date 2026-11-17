@@ -70,7 +70,6 @@ custom_components/heizungsanalyse/
    Aenderungsverlauf und ruft dieselben Analysefunktionen auf.
 
 ## 5. Entscheidungen aus M1
-
 - **Heizkreise und Raeume liegen als Listen in `entry.options`**, nicht als
   Config-Subentries. Gruende: beliebig viele Eintraege, keine Notwendigkeit
   fuer eine eigene Entry-Verwaltung je Kreis, gleiche Mechanik fuer beide
@@ -93,3 +92,31 @@ custom_components/heizungsanalyse/
 - Ob der Coordinator `DataUpdateCoordinator` nutzt oder ein eigener Listener
   (wie raumklima-2) sinnvoller ist, entscheidet sich in M2 anhand der
   Statistik-Abfragekosten.
+
+## 7. Umsetzung M2
+
+```
+analysis/
+  types.py          DayValue, HourValue, DaySample, HourSample
+  counters.py       counter_delta mit Reset-Erkennung
+  series.py         Statistikwerte -> Tagesreihen -> DaySample
+  cop.py            CopResult, cop_window, cop_per_day, cop_curve
+  cycling.py        starts_per_day, mean_runtime_per_cycle
+  heating_curve.py  deviation (Median/P90), curve_bins
+data_access.py      Recorder-Statistik (Tages-/Stundenperiode)
+coordinator.py      HeizungsanalyseCoordinator, AnalysisSnapshot
+sensor.py           sechs Sensoren, alle am Coordinator
+```
+
+Datenfluss je Lauf:
+
+1. `async_read_daily` holt eine Sammelabfrage fuer alle gemappten Entities
+   (31 Tage, `period="day"`).
+2. `series` baut daraus `DaySample`-Proben; Energie bevorzugt `change`, sonst
+   Zaehlerdelta.
+3. `cop`, `cycling` und `heating_curve` berechnen die Kennzahlen fensterweise.
+4. `async_read_hourly` (7 Tage) liefert nur die Stundenwerte fuer die
+   Vorlauf-Abweichung, gefiltert auf laufenden Verdichter, wenn dessen
+   Statistik vorhanden ist.
+5. Sensoren lesen ausschliesslich `coordinator.data`; sie fragen selbst nichts
+   ab und schreiben nichts.

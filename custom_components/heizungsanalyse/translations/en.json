@@ -64,7 +64,8 @@
           "buffer_entity": "Buffer temperature",
           "defrost_entity": "Defrost status",
           "aux_heater_entity": "Auxiliary heater status",
-          "compressor_starts_entity": "Compressor starts"
+          "compressor_starts_entity": "Compressor starts",
+          "compressor_runtime_entity": "Compressor runtime"
         }
       },
       "add_circuit": {
@@ -128,6 +129,28 @@
         "radiators": "Radiators",
         "underfloor": "Underfloor heating",
         "dhw": "Domestic hot water"
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "cop_7_days": {
+        "name": "COP (7 days)"
+      },
+      "cop_30_days": {
+        "name": "COP (30 days)"
+      },
+      "starts_per_day": {
+        "name": "Compressor starts per day"
+      },
+      "runtime_per_cycle": {
+        "name": "Runtime per cycle"
+      },
+      "flow_deviation": {
+        "name": "Flow temperature deviation"
+      },
+      "data_days": {
+        "name": "Days with data"
       }
     }
   }

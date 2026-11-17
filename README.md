@@ -10,15 +10,15 @@ Waermepumpe, Heizkreise, Thermostate oder Pumpen.
 
 ## Status
 
-Frueher Entwicklungsstand. Vorhanden sind das Repo-Geruest (M0) und die
-Einrichtung (M1): Pflichtquellen, optionale Quellen, Heizkreise und Raeume
-lassen sich ueber die Oberflaeche pflegen. Entities entstehen ab M2.
+Frueher Entwicklungsstand. Vorhanden sind das Repo-Geruest (M0), die
+Einrichtung (M1) und die ersten Kennzahlen (M2): COP, Verdichterstarts,
+Laufzeit je Zyklus, Vorlauf-Abweichung und Tage mit Daten.
 
 | Phase | Inhalt | Stand |
 |---|---|---|
 | M0 | Repo-Geruest, CI, leere Integration | erledigt |
 | M1 | Config-Flow, Entity-Mapping, Kreis- und Raum-Modell | erledigt |
-| M2 | Kennzahlen (COP, Starts, Laufzeit, Vorlauf) | offen |
+| M2 | Kennzahlen (COP, Starts, Laufzeit, Vorlauf) | erledigt |
 | M3 | Geraeteinventar, Aenderungsverlauf, Services | offen |
 | M4 | Raum- und Kreisanalyse | offen |
 | M5 | Findings-Engine | offen |

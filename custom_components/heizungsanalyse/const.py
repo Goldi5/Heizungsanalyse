@@ -20,8 +20,26 @@ DOMAIN: Final = "heizungsanalyse"
 NAME: Final = "Heizungsanalyse"
 VERSION: Final = _read_version()
 
-# In M1 noch leer. Ab M2 kommen die Plattformen hier hinein.
-PLATFORMS: Final[list[str]] = []
+PLATFORMS: Final[list[str]] = ["sensor"]
+
+# Aktualisierung und Auswertungsfenster
+UPDATE_INTERVAL_MINUTES: Final = 5
+HISTORY_DAYS: Final = 31
+DEVIATION_DAYS: Final = 7
+COP_SHORT_DAYS: Final = 7
+COP_LONG_DAYS: Final = 30
+
+# Kennzahlen (Sensor-Keys / translation_key)
+SENSOR_COP_SHORT: Final = "cop_7_days"
+SENSOR_COP_LONG: Final = "cop_30_days"
+SENSOR_STARTS_PER_DAY: Final = "starts_per_day"
+SENSOR_RUNTIME_PER_CYCLE: Final = "runtime_per_cycle"
+SENSOR_FLOW_DEVIATION: Final = "flow_deviation"
+SENSOR_DATA_DAYS: Final = "data_days"
+
+# Stromquellen-Kennzeichnung
+POWER_SOURCE_PRIMARY: Final = "primary"
+POWER_SOURCE_FALLBACK: Final = "fallback"
 
 # --- Pflichtquellen (entry.data) -------------------------------------------------
 CONF_POWER_ENTITY: Final = "power_entity"
@@ -46,6 +64,7 @@ CONF_BUFFER_ENTITY: Final = "buffer_entity"
 CONF_DEFROST_ENTITY: Final = "defrost_entity"
 CONF_AUX_HEATER_ENTITY: Final = "aux_heater_entity"
 CONF_COMPRESSOR_STARTS_ENTITY: Final = "compressor_starts_entity"
+CONF_COMPRESSOR_RUNTIME_ENTITY: Final = "compressor_runtime_entity"
 
 OPTIONAL_SOURCES: Final = (
     CONF_POWER_FALLBACK_ENTITY,
@@ -57,6 +76,7 @@ OPTIONAL_SOURCES: Final = (
     CONF_DEFROST_ENTITY,
     CONF_AUX_HEATER_ENTITY,
     CONF_COMPRESSOR_STARTS_ENTITY,
+    CONF_COMPRESSOR_RUNTIME_ENTITY,
 )
 
 # --- Heizkreise und Raeume -------------------------------------------------------

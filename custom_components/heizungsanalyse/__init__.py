@@ -12,6 +12,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN, PLATFORMS
+from .coordinator import HeizungsanalyseCoordinator
 
 type HeizungsanalyseConfigEntry = ConfigEntry[HeizungsanalyseRuntime]
 
@@ -22,20 +23,20 @@ class HeizungsanalyseRuntime:
 
     hass: HomeAssistant
     entry: ConfigEntry
+    coordinator: HeizungsanalyseCoordinator
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: HeizungsanalyseConfigEntry) -> bool:
     """Einen Konfigurationseintrag einrichten."""
-    entry.runtime_data = HeizungsanalyseRuntime(hass=hass, entry=entry)
-    if PLATFORMS:
-        await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    coordinator = HeizungsanalyseCoordinator(hass, entry)
+    await coordinator.async_config_entry_first_refresh()
+    entry.runtime_data = HeizungsanalyseRuntime(hass=hass, entry=entry, coordinator=coordinator)
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: HeizungsanalyseConfigEntry) -> bool:
     """Einen Konfigurationseintrag entladen."""
-    if not PLATFORMS:
-        return True
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 

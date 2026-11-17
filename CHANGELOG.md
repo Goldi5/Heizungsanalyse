@@ -1,3 +1,22 @@
+## 0.3.0b0 – 2026-11-17
+
+### Neu
+- **Analyseschicht** `analysis/` ohne Home-Assistant-Import: COP, COP-Kennlinie,
+  Taktung (Starts pro Tag, Laufzeit je Zyklus), Zaehlerdifferenzen mit
+  Reset-Erkennung, Heizkurve und Vorlauf-Abweichung (Median/P90).
+- **Datenzugriff** `data_access.py` liest Tages- und Stundenstatistik des
+  Recorders; ohne Recorder bleiben die Kennzahlen `unknown`.
+- **Coordinator** im 5-Minuten-Takt: baut Tagesproben, waehlt die Stromquelle
+  (primaer oder Ersatz) und weist sie an jedem COP aus.
+- **Sensoren:** COP (7 Tage), COP (30 Tage), Verdichterstarts pro Tag,
+  Laufzeit je Zyklus, Vorlauf-Abweichung, Tage mit Daten (diagnostisch).
+- **Tests:** 14-Tage-Referenzfixture aus dem Plan (COP ca. 3,8, Starts 7 bis 13
+  pro Tag), Zeitreihenaufbau, Zaehlerresets, Sensorzustaende, fehlende Daten.
+
+### Dokumentation
+- Grenzen der Vorlauf-Abweichung und der Quellenwahl in
+  `docs/assumptions.md` und `docs/architecture.md` ergaenzt.
+
 ## 0.2.0b0 – 2026-11-17
 
 ### Neu

@@ -64,7 +64,8 @@
           "buffer_entity": "Puffertemperatur",
           "defrost_entity": "Abtauung-Status",
           "aux_heater_entity": "Heizstab/NHZ-Status",
-          "compressor_starts_entity": "Verdichterstarts"
+          "compressor_starts_entity": "Verdichterstarts",
+          "compressor_runtime_entity": "Verdichter-Laufzeit"
         }
       },
       "add_circuit": {
@@ -128,6 +129,28 @@
         "radiators": "Heizkoerper",
         "underfloor": "Fussbodenheizung",
         "dhw": "Warmwasser"
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "cop_7_days": {
+        "name": "COP (7 Tage)"
+      },
+      "cop_30_days": {
+        "name": "COP (30 Tage)"
+      },
+      "starts_per_day": {
+        "name": "Verdichterstarts pro Tag"
+      },
+      "runtime_per_cycle": {
+        "name": "Laufzeit pro Zyklus"
+      },
+      "flow_deviation": {
+        "name": "Vorlauf-Abweichung"
+      },
+      "data_days": {
+        "name": "Tage mit Daten"
       }
     }
   }

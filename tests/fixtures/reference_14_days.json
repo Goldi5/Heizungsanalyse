@@ -1,0 +1,26 @@
+{
+  "description": "Anonymisierte Referenzdaten aus dem Plan (Teil A4), 14 Tage. Keine Entity-IDs, keine Raumnamen, keine UUIDs.",
+  "expected": {
+    "cop_overall": 3.8,
+    "cop_daily_min": 3.2,
+    "cop_daily_max": 4.4,
+    "starts_per_day_min": 7,
+    "starts_per_day_max": 13
+  },
+  "days": [
+    {"day": "2026-11-03", "heat_kwh": 82, "power_kwh": 25, "outdoor_c": 4.0, "starts": 9, "runtime_h": 4.5},
+    {"day": "2026-11-04", "heat_kwh": 92, "power_kwh": 26, "outdoor_c": 4.0, "starts": 11, "runtime_h": 6.2},
+    {"day": "2026-11-05", "heat_kwh": 88, "power_kwh": 24, "outdoor_c": 5.0, "starts": 8, "runtime_h": 4.0},
+    {"day": "2026-11-06", "heat_kwh": 86, "power_kwh": 26, "outdoor_c": 6.0, "starts": 12, "runtime_h": 6.8},
+    {"day": "2026-11-07", "heat_kwh": 94, "power_kwh": 24, "outdoor_c": 6.0, "starts": 10, "runtime_h": 5.5},
+    {"day": "2026-11-08", "heat_kwh": 99, "power_kwh": 24, "outdoor_c": 7.0, "starts": 7, "runtime_h": 3.6},
+    {"day": "2026-11-09", "heat_kwh": 96, "power_kwh": 23, "outdoor_c": 5.0, "starts": 13, "runtime_h": 7.4},
+    {"day": "2026-11-10", "heat_kwh": 88, "power_kwh": 25, "outdoor_c": 4.0, "starts": 9, "runtime_h": 4.8},
+    {"day": "2026-11-11", "heat_kwh": 99, "power_kwh": 23, "outdoor_c": 7.0, "starts": 11, "runtime_h": 6.0},
+    {"day": "2026-11-12", "heat_kwh": 94, "power_kwh": 24, "outdoor_c": 6.0, "starts": 10, "runtime_h": 5.4},
+    {"day": "2026-11-13", "heat_kwh": 98, "power_kwh": 25, "outdoor_c": 5.0, "starts": 8, "runtime_h": 4.2},
+    {"day": "2026-11-14", "heat_kwh": 90, "power_kwh": 26, "outdoor_c": 4.0, "starts": 12, "runtime_h": 6.6},
+    {"day": "2026-11-15", "heat_kwh": 92, "power_kwh": 23, "outdoor_c": 6.0, "starts": 9, "runtime_h": 4.9},
+    {"day": "2026-11-16", "heat_kwh": 96, "power_kwh": 22, "outdoor_c": 7.0, "starts": 10, "runtime_h": 5.6}
+  ]
+}
