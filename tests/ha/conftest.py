@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 from collections.abc import Generator
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
-from homeassistant.core import HomeAssistant
 import pytest
+
+if TYPE_CHECKING:  # ohne HA-Testumgebung wird dieser Ordner gar nicht gesammelt
+    from homeassistant.core import HomeAssistant
 
 
 @pytest.fixture(autouse=True)

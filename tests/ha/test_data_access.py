@@ -47,3 +47,16 @@ def test_parse_hourly_rows_sorted() -> None:
     values = parse_hourly_rows(rows)
 
     assert [value.mean for value in values] == [34.0, 35.0]
+
+
+def test_parse_rows_with_unix_timestamps() -> None:
+    """Aktuelle Recorder-Versionen liefern ``start`` als Zeitstempel in Sekunden."""
+    start = _local_midnight_utc(2026, 11, 3)
+    rows = [{"start": start.timestamp(), "change": 97.0, "state": 57340.0}]
+
+    values = parse_daily_rows(rows)
+
+    assert values[0].day == date(2026, 11, 3)
+    assert values[0].change == 97.0
+    hourly = parse_hourly_rows([{"start": start.timestamp() * 1000, "mean": 31.6}])
+    assert hourly[0].hour == start

@@ -14,6 +14,7 @@ import unicodedata
 
 def slug(text: str) -> str:
     """Stabiler Bezeichner aus einem Namen (ohne Umlaute)."""
+    text = text.replace("ß", "ss").replace("ẞ", "SS")
     normalized = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
     value = re.sub(r"[^a-z0-9]+", "_", normalized.lower()).strip("_")
     return value or "item"

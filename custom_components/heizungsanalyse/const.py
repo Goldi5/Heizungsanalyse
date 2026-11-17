@@ -52,6 +52,8 @@ SENSOR_FINDINGS: Final = "findings"
 
 ROOM_WINDOW_DAYS: Final = 7
 ROOM_TOLERANCE: Final = 1.0
+# Soll darunter gilt als Frostschutz/aus – solche Stichproben zählen nicht
+ROOM_MIN_TARGET: Final = 10.0
 HEATING_UP_TRIGGER: Final = 0.3
 HEATING_UP_TOLERANCE: Final = 0.5
 HEATING_UP_MAX_MINUTES: Final = 360

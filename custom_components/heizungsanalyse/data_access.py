@@ -7,7 +7,7 @@ Werte und weiß nichts davon, woher sie stammen.
 from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 import logging
 from typing import Any
 
@@ -29,12 +29,26 @@ def _number(value: Any) -> float | None:
     return None
 
 
+def _start(value: Any) -> datetime | None:
+    """Beginn einer Statistikzeile.
+
+    Der Recorder liefert ``start`` je nach Version als ``datetime`` oder als
+    Unix-Zeitstempel in Sekunden (aktuelle Versionen). Beides wird akzeptiert.
+    """
+    if isinstance(value, datetime):
+        return value
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        seconds = float(value) / 1000 if value > 1e11 else float(value)
+        return datetime.fromtimestamp(seconds, tz=UTC)
+    return None
+
+
 def parse_daily_rows(rows: Sequence[dict[str, Any]]) -> list[DayValue]:
     """Statistikzeilen (Tagesperiode) in neutrale Werte umwandeln."""
     result: list[DayValue] = []
     for row in rows:
-        start = row.get("start")
-        if not isinstance(start, datetime):
+        start = _start(row.get("start"))
+        if start is None:
             continue
         result.append(
             DayValue(
@@ -51,8 +65,8 @@ def parse_hourly_rows(rows: Sequence[dict[str, Any]]) -> list[HourValue]:
     """Statistikzeilen (Stundenperiode) in neutrale Werte umwandeln."""
     result: list[HourValue] = []
     for row in rows:
-        start = row.get("start")
-        if not isinstance(start, datetime):
+        start = _start(row.get("start"))
+        if start is None:
             continue
         result.append(HourValue(hour=start, mean=_number(row.get("mean"))))
     return sorted(result, key=lambda item: item.hour)

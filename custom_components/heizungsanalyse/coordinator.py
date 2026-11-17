@@ -62,6 +62,7 @@ from .const import (
     MIXER_RESOLUTION_MINUTES,
     POWER_SOURCE_FALLBACK,
     POWER_SOURCE_PRIMARY,
+    ROOM_MIN_TARGET,
     ROOM_TOLERANCE,
     ROOM_WINDOW_DAYS,
     UPDATE_INTERVAL_MINUTES,
@@ -413,6 +414,9 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
         current = _as_float(state.attributes.get("current_temperature"))
         target = _as_float(state.attributes.get("temperature"))
         if current is None or target is None:
+            return None
+        if target < ROOM_MIN_TARGET:
+            # Frostschutz oder bewusst abgeschaltet: kein Komfortziel, keine Raumhinweise
             return None
         valve = None
         valve_id = room.get(CONF_VALVE_POSITION_ENTITY)

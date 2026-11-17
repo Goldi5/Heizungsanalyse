@@ -1,3 +1,17 @@
+## 0.2.1 – 2026-11-17
+
+### Behoben
+- **Keine Kennzahlen trotz vorhandener Statistik:** Aktuelle Home-Assistant-
+  Versionen liefern den Beginn einer Statistikzeile als Zeitstempel statt als
+  Datum. Diese Zeilen wurden verworfen – COP, Starts, Vorlauf-Abweichung und
+  „Tage mit Daten“ blieben leer, und F12 meldete fälschlich fehlende
+  Langzeitstatistik. Beide Formate werden jetzt gelesen.
+- **Abgeschaltete Räume lösen keine Hinweise mehr aus:** Ein Soll unter 10 °C
+  (Frostschutz, bewusst aus) zählt nicht als Komfortziel. Vorher meldete F05
+  z. B. „9,9 K über dem Soll“ für einen Raum auf 6 °C.
+- Bezeichner aus Namen mit „ß“ werden mit „ss“ gebildet (Fußboden →
+  `fussboden`).
+
 ## 0.2.0 – 2026-11-17
 
 ### Neu
