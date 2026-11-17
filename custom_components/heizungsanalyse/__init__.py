@@ -12,9 +12,11 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
 
-from .const import DOMAIN, PLATFORMS
+from .const import DOMAIN, PLATFORMS, VERSION
 from .coordinator import HeizungsanalyseCoordinator
-from .frontend import async_register_frontend
+from .debug_log import get_trace, install_debug_trace
+from .event_log import EventLog
+from .frontend import async_register_frontend, log_dashboard_state
 from .services import async_setup_services
 from .storage import InventoryStore
 from .websocket_api import async_register as async_register_websocket
@@ -32,6 +34,7 @@ class HeizungsanalyseRuntime:
     entry: ConfigEntry
     coordinator: HeizungsanalyseCoordinator
     store: InventoryStore
+    log: EventLog
 
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
@@ -44,21 +47,45 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 
 async def async_setup_entry(hass: HomeAssistant, entry: HeizungsanalyseConfigEntry) -> bool:
     """Einen Konfigurationseintrag einrichten."""
-    coordinator = HeizungsanalyseCoordinator(hass, entry)
-    await coordinator.async_config_entry_first_refresh()
-
     store = InventoryStore(hass, entry.entry_id)
     await store.async_load()
-    await store.async_save_rollups(coordinator.data.samples)
 
-    entry.runtime_data = HeizungsanalyseRuntime(hass=hass, entry=entry, coordinator=coordinator, store=store)
+    log = EventLog(store)
+    await log.async_load()
+    await log.async_start()
+
+    trace = install_debug_trace(hass, store)
+    await trace.async_load()
+
+    coordinator = HeizungsanalyseCoordinator(hass, entry, log=log)
+    await coordinator.async_config_entry_first_refresh()
+
+    await store.async_save_rollups(coordinator.data.samples)
+    await coordinator.async_log_config(await store.async_config_snapshot())
+    await store.async_set_config_snapshot(coordinator.config_state())
+
+    entry.runtime_data = HeizungsanalyseRuntime(hass=hass, entry=entry, coordinator=coordinator, store=store, log=log)
+    await log_dashboard_state(hass, log, entry)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     def _persist_rollups() -> None:
         hass.async_create_task(store.async_save_rollups(coordinator.data.samples))
 
     entry.async_on_unload(coordinator.async_add_listener(_persist_rollups))
+    entry.async_on_unload(_stop_logging(store, log, trace))
     return True
+
+
+def _stop_logging(store: InventoryStore, log: EventLog, trace) -> object:
+    """Beim Entladen: offene Puffer sichern, Spur stoppen."""
+
+    async def _stop() -> None:
+        trace.uninstall()
+        await trace.async_save()
+        await log.async_flush()
+        await store.async_flush()
+
+    return _stop
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: HeizungsanalyseConfigEntry) -> bool:
@@ -70,7 +97,9 @@ __all__ = [
     "DOMAIN",
     "HeizungsanalyseConfigEntry",
     "HeizungsanalyseRuntime",
+    "VERSION",
     "async_setup",
     "async_setup_entry",
     "async_unload_entry",
+    "get_trace",
 ]

@@ -81,3 +81,9 @@ export_report:
           options:
             - markdown
             - json
+
+refresh:
+  name: Jetzt neu berechnen
+  description: >-
+    Wertet die vorhandenen Daten erneut aus. Die Integration liest dabei nur;
+    es wird kein Gerät geschaltet.

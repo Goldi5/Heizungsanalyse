@@ -1,24 +1,29 @@
-"""Persistenz: Geräteinventar, Änderungsverlauf und Tages-Roll-ups."""
+"""Persistenz: Geräteinventar, Änderungsverlauf, Tages-Roll-ups, Protokoll."""
 
 from __future__ import annotations
 
 from collections.abc import Iterable
-from datetime import date
+from datetime import date, datetime, timedelta
 import logging
 from typing import Any
 
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
+from .analysis.event_log import DEFAULT_LIMIT, DEFAULT_RETENTION_DAYS
 from .analysis.types import DaySample
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-STORAGE_VERSION = 1
+STORAGE_VERSION = 2
 ROLLUP_RETENTION_DAYS = 400
 CHANGE_LOG_LIMIT = 2000
+LOG_SAVE_DELAY_SECONDS = 10
+TRACE_LINES = 3000
+TRACE_HOURS = 12
 
 EMPTY_INVENTORY: dict[str, dict[str, Any]] = {
     "pumps": {},
@@ -39,8 +44,11 @@ class InventoryStore:
     """Hält Inventar, Änderungsverlauf und Tageswerte im HA-Speicher."""
 
     def __init__(self, hass: HomeAssistant, entry_id: str) -> None:
+        self._hass = hass
         self._store: Store[dict[str, Any]] = Store(hass, STORAGE_VERSION, f"{DOMAIN}.{entry_id}")
         self._data: dict[str, Any] | None = None
+        self._save_handle: Any = None
+        self._trace_dirty = False
 
     async def async_load(self) -> dict[str, Any]:
         """Daten einmalig laden; fehlende Bereiche werden ergänzt."""
@@ -52,6 +60,9 @@ class InventoryStore:
                 "change_log": list(stored.get("change_log") or []),
                 "rollups": dict(stored.get("rollups") or {}),
                 "dashboard": dict(stored.get("dashboard") or {}),
+                "log": list(stored.get("log") or []),
+                "trace": list(stored.get("trace") or []),
+                "config_snapshot": dict(stored.get("config_snapshot") or {}),
             }
         return self._data
 
@@ -179,6 +190,104 @@ class InventoryStore:
 
     async def async_rollups(self) -> dict[str, dict[str, Any]]:
         return dict((await self.async_load())["rollups"])
+
+    # ------------------------------------------------------------- Protokoll
+
+    def _schedule_save(self) -> None:
+        """Speichern verzögern: nicht bei jedem Eintrag auf die Platte."""
+        if self._save_handle is not None:
+            return
+        self._save_handle = async_call_later(self._hass, LOG_SAVE_DELAY_SECONDS, self._save_later)
+
+    async def _save_later(self, _now) -> None:
+        self._save_handle = None
+        await self.async_save()
+
+    async def async_flush(self) -> None:
+        """Ausstehendes sofort sichern (beim Entladen und bei HA-Stopp)."""
+        if self._save_handle is not None:
+            self._save_handle()
+            self._save_handle = None
+        await self.async_save()
+
+    async def async_append_log(self, entries: Iterable[dict[str, Any]]) -> int:
+        """Protokolleinträge anhängen, begrenzen und verzögert sichern."""
+        data = await self.async_load()
+        added = list(entries)
+        if not added:
+            return 0
+        data["log"].extend(added)
+        now = dt_util.utcnow()
+        cutoff = now - timedelta(days=DEFAULT_RETENTION_DAYS)
+        kept = [entry for entry in data["log"] if _parse_ts(entry.get("ts")) is None or _parse_ts(entry.get("ts")) >= cutoff]
+        if len(kept) > DEFAULT_LIMIT:
+            kept = sorted(kept, key=lambda entry: _parse_ts(entry.get("ts")) or now)[-DEFAULT_LIMIT:]
+        data["log"] = kept
+        self._schedule_save()
+        return len(added)
+
+    async def async_log_entries(self, *, limit: int = 500, newest_first: bool = True) -> list[dict[str, Any]]:
+        data = await self.async_load()
+        entries = data["log"][-limit:]
+        return list(reversed(entries)) if newest_first else entries
+
+    # ------------------------------------------------------------ Debug-Spur
+
+    async def async_set_trace(self, records: list[dict[str, Any]]) -> None:
+        """Debug-Spur als Ganzes übernehmen (beim Sichern)."""
+        data = await self.async_load()
+        data["trace"] = list(records)[-TRACE_LINES:]
+        self._trace_dirty = True
+
+    async def async_append_trace(self, records: Iterable[dict[str, Any]]) -> int:
+        """Debug-Spur anhängen (im Speicher, keine sofortige Platte)."""
+        data = await self.async_load()
+        added = list(records)
+        if not added:
+            return 0
+        data["trace"].extend(added)
+        now = dt_util.utcnow()
+        cutoff = now - timedelta(hours=TRACE_HOURS)
+        kept = [
+            record for record in data["trace"] if _parse_ts(record.get("ts")) is None or _parse_ts(record.get("ts")) >= cutoff
+        ]
+        if len(kept) > TRACE_LINES:
+            kept = kept[-TRACE_LINES:]
+        data["trace"] = kept
+        self._trace_dirty = True
+        return len(added)
+
+    async def async_trace_entries(self, *, limit: int = 500) -> list[dict[str, Any]]:
+        data = await self.async_load()
+        return list(reversed(data["trace"][-limit:]))
+
+    async def async_save_trace(self) -> None:
+        if self._data is not None and self._trace_dirty:
+            self._trace_dirty = False
+            await self._store.async_save(self._data)
+
+    # --------------------------------------------------- Konfigurations-Snapshot
+
+    async def async_config_snapshot(self) -> dict[str, Any]:
+        return dict((await self.async_load())["config_snapshot"])
+
+    async def async_set_config_snapshot(self, snapshot: dict[str, Any]) -> None:
+        data = await self.async_load()
+        if data["config_snapshot"] == snapshot:
+            return
+        data["config_snapshot"] = snapshot
+        await self.async_save()
+
+
+def _parse_ts(value: Any) -> datetime | None:
+    if isinstance(value, datetime):
+        return value
+    if not value:
+        return None
+    try:
+        return dt_util.parse_datetime(str(value))
+    except (TypeError, ValueError):
+        return None
 
 
 def rollup_days(rollups: dict[str, dict[str, Any]]) -> list[date]:

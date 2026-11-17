@@ -132,3 +132,27 @@ async def async_read_hourly(
         types=HOURLY_TYPES,
     )
     return {entity_id: parse_hourly_rows(rows) for entity_id, rows in rows_by_id.items()}
+
+
+async def async_read_raw(
+    hass: HomeAssistant,
+    entity_ids: Iterable[str],
+    *,
+    days: int,
+    period: str,
+    types: set[str],
+) -> dict[str, list[dict[str, Any]]]:
+    """Rohe Statistikzeilen für den Quellen-Check (Diagnose)."""
+    return await _read(hass, entity_ids, start=dt_util.utcnow() - timedelta(days=days), period=period, types=types)
+
+
+async def async_read_metadata(hass: HomeAssistant, entity_ids: Iterable[str]) -> dict[str, Any]:
+    """Metadaten der Statistik (Einheit, Typ, Quelle) je Entity."""
+    wanted = {entity_id for entity_id in entity_ids if entity_id}
+    if not wanted:
+        return {}
+    try:
+        instance = get_instance(hass)
+    except KeyError:
+        return {}
+    return await instance.async_add_executor_job(statistics.get_metadata, hass, statistic_ids=wanted)

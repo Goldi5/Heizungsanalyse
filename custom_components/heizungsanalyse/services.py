@@ -26,6 +26,7 @@ from .const import (
     SERVICE_COMPARE_PERIODS,
     SERVICE_EXPORT_REPORT,
     SERVICE_LOG_CHANGE,
+    SERVICE_REFRESH,
     SERVICE_UPDATE_INVENTORY,
 )
 from .report import render_json, render_markdown
@@ -52,6 +53,8 @@ LOG_CHANGE_SCHEMA = vol.Schema(
         vol.Optional("note"): str,
     }
 )
+
+REFRESH_SCHEMA = vol.Schema({})
 
 COMPARE_SCHEMA = vol.Schema(
     {
@@ -114,6 +117,14 @@ async def _handle_update_inventory(call: ServiceCall) -> ServiceResponse:
     changes = await runtime.store.async_update_inventory(object_id, values, note=call.data.get("note"))
     if changes:
         call.hass.bus.async_fire(EVENT_INVENTORY_CHANGED, {"changes": changes})
+        await runtime.log.async_add(
+            "info",
+            "inventory",
+            f"Inventar {object_id}: {len(changes)} Feld/Felder geändert",
+            key="inventory.updated",
+            params={"object": object_id, "count": len(changes)},
+            details={"object": object_id, "changes": changes},
+        )
     return {"object": object_id, "changed": len(changes)}
 
 
@@ -127,6 +138,14 @@ async def _handle_log_change(call: ServiceCall) -> ServiceResponse:
         note=call.data.get("note"),
     )
     call.hass.bus.async_fire(EVENT_INVENTORY_CHANGED, {"changes": [change]})
+    await runtime.log.async_add(
+        "info",
+        "inventory",
+        f"Änderung dokumentiert: {change['object']}.{change['field']}",
+        key="inventory.logged",
+        params={"object": change["object"], "field": change["field"]},
+        details=dict(change),
+    )
     return {"change": change}
 
 
@@ -164,6 +183,13 @@ async def _handle_export_report(call: ServiceCall) -> ServiceResponse:
     return {"format": report_format, "report": body}
 
 
+async def _handle_refresh(call: ServiceCall) -> ServiceResponse:
+    """Coordinator neu rechnen lassen (nur Lesevorgang, kein Eingriff)."""
+    runtime = _runtime(call.hass)
+    await runtime.coordinator.async_request_refresh()
+    return {"ok": True, "last_duration_ms": runtime.coordinator.last_duration_ms}
+
+
 async def async_setup_services(hass: HomeAssistant) -> None:
     """Dienste einmalig registrieren."""
     if hass.services.has_service(DOMAIN, SERVICE_UPDATE_INVENTORY):
@@ -188,6 +214,13 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         SERVICE_COMPARE_PERIODS,
         _handle_compare_periods,
         schema=COMPARE_SCHEMA,
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_REFRESH,
+        _handle_refresh,
+        schema=REFRESH_SCHEMA,
         supports_response=SupportsResponse.OPTIONAL,
     )
     hass.services.async_register(

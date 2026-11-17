@@ -17,7 +17,7 @@ from homeassistant.components.frontend import add_extra_js_url
 from homeassistant.components.http import HomeAssistantView
 from homeassistant.core import HomeAssistant
 
-from .const import CARD_URL, VERSION
+from .const import CARD_URL, DASHBOARD_PATH, VERSION
 
 _LOGGER = logging.getLogger(__name__)
 CARD_FILE = Path(__file__).parent / "www" / "heizungsanalyse-card.js"
@@ -75,3 +75,47 @@ async def async_register_frontend(hass: HomeAssistant) -> None:
     except Exception as err:  # noqa: BLE001 - interne API, lieber Rückfall als Absturz
         _LOGGER.warning("Ressource konnte nicht eingetragen werden (%s) - nutze Extra-Modul", err)
         add_extra_js_url(hass, url)
+
+
+async def log_dashboard_state(hass: HomeAssistant, log, entry) -> None:
+    """Ressource und Dashboard-Stand einmalig protokollieren."""
+    data = hass.data.get("lovelace")
+    resources = getattr(data, "resources", None)
+    storage_mode = resources is not None and getattr(data, "resource_mode", "storage") == "storage"
+    items: list[dict] = []
+    if storage_mode:
+        try:
+            await resources.async_get_info()
+            items = list(resources.async_items())
+        except Exception:  # noqa: BLE001 - interne API, dann eben ohne URL
+            items = []
+    matching = [item for item in items if str(item.get("url", "")).split("?")[0] == CARD_URL]
+    body = await hass.async_add_executor_job(_read_card)
+    url = matching[0].get("url") if matching else f"{CARD_URL}?v={VERSION}-{card_hash(body)}"
+    mode = "storage" if storage_mode else "yaml"
+    await log.async_add(
+        "info",
+        "dashboard",
+        f"Karte als Ressource eingetragen ({mode}-Modus, {url})",
+        key="dashboard.resource",
+        params={"mode": mode, "url": url},
+        details={"mode": mode, "url": url, "count": len(matching)},
+    )
+
+    runtime = getattr(entry, "runtime_data", None)
+    if runtime is None:
+        return
+    state = await runtime.store.async_dashboard()
+    if state.get("handled"):
+        key = "dashboard.created" if state.get("created") else "dashboard.exists"
+        message = (
+            f"Dashboard {DASHBOARD_PATH} angelegt" if state.get("created") else f"Dashboard {DASHBOARD_PATH} bereits vorhanden"
+        )
+        await log.async_add(
+            "info",
+            "dashboard",
+            message,
+            key=key,
+            params={"path": DASHBOARD_PATH},
+            details=dict(state),
+        )

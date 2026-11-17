@@ -129,6 +129,7 @@ SERVICE_UPDATE_INVENTORY: Final = "update_inventory"
 SERVICE_LOG_CHANGE: Final = "log_change"
 SERVICE_COMPARE_PERIODS: Final = "compare_periods"
 SERVICE_EXPORT_REPORT: Final = "export_report"
+SERVICE_REFRESH: Final = "refresh"
 
 CONF_THRESHOLDS: Final = "thresholds"
 

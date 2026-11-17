@@ -251,6 +251,10 @@
           "name": "Format"
         }
       }
+    },
+    "refresh": {
+      "name": "Recalculate now",
+      "description": "Re-evaluates the existing data. The integration only reads; it never switches a device."
     }
   }
 }
