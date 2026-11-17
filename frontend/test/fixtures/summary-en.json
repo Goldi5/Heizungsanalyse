@@ -6,7 +6,61 @@
   "value": 75,
   "level": "good",
   "warnings": 1,
-  "infos": 2
+  "infos": 2,
+  "checks": [
+   {
+    "key": "cop",
+    "active": true,
+    "reason": null
+   },
+   {
+    "key": "flow",
+    "active": true,
+    "reason": null
+   },
+   {
+    "key": "starts",
+    "active": true,
+    "reason": null
+   },
+   {
+    "key": "runtime",
+    "active": true,
+    "reason": null
+   },
+   {
+    "key": "rooms",
+    "active": true,
+    "reason": null
+   },
+   {
+    "key": "pumps",
+    "active": true,
+    "reason": null
+   },
+   {
+    "key": "mixer",
+    "active": true,
+    "reason": null
+   },
+   {
+    "key": "defrost",
+    "active": true,
+    "reason": null
+   },
+   {
+    "key": "aux",
+    "active": true,
+    "reason": null
+   },
+   {
+    "key": "dhw",
+    "active": true,
+    "reason": null
+   }
+  ],
+  "active": 10,
+  "total": 10
  },
  "kpis": {
   "cop_short": {
@@ -52,7 +106,7 @@
    "severity": "warning",
    "key": "flow_deviation",
    "title": "Flow temperature above target",
-   "text": "The actual flow temperature is a median 1.4 K above target (threshold 1.0 K).",
+   "text": "The actual flow temperature is a median 1.4 K above target (threshold 1 K).",
    "suggestion": "Check target, heating curve and buffer control; this is the strongest optimisation candidate.",
    "evidence": {
     "median_k": 1.4,
@@ -87,7 +141,7 @@
    "severity": "info",
    "key": "room_overheated",
    "title": "Room gets too warm",
-   "text": "Kinderzimmer is a median 1.3 K above target (threshold 1.0 K).",
+   "text": "Kinderzimmer is a median 1.3 K above target (threshold 1 K).",
    "suggestion": "Check control, valve and external heat; overheating costs energy.",
    "evidence": {
     "median_k": 1.3,

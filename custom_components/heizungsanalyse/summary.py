@@ -87,12 +87,56 @@ def _r(value: float | None, digits: int = 2) -> float | None:
     return None if value is None else round(float(value), digits)
 
 
-def score(findings: Sequence[Finding], days_with_data: int) -> dict[str, Any]:
-    """Anlagen-Check 0-100 mit Stufe. Ohne Datenbasis kein Wert."""
+# Prüfungen, die der Anlagen-Check abdeckt. Die ersten beiden sind Pflicht für
+# eine gute Note: ohne COP und Vorlauf-Abweichung ist „Sehr gut“ nicht belegbar.
+CHECKS: tuple[str, ...] = ("cop", "flow", "starts", "runtime", "rooms", "pumps", "mixer", "defrost", "aux", "dhw")
+KEY_CHECKS = ("cop", "flow")
+MIN_COVERAGE = 0.7
+MIN_ROOM_SAMPLES = 144
+
+
+def coverage(snapshot: Any, circuits: Sequence[Mapping[str, Any]], sources: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """Welche Prüfungen laufen – und warum nicht (keine Quelle / noch keine Daten)."""
+    recent = list(snapshot.samples)[-7:]
+    has_pump = any(c.get("pump_entity") for c in circuits)
+    has_mixer = any(c.get("mixer_open_entity") or c.get("mixer_close_entity") for c in circuits)
+
+    def row(key: str, active: bool, source: bool) -> dict[str, Any]:
+        return {"key": key, "active": bool(active), "reason": None if active else ("no_data" if source else "no_source")}
+
+    rooms = getattr(snapshot, "rooms", {}) or {}
+    return [
+        row("cop", snapshot.cop_short.cop is not None and snapshot.cop_short.days >= 3, True),
+        row(
+            "flow",
+            getattr(snapshot.deviation, "count", 0) > 0,
+            bool(sources.get("flow_entity") and sources.get("target_flow_entity")),
+        ),
+        row("starts", snapshot.starts_per_day is not None, True),
+        row("runtime", snapshot.runtime_per_cycle is not None, True),
+        row("rooms", any(getattr(v, "samples", 0) >= MIN_ROOM_SAMPLES for v in rooms.values()), True),
+        row("pumps", any(getattr(v, "samples", 0) > 0 for v in (getattr(snapshot, "circuits", {}) or {}).values()), has_pump),
+        row("mixer", bool(getattr(snapshot, "mixer", {}) or {}), has_mixer),
+        row("defrost", any(s.defrost_hours is not None for s in recent), bool(sources.get("defrost_entity"))),
+        row("aux", any(s.aux_hours is not None for s in recent), bool(sources.get("aux_heater_entity"))),
+        row("dhw", any(s.dhw_heat_kwh is not None for s in recent), bool(sources.get("dhw_heat_entity"))),
+    ]
+
+
+def score(findings: Sequence[Finding], days_with_data: int, checks: Sequence[Mapping[str, Any]] | None = None) -> dict[str, Any]:
+    """Anlagen-Check 0-100 mit Stufe. Ohne Datenbasis kein Wert.
+
+    Laufen wichtige Prüfungen nicht (COP, Vorlauf) oder weniger als 70 %, heißt
+    die Stufe „eingeschränkt“ statt „gut“/„sehr gut“ – eine Note ohne Prüfung
+    wäre geschönt. Schlechte Noten bleiben schlecht.
+    """
     warnings = sum(1 for item in findings if item.severity == "warning")
     infos = sum(1 for item in findings if item.severity != "warning")
+    rows = list(checks or [])
+    active = sum(1 for c in rows if c.get("active"))
+    extra = {"checks": rows, "active": active, "total": len(rows)}
     if days_with_data < MIN_SCORE_DAYS:
-        return {"value": None, "level": "learning", "warnings": warnings, "infos": infos}
+        return {"value": None, "level": "learning", "warnings": warnings, "infos": infos} | extra
     value = max(0, 100 - warnings * SCORE_PENALTY["warning"] - infos * SCORE_PENALTY["info"])
     if value >= 85:
         level = "very_good"
@@ -102,7 +146,11 @@ def score(findings: Sequence[Finding], days_with_data: int) -> dict[str, Any]:
         level = "watch"
     else:
         level = "action"
-    return {"value": value, "level": level, "warnings": warnings, "infos": infos}
+    if rows and level in ("very_good", "good"):
+        key_missing = any(not c.get("active") for c in rows if c.get("key") in KEY_CHECKS)
+        if key_missing or active / len(rows) < MIN_COVERAGE:
+            level = "limited"
+    return {"value": value, "level": level, "warnings": warnings, "infos": infos} | extra
 
 
 def daily_series(samples: Iterable[DaySample], *, limit: int = SERIES_DAYS) -> list[dict[str, Any]]:
@@ -297,7 +345,7 @@ def build_summary(
         "version": version,
         "title": title,
         "generated": (generated or datetime.now()).isoformat(),
-        "score": score(findings, snapshot.days_with_data),
+        "score": score(findings, snapshot.days_with_data, coverage(snapshot, circuits, sources)),
         "kpis": {
             "cop_short": _cop(snapshot.cop_short),
             "cop_long": _cop(snapshot.cop_long),

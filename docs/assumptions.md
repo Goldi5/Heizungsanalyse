@@ -151,9 +151,9 @@ abbildet; die Live-Zahl wird hier separat festgehalten.
   Fünf-Minuten-Takt. Unter- und Überheizungsanteile, Aufheizzeiten und
   Mischer-Impulse sind deshalb Näherungen; schnellere Vorgänge können
   unerkannt bleiben.
-- **Fenster im Arbeitsspeicher.** Nach einem Neustart von Home Assistant sind
-  die Raum- und Kreiswerte für einige Läufe `unknown`. Tageskennzahlen aus
-  M2/M3 bleiben davon unberührt.
+- **Fenster im Arbeitsspeicher.** Nach einem Neustart wird es aus dem
+  Zustandsverlauf nachgetragen; reicht der Verlauf nicht so weit, bleiben
+  Raumhinweise bis zwölf Stunden Daten aus.
 - **Keine Aufheizzeit ohne Sollwertsprung.** Räume, in denen das Soll nie
   angehoben wird (oder die dauerhaft aus sind), zeigen `unknown` statt einer
   Zahl.

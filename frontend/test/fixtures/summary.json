@@ -6,7 +6,61 @@
   "value": 75,
   "level": "good",
   "warnings": 1,
-  "infos": 2
+  "infos": 2,
+  "checks": [
+   {
+    "key": "cop",
+    "active": true,
+    "reason": null
+   },
+   {
+    "key": "flow",
+    "active": true,
+    "reason": null
+   },
+   {
+    "key": "starts",
+    "active": true,
+    "reason": null
+   },
+   {
+    "key": "runtime",
+    "active": true,
+    "reason": null
+   },
+   {
+    "key": "rooms",
+    "active": true,
+    "reason": null
+   },
+   {
+    "key": "pumps",
+    "active": true,
+    "reason": null
+   },
+   {
+    "key": "mixer",
+    "active": true,
+    "reason": null
+   },
+   {
+    "key": "defrost",
+    "active": true,
+    "reason": null
+   },
+   {
+    "key": "aux",
+    "active": true,
+    "reason": null
+   },
+   {
+    "key": "dhw",
+    "active": true,
+    "reason": null
+   }
+  ],
+  "active": 10,
+  "total": 10
  },
  "kpis": {
   "cop_short": {
@@ -52,7 +106,7 @@
    "severity": "warning",
    "key": "flow_deviation",
    "title": "Vorlauf liegt über Soll",
-   "text": "Der Ist-Vorlauf liegt im Median 1.4 K über dem Soll (Schwelle 1.0 K).",
+   "text": "Der Ist-Vorlauf liegt im Median 1,4 K über dem Soll (Schwelle 1 K).",
    "suggestion": "Sollwert, Heizkurve und Pufferführung prüfen; die Abweichung ist der stärkste Optimierungskandidat.",
    "evidence": {
     "median_k": 1.4,
@@ -87,7 +141,7 @@
    "severity": "info",
    "key": "room_overheated",
    "title": "Raum wird zu warm",
-   "text": "Kinderzimmer liegt im Median 1.3 K über dem Soll (Schwelle 1.0 K).",
+   "text": "Kinderzimmer liegt im Median 1,3 K über dem Soll (Schwelle 1 K).",
    "suggestion": "Regelung, Ventil und Fremdwärme prüfen; Überheizung kostet Energie.",
    "evidence": {
     "median_k": 1.3,

@@ -2,7 +2,7 @@
 import { getLang, t } from "./i18n.js";
 import { helpText } from "./help.js";
 import { binChart, ring, scatterChart, sparkline, timeChart, withWidth } from "./charts.js";
-import { SCORE_LEVEL, binByOutdoor, dayLabel, esc, fmt, kpiTone, linearFit, rangeRows, signed, trend, weatherAdjusted } from "./logic.js";
+import { CHECK_NAMES, SCORE_LEVEL, binByOutdoor, dayLabel, esc, fmt, kpiTone, linearFit, rangeRows, signed, trend, weatherAdjusted } from "./logic.js";
 
 export const VIEWS = ["anlage", "effizienz", "raeume", "vergleich", "inventar", "protokoll"];
 
@@ -62,8 +62,9 @@ export function viewAnlage(d, ui) {
   const scoreCard = `<div class="c">${head(t("Anlagen-Check"), "score", ui)}
     <div class="score">${ring(d.score.value, lvl.tone)}
       <div><div class="lvl">${esc(t(lvl.label))}</div>
-      <div class="muted">${esc(t("{w} Warnung · {i} Hinweise", { w: d.score.warnings, i: d.score.infos }))}<br>${esc(t("Datenbasis {d} Tage", { d: k.days_with_data }))}</div>
-      ${k.power_source === "fallback" ? `<div style="margin-top:8px">${pill("warn", t("Quelle {s}", { s: t("Ersatzquelle") }))}</div>` : ""}</div></div></div>`;
+      <div class="muted">${esc(t("{w} Warnung · {i} Hinweise", { w: d.score.warnings, i: d.score.infos }))}<br>${esc(t("Datenbasis {d} Tage", { d: k.days_with_data }))}${d.score.total ? `<br>${esc(t("{a} von {n} Prüfungen aktiv", { a: d.score.active, n: d.score.total }))}` : ""}</div>
+      ${k.power_source === "fallback" ? `<div style="margin-top:8px">${pill("warn", t("Quelle {s}", { s: t("Ersatzquelle") }))}</div>` : ""}</div></div>
+    ${(d.score.checks || []).some((c) => !c.active) ? `<div class="fs" style="margin-top:10px">${esc(t("Ohne Bewertung:"))}</div><div class="ev">${(d.score.checks || []).filter((c) => !c.active).map((c) => `<span title="${esc(c.reason === "no_source" ? t("kein Sensor zugeordnet") : t("noch keine Daten"))}">${esc(t(CHECK_NAMES[c.key] || c.key))} · ${esc(c.reason === "no_source" ? t("kein Sensor") : t("keine Daten"))}</span>`).join("")}</div>` : ""}</div>`;
 
   const cop = k.cop_short.value;
   const copPill = (() => {
@@ -367,6 +368,7 @@ const SOURCE_STATUS = {
 const LOG_EN = {
   "log.restart": "— restart —",
   "update.run": "Analysis: {rows} statistic rows, {days} days with data, {duration} ms",
+  "update.backfill": "History back-filled: {rooms} room, {pumps} pump, {mixer} mixer samples",
   "source.lost": "Source {entity} is unavailable (for {hours} h)",
   "source.back": "Source {entity} is available again",
   "source.no_statistics": "Source {entity} has no long-term statistics",

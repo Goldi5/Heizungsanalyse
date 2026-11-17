@@ -34,8 +34,8 @@ Standardeinstellungen (Platzhalter, im Optionsdialog änderbar):
 
 | Feld | Standard |
 |---|---|
-| `flow_deviation_k` | 5.0 |
-| `starts_per_day` | 20.0 |
+| `flow_deviation_k` | 2.0 |
+| `starts_per_day` | 12.0 |
 | `runtime_minutes` | 20.0 |
 | `pump_idle_share` | 0.4 |
 | `room_deviation_k` | 1.0 |

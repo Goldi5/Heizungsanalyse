@@ -29,6 +29,15 @@ from .analysis.event_log import (
 )
 from .analysis.findings import Finding, FindingsInput, Thresholds, evaluate, signature
 from .analysis.heating_curve import CurveBin, DeviationResult, curve_bins, deviation
+from .analysis.onoff import (
+    as_on,
+    grid,
+    hours_per_day,
+    intervals,
+    share_per_hour,
+    starts_per_day as onoff_starts_per_day,
+    value_at,
+)
 from .analysis.rooms import RoomDeviation, RoomReading
 from .analysis.series import build_samples, counter_by_day, energy_by_day, mean_by_day
 from .analysis.types import DaySample, HourSample
@@ -67,6 +76,8 @@ from .const import (
     HEATING_UP_TOLERANCE,
     HEATING_UP_TRIGGER,
     HISTORY_DAYS,
+    HISTORY_ONOFF_DAYS,
+    HISTORY_REFRESH_MINUTES,
     MIXER_RESOLUTION_MINUTES,
     POWER_SOURCE_FALLBACK,
     POWER_SOURCE_PRIMARY,
@@ -75,7 +86,7 @@ from .const import (
     ROOM_WINDOW_DAYS,
     UPDATE_INTERVAL_MINUTES,
 )
-from .data_access import async_read_daily, async_read_hourly
+from .data_access import async_read_daily, async_read_history, async_read_hourly
 from .event_log import EventLog
 from .tracking import CircuitTracker, MixerTracker, RoomTracker, rank_rooms_with_circuits
 
@@ -172,6 +183,12 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
         self._unit_warned: set[str] = set()
         self._class_warned: set[str] = set()
         self._flow_hours: list[HourSample] = []
+        # Zustandsverlauf (Binärsensoren haben keine Langzeitstatistik)
+        self._history_at: datetime | None = None
+        self._changes: dict[str, list[tuple[datetime, bool | None]]] = {}
+        self._spans: dict[str, list[tuple[datetime, datetime]]] = {}
+        self._history_start: datetime | None = None
+        self._backfilled = False
         self.last_duration_ms = 0.0
         self.last_error: str | None = None
 
@@ -260,6 +277,7 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
             defrost_id,
         }
         daily = await async_read_daily(self.hass, wanted, HISTORY_DAYS)
+        await self._refresh_history(dt_util.utcnow())
 
         power_source, power_id = self._select_power(daily, primary_power_id, fallback_power_id)
 
@@ -267,13 +285,13 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
             heat=energy_by_day(daily.get(heat_id, [])),
             power=energy_by_day(daily.get(power_id, [])) if power_id else {},
             outdoor=mean_by_day(daily.get(outdoor_id, [])),
-            starts=counter_by_day(daily.get(starts_id, [])) if starts_id else {},
-            runtime=counter_by_day(daily.get(runtime_id, [])) if runtime_id else {},
+            starts=(counter_by_day(daily.get(starts_id, [])) if starts_id else {}) or self._history_starts(compressor_id),
+            runtime=(counter_by_day(daily.get(runtime_id, [])) if runtime_id else {}) or self._history_hours(compressor_id),
             flow=mean_by_day(daily.get(flow_id, [])) if flow_id else {},
             target_flow=mean_by_day(daily.get(target_flow_id, [])) if target_flow_id else {},
             dhw_heat=energy_by_day(daily.get(dhw_id, [])) if dhw_id else {},
-            aux_hours=_hours_by_day(daily.get(aux_id, [])) if aux_id else {},
-            defrost_hours=_hours_by_day(daily.get(defrost_id, [])) if defrost_id else {},
+            aux_hours=(_hours_by_day(daily.get(aux_id, [])) if aux_id else {}) or self._history_hours(aux_id),
+            defrost_hours=(_hours_by_day(daily.get(defrost_id, [])) if defrost_id else {}) or self._history_hours(defrost_id),
         )
 
         hours, compressor_filtered = await self._read_hours(flow_id, target_flow_id, compressor_id)
@@ -304,7 +322,7 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
             cop_long=cop_window(samples, days=COP_LONG_DAYS, source=power_source),
             starts_per_day=starts_per_day(samples, days=COP_SHORT_DAYS),
             runtime_per_cycle=mean_runtime_per_cycle(samples, days=COP_SHORT_DAYS),
-            deviation=deviation(hours),
+            deviation=deviation(hours, compressor_only=compressor_filtered),
             compressor_filtered=compressor_filtered,
             cop_trend=cop_curve(samples),
             curve=curve_bins(samples),
@@ -774,6 +792,127 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
             return None, None
         return POWER_SOURCE_PRIMARY, primary_id
 
+    def _onoff_entities(self) -> set[str]:
+        ids = {
+            self.entry.data.get(CONF_COMPRESSOR_ENTITY),
+            self._entity(CONF_DEFROST_ENTITY),
+            self._entity(CONF_AUX_HEATER_ENTITY),
+        }
+        for circuit in self._circuits_config():
+            ids |= {circuit.get(CONF_PUMP_ENTITY), circuit.get(CONF_MIXER_OPEN_ENTITY), circuit.get(CONF_MIXER_CLOSE_ENTITY)}
+        return {entity_id for entity_id in ids if entity_id}
+
+    async def _refresh_history(self, now: datetime) -> None:
+        """An/Aus-Verläufe alle HISTORY_REFRESH_MINUTES neu lesen; beim ersten Lauf die Raum- und
+        Kreisstichproben der letzten Tage aus dem Verlauf nachtragen (statt nach jedem Neustart leer)."""
+        if self._history_at is not None and now - self._history_at < timedelta(minutes=HISTORY_REFRESH_MINUTES):
+            return
+        self._history_at = now
+        ids = self._onoff_entities()
+        raw = await async_read_history(self.hass, ids, HISTORY_ONOFF_DAYS)
+        start = now - timedelta(days=HISTORY_ONOFF_DAYS)
+        self._history_start = start
+        self._changes = {}
+        self._spans = {}
+        for entity_id, rows in raw.items():
+            changes = [(at, as_on(state)) for at, state, _attrs in rows]
+            self._changes[entity_id] = changes
+            self._spans[entity_id] = intervals(changes, start, now)
+        if not self._backfilled:
+            self._backfilled = True
+            await self._backfill(now)
+
+    def _history_hours(self, entity_id: str | None) -> dict:
+        """Stunden „an“ je Tag aus dem Verlauf; Tage im Fenster ohne Lauf zählen als 0."""
+        if not entity_id or entity_id not in self._spans or self._history_start is None:
+            return {}
+        tz = dt_util.get_default_time_zone()
+        result = hours_per_day(self._spans[entity_id], tz)
+        first = self._history_start.astimezone(tz).date() + timedelta(days=1)
+        today = dt_util.now().date()
+        day = first
+        while day <= today:
+            result.setdefault(day, 0.0)
+            day += timedelta(days=1)
+        # erster Tag ist angeschnitten – nicht verwenden
+        return {day: hours for day, hours in result.items() if day >= first}
+
+    def _history_starts(self, entity_id: str | None) -> dict:
+        if not entity_id or entity_id not in self._spans or self._history_start is None:
+            return {}
+        tz = dt_util.get_default_time_zone()
+        first = self._history_start.astimezone(tz).date() + timedelta(days=1)
+        counts = onoff_starts_per_day(self._spans[entity_id], tz, self._history_start)
+        hours = self._history_hours(entity_id)
+        return {day: float(counts.get(day, 0)) for day in hours if day >= first}
+
+    async def _backfill(self, now: datetime) -> None:
+        """Raum- und Kreisstichproben der letzten ROOM_WINDOW_DAYS aus dem Verlauf (5-min-Raster)."""
+        start = now - timedelta(days=ROOM_WINDOW_DAYS)
+        times = grid(start, now - timedelta(minutes=UPDATE_INTERVAL_MINUTES), UPDATE_INTERVAL_MINUTES)
+        climate_ids = {room.get(CONF_CLIMATE_ENTITY) for room in self._rooms_config() if room.get(CONF_CLIMATE_ENTITY)}
+        climate_rows = await async_read_history(self.hass, climate_ids, ROOM_WINDOW_DAYS, attributes=True)
+        readings: list[RoomReading] = []
+        for room in self._rooms_config():
+            rows = climate_rows.get(room.get(CONF_CLIMATE_ENTITY) or "", [])
+            if not rows or CONF_ID not in room:
+                continue
+            values = [
+                (at, (state, _as_float(attrs.get("current_temperature")), _as_float(attrs.get("temperature"))))
+                for at, state, attrs in rows
+            ]
+            for at, value in value_at(values, times):
+                state, current, target = value  # type: ignore[misc]
+                if state in (STATE_OFF, STATE_UNAVAILABLE, STATE_UNKNOWN) or current is None or target is None:
+                    continue
+                if target < ROOM_MIN_TARGET:
+                    continue
+                readings.append(
+                    RoomReading(
+                        at=at, room_id=str(room[CONF_ID]), current_c=current, target_c=target, circuit=room.get(CONF_CIRCUIT)
+                    )
+                )
+        readings.sort(key=lambda item: item.at)
+        self._rooms.add(readings, now)
+
+        compressor = self._changes.get(self.entry.data.get(CONF_COMPRESSOR_ENTITY) or "", [])
+        comp_at = dict(value_at(compressor, times)) if compressor else {}
+        samples: list[CircuitSample] = []
+        mixer: list[MixerSample] = []
+        for circuit in self._circuits_config():
+            circuit_id = circuit.get(CONF_ID)
+            if not circuit_id:
+                continue
+            pump = self._changes.get(circuit.get(CONF_PUMP_ENTITY) or "", [])
+            if pump and comp_at:
+                for at, on in value_at(pump, times):
+                    running = comp_at.get(at)
+                    if on is None or running is None:
+                        continue
+                    samples.append(CircuitSample(at=at, circuit_id=circuit_id, pump_on=bool(on), compressor_on=bool(running)))
+            opening = dict(value_at(self._changes.get(circuit.get(CONF_MIXER_OPEN_ENTITY) or "", []), times))
+            closing = dict(value_at(self._changes.get(circuit.get(CONF_MIXER_CLOSE_ENTITY) or "", []), times))
+            if opening or closing:
+                for at in times:
+                    if at not in opening and at not in closing:
+                        continue
+                    mixer.append(
+                        MixerSample(at=at, circuit_id=circuit_id, open_on=bool(opening.get(at)), close_on=bool(closing.get(at)))
+                    )
+        samples.sort(key=lambda item: item.at)
+        mixer.sort(key=lambda item: item.at)
+        self._circuit_tracker.add(samples, now)
+        self._mixer_tracker.add(mixer, now)
+        if self.log is not None:
+            await self.log.async_add(
+                "info",
+                "update",
+                f"Verlauf nachgetragen: {len(readings)} Raum-, {len(samples)} Pumpen-, {len(mixer)} Mischer-Stichproben",
+                key="update.backfill",
+                params={"rooms": len(readings), "pumps": len(samples), "mixer": len(mixer)},
+                details={"rooms": len(readings), "pumps": len(samples), "mixer": len(mixer)},
+            )
+
     async def _read_hours(
         self,
         flow_id: str | None,
@@ -797,6 +936,9 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
         compressor = {
             value.hour: value.mean for value in (hourly.get(compressor_id, []) if compressor_id else []) if value.mean is not None
         }
+        if not compressor and compressor_id and self._spans.get(compressor_id) is not None:
+            # Binärsensor ohne Statistik: Laufanteil je Stunde aus dem Zustandsverlauf
+            compressor = share_per_hour(self._spans[compressor_id], flow.keys())
         filtered = bool(compressor)
 
         hours: list[HourSample] = []

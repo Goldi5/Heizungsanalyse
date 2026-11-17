@@ -166,8 +166,12 @@ Entscheidungen:
   (fünf Minuten), nicht aus der Recorder-Statistik: Climate-Attribute und
   Binärsensoren haben keine Langzeitstatistik. Die Auflösung wird an jedem
   Sensor als Attribut ausgewiesen.
-- Das Fenster ist sieben Tage und lebt im Arbeitsspeicher. Nach einem Neustart
-  füllt es sich neu; die Stichprobenzahl macht das sichtbar.
+- Das Fenster ist sieben Tage und lebt im Arbeitsspeicher. Beim ersten Lauf
+  nach einem Neustart wird es aus dem Zustandsverlauf nachgetragen
+  (Fünf-Minuten-Raster, Protokolleintrag „Verlauf nachgetragen“).
+- Laufzeiten, Starts und Stundenanteile von Binärsensoren (Verdichter,
+  Abtauung, Heizstab) kommen aus dem Zustandsverlauf (`analysis/onoff.py`),
+  alle 30 Minuten neu gelesen.
 - Räume ohne Climate-Entity (z. B. das Schlafzimmer) bekommen keine Sensoren
   und lösen keine Kennzahl aus. Räume ohne Ventilposition (Livisi) werden
   vollständig ausgewertet; `valve_available` ist dann `false`.

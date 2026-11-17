@@ -1,3 +1,30 @@
+## 0.3.3 – 2026-11-17
+
+### Behoben
+- **Vorlauf Ist − Soll blieb leer**, wenn der Verdichter ein An/Aus-Sensor ist:
+  Die Auswertung verlangte „Verdichter lief“, fand dafür aber keine Statistik
+  und verwarf jede Stunde. Jetzt kommt der Laufanteil je Stunde aus dem
+  Zustandsverlauf; ohne jede Verdichterinformation wird über alle Stunden
+  gerechnet (wie dokumentiert).
+- **Raumwarnung nach einer einzigen Messung:** Räume werden erst ab zwölf
+  Stunden Stichproben bewertet.
+
+### Neu
+- **An/Aus-Sensoren aus dem Zustandsverlauf:** Abtauung und Heizstab (Stunden
+  pro Tag), Verdichterlaufzeit je Zyklus und – ohne Startzähler – Starts pro
+  Tag werden aus dem Verlauf berechnet (`analysis/onoff.py`, alle 30 min).
+- **Kein leeres Fenster nach dem Neustart:** Raum-, Pumpen- und
+  Mischerstichproben der letzten sieben Tage werden aus dem Verlauf
+  nachgetragen (Protokoll: „Verlauf nachgetragen“).
+- **Ehrlicher Anlagen-Check:** Er zeigt „x von 10 Prüfungen aktiv“ und listet,
+  was fehlt (kein Sensor / noch keine Daten). Laufen COP oder Vorlauf-Prüfung
+  nicht oder weniger als 70 % der Prüfungen, heißt die Stufe „Eingeschränkt“
+  statt „Gut“/„Sehr gut“.
+
+### Geändert
+- Schwellen kalibriert: Vorlauf über Soll ab **2 K** (vorher 5 K), Starts ab
+  **12 pro Tag** (vorher 20). Eigene Werte im Optionsdialog bleiben erhalten.
+
 ## 0.3.2 – 2026-11-17
 
 ### Behoben

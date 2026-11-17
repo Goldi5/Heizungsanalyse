@@ -57,6 +57,6 @@ Dann wird nur mit Soll und Ist gerechnet.
 | Raum- und Kreiswerte | 7 Tage | Stichproben im Coordinator-Takt |
 | Roll-ups für Vergleiche | bis 400 Tage | eigener Speicher |
 
-Raum- und Kreiswerte leben im Arbeitsspeicher und füllen sich nach einem
-Neustart neu. Die Stichprobenzahl an jedem Sensor zeigt, wie belastbar der Wert
-gerade ist.
+Raum- und Kreiswerte leben im Arbeitsspeicher; nach einem Neustart werden die
+letzten sieben Tage aus dem Zustandsverlauf nachgetragen. Die Stichprobenzahl an
+jedem Sensor zeigt, wie belastbar der Wert gerade ist.

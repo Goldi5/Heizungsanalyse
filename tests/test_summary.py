@@ -61,7 +61,7 @@ class Snap:
 def test_score_levels() -> None:
     warn = Finding("F01", "warning", "flow_deviation")
     info = Finding("F09", "info", "defrost")
-    assert score([], 10) == {"value": 100, "level": "very_good", "warnings": 0, "infos": 0}
+    assert score([], 10) | {} == {"value": 100, "level": "very_good", "warnings": 0, "infos": 0, "checks": [], "active": 0, "total": 0}
     assert score([warn, info], 10)["value"] == 80
     assert score([warn, info], 10)["level"] == "good"
     assert score([warn] * 4, 10)["level"] == "action"
@@ -115,3 +115,36 @@ def test_build_summary_shape() -> None:
     assert out["circuits"][0]["rooms"] == ["Bad"]
     assert "defrost" in out["missing"] and "heating_curve" not in out["missing"]
     assert len(out["series"]) == 14
+
+
+def test_score_limited_without_key_checks() -> None:
+    """Ohne Vorlauf-Prüfung keine gute Note, sondern „eingeschränkt“."""
+    checks = [{"key": "cop", "active": True}, {"key": "flow", "active": False, "reason": "no_data"}]
+    out = score([], 10, checks)
+    assert out["level"] == "limited"
+    assert out["active"] == 1 and out["total"] == 2
+    full = [{"key": k, "active": True} for k in ("cop", "flow", "starts")]
+    assert score([], 10, full)["level"] == "very_good"
+    # schlechte Noten bleiben schlecht
+    warn = Finding("F01", "warning", "flow_deviation")
+    assert score([warn] * 4, 10, checks)["level"] == "action"
+
+
+def test_build_summary_lists_inactive_checks() -> None:
+    out = build_summary(
+        Snap(),
+        version="0.3.3",
+        title="Anlage",
+        language="de",
+        rooms=[{"id": "bad", "name": "Bad", "circuit": "hk1"}],
+        circuits=[{"id": "hk1", "name": "HK", "type": "radiators"}],
+        sources={"flow_entity": "x", "target_flow_entity": "y"},
+        history=_samples(),
+        changes=[],
+        inventory={},
+        to_local_day=lambda v: None,
+    )
+    by_key = {c["key"]: c for c in out["score"]["checks"]}
+    assert by_key["flow"]["active"] is True
+    assert by_key["defrost"]["reason"] == "no_source"
+    assert by_key["rooms"]["active"] is True  # Snap hat 300 Stichproben

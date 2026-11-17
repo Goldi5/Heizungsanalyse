@@ -156,3 +156,64 @@ async def async_read_metadata(hass: HomeAssistant, entity_ids: Iterable[str]) ->
     except KeyError:
         return {}
     return await instance.async_add_executor_job(statistics.get_metadata, hass, statistic_ids=wanted)
+
+
+async def async_read_history(
+    hass: HomeAssistant,
+    entity_ids: Iterable[str],
+    days: float,
+    *,
+    attributes: bool = False,
+) -> dict[str, list[tuple[datetime, str, dict[str, Any]]]]:
+    """Zustandsverlauf der letzten ``days`` Tage je Entity (nur lesend).
+
+    Für Binärsensoren und Klima-Entities, die keine Langzeitstatistik haben.
+    Der Zustand zu Fensterbeginn ist enthalten, damit Laufzeiten am Rand stimmen.
+    """
+    wanted = sorted({entity_id for entity_id in entity_ids if entity_id})
+    if not wanted:
+        return {}
+    try:
+        instance = get_instance(hass)
+    except KeyError:
+        _LOGGER.debug("Recorder nicht aktiv; kein Verlauf verfügbar")
+        return {}
+    from homeassistant.components.recorder import history
+
+    start = dt_util.utcnow() - timedelta(days=days)
+
+    def _load() -> dict[str, list]:
+        return history.get_significant_states(
+            hass,
+            start,
+            None,
+            wanted,
+            include_start_time_state=True,
+            # auch reine Attributwechsel (Ist-/Soll-Temperatur eines Klima-Geräts)
+            significant_changes_only=False,
+            minimal_response=not attributes,
+            no_attributes=not attributes,
+        )
+
+    try:
+        raw = await instance.async_add_executor_job(_load)
+    except Exception as err:  # noqa: BLE001 - Verlauf ist Zusatz, nie ein Abbruchgrund
+        _LOGGER.debug("Verlauf nicht lesbar: %s", err)
+        return {}
+    result: dict[str, list[tuple[datetime, str, dict[str, Any]]]] = {}
+    for entity_id, states in (raw or {}).items():
+        rows: list[tuple[datetime, str, dict[str, Any]]] = []
+        for item in states:
+            if isinstance(item, dict):
+                stamp = item.get("last_updated") or item.get("last_changed")
+                when = dt_util.parse_datetime(stamp) if isinstance(stamp, str) else stamp
+                state = item.get("state")
+                attrs = item.get("attributes") or {}
+            else:
+                when = getattr(item, "last_updated", None) or getattr(item, "last_changed", None)
+                state = getattr(item, "state", None)
+                attrs = dict(getattr(item, "attributes", {}) or {})
+            if isinstance(when, datetime) and state is not None:
+                rows.append((when if when.tzinfo else when.replace(tzinfo=UTC), str(state), dict(attrs)))
+        result[entity_id] = sorted(rows, key=lambda row: row[0])
+    return result

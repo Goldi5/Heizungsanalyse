@@ -32,7 +32,7 @@ Bilder mit Beispieldaten. Details: [Dashboard](docs/dashboard.md).
 
 ## Status
 
-Version 0.3.2. Alle Analysestufen sind vorhanden: Repo-Gerüst (M0),
+Version 0.3.3. Alle Analysestufen sind vorhanden: Repo-Gerüst (M0),
 Einrichtung (M1), Kennzahlen (M2), Inventar und Dienste (M3), Raum- und
 Kreisanalyse (M4), Findings (M5), Doku (M6), die dokumentierte Schnittstelle
 zu raumklima-2 (M7), das selbst angelegte Dashboard (M8–M12) sowie
@@ -114,8 +114,12 @@ Die Zuordnung der Pflichtquellen lässt sich über *Neu konfigurieren*
   schätzen. Fehlende Quellen erzeugen keine Kennzahl und kein Finding.
 - Kennlinien (COP gegen Außentemperatur, Heizkurve) füllen sich erst über
   eine Heizperiode.
-- Raum- und Kreiswerte sind Stichproben im Fünf-Minuten-Takt und leben im
-  Arbeitsspeicher; nach einem Neustart füllen sie sich neu.
+- Raum- und Kreiswerte sind Stichproben im Fünf-Minuten-Takt. Nach einem
+  Neustart werden die letzten sieben Tage aus dem Verlauf von Home Assistant
+  nachgetragen. Raumhinweise gibt es erst ab zwölf Stunden Daten.
+- An/Aus-Sensoren (Verdichter, Abtauung, Heizstab) haben keine
+  Langzeitstatistik; sie werden aus dem Zustandsverlauf ausgewertet. Der reicht
+  so weit zurück, wie der Recorder ihn aufbewahrt (Standard zehn Tage).
 - Livisi-Thermostate liefern keine Ventilposition. Raumkennzahlen nutzen dann
   nur Soll und Ist; ein hydraulischer Abgleich lässt sich damit nicht
   nachweisen.

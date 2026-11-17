@@ -24,8 +24,8 @@ SEVERITY_INFO = "info"
 class Thresholds:
     """Schwellen der Findings, per Optionsdialog änderbar."""
 
-    flow_deviation_k: float = 5.0
-    starts_per_day: float = 20.0
+    flow_deviation_k: float = 2.0
+    starts_per_day: float = 12.0
     runtime_minutes: float = 20.0
     pump_idle_share: float = 0.4
     room_deviation_k: float = 1.0
@@ -181,10 +181,15 @@ def _pump_idle(results: FindingsInput, thresholds: Thresholds) -> list[Finding]:
     return findings
 
 
+# Mindestens 12 Stunden Stichproben (5-min-Takt), bevor ein Raum bewertet wird –
+# vorher reicht eine einzelne Messung für eine Warnung.
+MIN_ROOM_SAMPLES = 144
+
+
 def _room_deviation(results: FindingsInput, thresholds: Thresholds) -> list[Finding]:
     findings: list[Finding] = []
     for room_id, stats in results.room_stats.items():
-        if stats.median is None:
+        if stats.median is None or stats.samples < MIN_ROOM_SAMPLES:
             continue
         if stats.median < -thresholds.room_deviation_k:
             findings.append(

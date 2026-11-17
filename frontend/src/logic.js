@@ -31,6 +31,20 @@ export const SCORE_LEVEL = {
   watch: { label: "Beobachten", tone: "warn" },
   action: { label: "Handlungsbedarf", tone: "bad" },
   learning: { label: "Lernt noch", tone: "mut" },
+  limited: { label: "Eingeschränkt", tone: "warn" },
+};
+
+export const CHECK_NAMES = {
+  cop: "COP",
+  flow: "Vorlauf Ist − Soll",
+  starts: "Starts",
+  runtime: "Laufzeit je Zyklus",
+  rooms: "Räume",
+  pumps: "Pumpen",
+  mixer: "Mischer",
+  defrost: "Abtauen",
+  aux: "Heizstab",
+  dhw: "Warmwasser",
 };
 
 // Lineare Regression y = a + b*x (für die COP-Kennlinie)

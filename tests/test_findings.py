@@ -71,9 +71,9 @@ def test_f03_pump_idle() -> None:
 
 def test_f04_and_f05_room_deviation() -> None:
     stats = {
-        "kalt": RoomDeviation(median=-1.6, p90=0.0, under_share=0.8, over_share=0.0, samples=50),
-        "warm": RoomDeviation(median=1.7, p90=2.0, under_share=0.0, over_share=0.7, samples=50),
-        "ok": RoomDeviation(median=0.2, p90=0.5, under_share=0.1, over_share=0.0, samples=50),
+        "kalt": RoomDeviation(median=-1.6, p90=0.0, under_share=0.8, over_share=0.0, samples=200),
+        "warm": RoomDeviation(median=1.7, p90=2.0, under_share=0.0, over_share=0.7, samples=200),
+        "ok": RoomDeviation(median=0.2, p90=0.5, under_share=0.1, over_share=0.0, samples=200),
     }
 
     findings = evaluate(_base(room_stats=stats, room_names={"kalt": "Bad", "warm": "Flur"}))
@@ -158,3 +158,9 @@ def test_signature_changes_with_evidence() -> None:
 
     assert signature(first) != signature(second)
     assert signature(first) == signature(evaluate(_base(deviation_median=6.0)))
+
+
+def test_room_needs_twelve_hours_of_samples() -> None:
+    """Eine einzelne Messung reicht nicht für eine Raumwarnung."""
+    stats = {"kalt": RoomDeviation(median=-1.6, p90=0.0, under_share=1.0, over_share=0.0, samples=1)}
+    assert _ids(evaluate(_base(room_stats=stats))) == []

@@ -1,6 +1,13 @@
 // Texte des Dashboards. Deutsch ist der Schlüssel, Englisch die Übersetzung.
 // Fehlt eine Übersetzung, bleibt der deutsche Text stehen (Test prüft Vollständigkeit).
 export const EN = {
+  "Mischer": "Mixer",
+  "kein Sensor": "no sensor",
+  "noch keine Daten": "no data yet",
+  "kein Sensor zugeordnet": "no sensor mapped",
+  "Ohne Bewertung:": "Not assessed:",
+  "{a} von {n} Prüfungen aktiv": "{a} of {n} checks active",
+  "Eingeschränkt": "Limited",
   "Anlage": "System",
   "Effizienz": "Efficiency",
   "Räume & Kreise": "Rooms & circuits",

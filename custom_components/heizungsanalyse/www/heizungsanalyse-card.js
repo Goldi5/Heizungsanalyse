@@ -1,10 +1,17 @@
-/* Heizungsanalyse 0.3.2 - gebaut aus frontend/src (npm run build). Nicht von Hand bearbeiten. */
+/* Heizungsanalyse 0.3.3 - gebaut aus frontend/src (npm run build). Nicht von Hand bearbeiten. */
 (() => {
   // src/version.js
-  var HA_VERSION = "0.3.2";
+  var HA_VERSION = "0.3.3";
 
   // src/i18n.js
   var EN = {
+    "Mischer": "Mixer",
+    "kein Sensor": "no sensor",
+    "noch keine Daten": "no data yet",
+    "kein Sensor zugeordnet": "no sensor mapped",
+    "Ohne Bewertung:": "Not assessed:",
+    "{a} von {n} Prüfungen aktiv": "{a} of {n} checks active",
+    "Eingeschränkt": "Limited",
     "Anlage": "System",
     "Effizienz": "Efficiency",
     "Räume & Kreise": "Rooms & circuits",
@@ -244,7 +251,20 @@
     good: { label: "Gut", tone: "ok" },
     watch: { label: "Beobachten", tone: "warn" },
     action: { label: "Handlungsbedarf", tone: "bad" },
-    learning: { label: "Lernt noch", tone: "mut" }
+    learning: { label: "Lernt noch", tone: "mut" },
+    limited: { label: "Eingeschränkt", tone: "warn" }
+  };
+  var CHECK_NAMES = {
+    cop: "COP",
+    flow: "Vorlauf Ist − Soll",
+    starts: "Starts",
+    runtime: "Laufzeit je Zyklus",
+    rooms: "Räume",
+    pumps: "Pumpen",
+    mixer: "Mischer",
+    defrost: "Abtauen",
+    aux: "Heizstab",
+    dhw: "Warmwasser"
   };
   function linearFit(points) {
     const pts = points.filter((p) => p && Number.isFinite(p.x) && Number.isFinite(p.y));
@@ -484,8 +504,8 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
   // src/help.js
   var HELP = {
     score: {
-      de: "Ein einfacher Gesamtwert: 100 Punkte, minus 15 je Warnung und minus 5 je Hinweis. Er sagt nur, wie viele Regeln anschlagen – nicht, wie effizient die Anlage absolut ist. In den ersten Tagen steht „Lernt noch“.",
-      en: "A simple overall value: 100 points, minus 15 per warning and minus 5 per note. It only reflects how many rules fire – not how efficient the system is in absolute terms. The first days show “still learning”."
+      de: "Ein einfacher Gesamtwert: 100 Punkte, minus 15 je Warnung und minus 5 je Hinweis. Er sagt nur, wie viele Regeln anschlagen – nicht, wie effizient die Anlage absolut ist. In den ersten Tagen steht „Lernt noch“. Laufen COP oder Vorlauf-Prüfung nicht oder weniger als 70 % der Prüfungen, steht „Eingeschränkt“: Was nicht geprüft wird, kann auch nicht gut sein. Darunter steht, welche Prüfung fehlt und warum.",
+      en: "A simple overall value: 100 points, minus 15 per warning and minus 5 per note. It only reflects how many rules fire – not how efficient the system is in absolute terms. The first days show “still learning”. If the COP or flow check is not running, or fewer than 70 % of checks, it shows “limited”: what is not checked cannot be called good. Below it lists which check is missing and why."
     },
     cop: {
       de: "COP = erzeugte Wärme ÷ verbrauchter Strom. 4,5 heißt: aus 1 kWh Strom wurden 4,5 kWh Wärme. Gezeigt wird der Wert der letzten 7 Tage, daneben 30 Tage. Bei Kälte sinkt der COP – das ist normal.",
@@ -816,8 +836,9 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     const scoreCard = `<div class="c">${head(t("Anlagen-Check"), "score", ui)}
     <div class="score">${ring(d.score.value, lvl.tone)}
       <div><div class="lvl">${esc(t(lvl.label))}</div>
-      <div class="muted">${esc(t("{w} Warnung · {i} Hinweise", { w: d.score.warnings, i: d.score.infos }))}<br>${esc(t("Datenbasis {d} Tage", { d: k.days_with_data }))}</div>
-      ${k.power_source === "fallback" ? `<div style="margin-top:8px">${pill("warn", t("Quelle {s}", { s: t("Ersatzquelle") }))}</div>` : ""}</div></div></div>`;
+      <div class="muted">${esc(t("{w} Warnung · {i} Hinweise", { w: d.score.warnings, i: d.score.infos }))}<br>${esc(t("Datenbasis {d} Tage", { d: k.days_with_data }))}${d.score.total ? `<br>${esc(t("{a} von {n} Prüfungen aktiv", { a: d.score.active, n: d.score.total }))}` : ""}</div>
+      ${k.power_source === "fallback" ? `<div style="margin-top:8px">${pill("warn", t("Quelle {s}", { s: t("Ersatzquelle") }))}</div>` : ""}</div></div>
+    ${(d.score.checks || []).some((c) => !c.active) ? `<div class="fs" style="margin-top:10px">${esc(t("Ohne Bewertung:"))}</div><div class="ev">${(d.score.checks || []).filter((c) => !c.active).map((c) => `<span title="${esc(c.reason === "no_source" ? t("kein Sensor zugeordnet") : t("noch keine Daten"))}">${esc(t(CHECK_NAMES[c.key] || c.key))} · ${esc(c.reason === "no_source" ? t("kein Sensor") : t("keine Daten"))}</span>`).join("")}</div>` : ""}</div>`;
     const cop = k.cop_short.value;
     const copPill = (() => {
       if (cop == null) return pill("mut", t("keine Daten"));
@@ -1081,6 +1102,7 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
   var LOG_EN = {
     "log.restart": "— restart —",
     "update.run": "Analysis: {rows} statistic rows, {days} days with data, {duration} ms",
+    "update.backfill": "History back-filled: {rooms} room, {pumps} pump, {mixer} mixer samples",
     "source.lost": "Source {entity} is unavailable (for {hours} h)",
     "source.back": "Source {entity} is available again",
     "source.no_statistics": "Source {entity} has no long-term statistics",

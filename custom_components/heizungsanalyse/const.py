@@ -31,6 +31,9 @@ DASHBOARD_ICON: Final = "mdi:heat-pump"
 # Aktualisierung und Auswertungsfenster
 UPDATE_INTERVAL_MINUTES: Final = 5
 HISTORY_DAYS: Final = 31
+# Zustandsverlauf für Binärsensoren (Recorder hält ihn standardmäßig 10 Tage)
+HISTORY_ONOFF_DAYS: Final = 10
+HISTORY_REFRESH_MINUTES: Final = 30
 DEVIATION_DAYS: Final = 7
 COP_SHORT_DAYS: Final = 7
 COP_LONG_DAYS: Final = 30
