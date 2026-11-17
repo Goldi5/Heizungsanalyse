@@ -15,9 +15,9 @@ from typing import Any
 from .analysis.cop import CopBin, CopResult
 from .analysis.findings import Finding
 from .analysis.heating_curve import CurveBin
+from .analysis.hydraulics import cop_with_dhw
 from .analysis.periods import summarize, within
 from .analysis.types import DaySample
-from .analysis.hydraulics import cop_with_dhw
 from .findings_text import render
 
 SERIES_DAYS = 400
