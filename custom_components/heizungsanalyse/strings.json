@@ -50,7 +50,8 @@
           "add_room": "Raum hinzufuegen",
           "remove_room": "Raum entfernen",
           "save": "Speichern"
-        }
+        },
+        "description": "Quellen, Heizkreise, Raeume oder Schwellen aendern."
       },
       "sources": {
         "title": "Optionale Quellen",

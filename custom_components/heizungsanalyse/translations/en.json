@@ -50,7 +50,8 @@
           "add_room": "Add room",
           "remove_room": "Remove room",
           "save": "Save"
-        }
+        },
+        "description": "Change sources, heating circuits, rooms or thresholds."
       },
       "sources": {
         "title": "Optional sources",
