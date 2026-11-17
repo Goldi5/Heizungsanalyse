@@ -32,7 +32,7 @@ def samples_from_rollups(rollups: Mapping[str, Mapping[str, Any]]) -> list[DaySa
 
 
 def merge_samples(base: Sequence[DaySample], fresh: Sequence[DaySample]) -> list[DaySample]:
-    """Roll-ups mit frischen Werten zusammenfuehren; frische Werte gewinnen."""
+    """Roll-ups mit frischen Werten zusammenführen; frische Werte gewinnen."""
     merged: dict[date, DaySample] = {sample.day: sample for sample in base}
     merged.update({sample.day: sample for sample in fresh})
     return sorted(merged.values(), key=lambda sample: sample.day)

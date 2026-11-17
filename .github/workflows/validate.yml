@@ -50,3 +50,20 @@ jobs:
           cache-dependency-path: requirements_test.txt
       - run: pip install -r requirements_test.txt
       - run: pytest tests -q -p no:logging --cov=custom_components.heizungsanalyse --cov-report=term-missing
+
+  frontend:
+    name: Dashboard (Node)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+      - name: Bauen und testen
+        run: |
+          cd frontend
+          npm ci
+          npm run check
+          npm test
+          npm run build
+          git diff --exit-code -- ../custom_components/heizungsanalyse/www/ || (echo "::error::heizungsanalyse-card.js ist nicht aktuell – 'npm run build' im Ordner frontend ausführen und committen" && exit 1)

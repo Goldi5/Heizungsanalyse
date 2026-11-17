@@ -1,10 +1,10 @@
 # Entities
 
-Alle Entities haengen am Coordinator (fuenf Minuten) und am Geraet der
-Integration. Raeume und Kreise erhalten je ein eigenes Untergeraet; dort stehen
-nur die zugehoerigen Sensoren. Es gibt keinen Schreibzugriff.
+Alle Entities hängen am Coordinator (fünf Minuten) und am Gerät der
+Integration. Räume und Kreise erhalten je ein eigenes Untergerät; dort stehen
+nur die zugehörigen Sensoren. Es gibt keinen Schreibzugriff.
 
-## Hauptgeraet
+## Hauptgerät
 
 | Entity | Einheit | Bedeutung | Attribute |
 |---|---|---|---|
@@ -13,16 +13,16 @@ nur die zugehoerigen Sensoren. Es gibt keinen Schreibzugriff.
 | `sensor.<titel>_starts_per_day` | /d | Verdichterstarts pro Tag | `window_days` |
 | `sensor.<titel>_runtime_per_cycle` | min | mittlere Laufzeit je Zyklus | – |
 | `sensor.<titel>_flow_deviation` | K | Median Ist−Soll-Vorlauf | `p90`, `hours`, `compressor_filtered` |
-| `sensor.<titel>_data_days` | d | Tage mit Waermedaten (diagnostisch) | – |
-| `sensor.<titel>_room_ranking` | 1 | Anzahl bewerteter Raeume (diagnostisch) | `rooms`, `by_circuit`, `window_days` |
+| `sensor.<titel>_data_days` | d | Tage mit Wärmedaten (diagnostisch) | – |
+| `sensor.<titel>_room_ranking` | 1 | Anzahl bewerteter Räume (diagnostisch) | `rooms`, `by_circuit`, `window_days` |
 | `sensor.<titel>_findings` | 1 | Anzahl Hinweise | `warning_count`, `info_count`, `findings`, `thresholds` |
 
-Der Entity-Prefix ist der Titel des Konfigurationseintrags. Er laesst sich in
+Der Entity-Prefix ist der Titel des Konfigurationseintrags. Er lässt sich in
 Home Assistant umbenennen; die `unique_id` bleibt stabil.
 
 ## Je Raum
 
-Nur fuer Raeume mit Climate-Entity. Raeume ohne Regelung (z. B. Schlafzimmer mit
+Nur für Räume mit Climate-Entity. Räume ohne Regelung (z. B. Schlafzimmer mit
 dauerhaft ausgeschalteter Heizung) bekommen keine Entities.
 
 | Entity | Einheit | Bedeutung | Attribute |
@@ -44,8 +44,8 @@ Dann wird nur mit Soll und Ist gerechnet.
 
 | Ereignis | Wann | Nutzlast |
 |---|---|---|
-| `heizungsanalyse_findings` | Ergebnis der Hinweise geaendert | `count`, `findings` |
-| `heizungsanalyse_inventory_changed` | Inventar geaendert | `changes` |
+| `heizungsanalyse_findings` | Ergebnis der Hinweise geändert | `count`, `findings` |
+| `heizungsanalyse_inventory_changed` | Inventar geändert | `changes` |
 | `heizungsanalyse_period_comparison` | `compare_periods` gelaufen | Vergleichsobjekt |
 
 ## Datenfenster
@@ -55,8 +55,8 @@ Dann wird nur mit Soll und Ist gerechnet.
 | COP, Starts, Laufzeit | 7 und 30 Tage | Recorder-Tagesstatistik |
 | Vorlauf-Abweichung | 7 Tage | Recorder-Stundenstatistik |
 | Raum- und Kreiswerte | 7 Tage | Stichproben im Coordinator-Takt |
-| Roll-ups fuer Vergleiche | bis 400 Tage | eigener Speicher |
+| Roll-ups für Vergleiche | bis 400 Tage | eigener Speicher |
 
-Raum- und Kreiswerte leben im Arbeitsspeicher und fuellen sich nach einem
+Raum- und Kreiswerte leben im Arbeitsspeicher und füllen sich nach einem
 Neustart neu. Die Stichprobenzahl an jedem Sensor zeigt, wie belastbar der Wert
 gerade ist.

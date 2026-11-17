@@ -8,10 +8,15 @@
     "@Goldi5"
   ],
   "config_flow": true,
+  "dependencies": [
+    "frontend",
+    "http",
+    "lovelace"
+  ],
   "documentation": "https://github.com/Goldi5/Heizungsanalyse",
   "integration_type": "hub",
   "iot_class": "calculated",
   "issue_tracker": "https://github.com/Goldi5/Heizungsanalyse/issues",
   "requirements": [],
-  "version": "0.1.1"
+  "version": "0.2.0"
 }

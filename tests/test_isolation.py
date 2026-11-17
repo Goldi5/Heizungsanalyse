@@ -1,4 +1,4 @@
-"""Die Integration bleibt unabhaengig von raumklima-2 und ohne feste Entity-IDs."""
+"""Die Integration bleibt unabhängig von raumklima-2 und ohne feste Entity-IDs."""
 
 from __future__ import annotations
 

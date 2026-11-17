@@ -1,4 +1,4 @@
-"""Fixtures fuer die Integrationstests mit Home Assistant."""
+"""Fixtures für die Integrationstests mit Home Assistant."""
 
 from __future__ import annotations
 

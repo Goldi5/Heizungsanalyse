@@ -1,6 +1,6 @@
-"""Dienste: Inventar pflegen, Zeitraeume vergleichen, Bericht erzeugen.
+"""Dienste: Inventar pflegen, Zeiträume vergleichen, Bericht erzeugen.
 
-Die Dienste schreiben ausschliesslich in den integrationseigenen Speicher.
+Die Dienste schreiben ausschließlich in den integrationseigenen Speicher.
 Kein Dienst ruft eine Service-Aktion auf einer Fremd-Entity auf.
 """
 

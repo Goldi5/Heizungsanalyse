@@ -1,4 +1,4 @@
-"""Datenmodell fuer Heizkreise und Raeume (ohne Home Assistant)."""
+"""Datenmodell für Heizkreise und Räume (ohne Home Assistant)."""
 
 from __future__ import annotations
 

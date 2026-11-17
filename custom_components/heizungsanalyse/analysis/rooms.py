@@ -1,7 +1,7 @@
 """Raumkennzahlen: Soll-Abweichung, Aufheizzeit, Rangliste (reines Python).
 
 Grundlage sind Stichproben aus dem laufenden Betrieb (Standard: alle
-fuenf Minuten). Die Kennzahlen sind deshalb ausdruecklich stichprobenbasiert
+fünf Minuten). Die Kennzahlen sind deshalb ausdrücklich stichprobenbasiert
 und keine sekundengenaue Auswertung.
 """
 
@@ -61,8 +61,8 @@ def _median(values: Sequence[float]) -> float:
 def deviation_stats(readings: Sequence[RoomReading], *, tolerance: float = 1.0) -> RoomDeviation:
     """Abweichung Ist minus Soll.
 
-    ``under``/``over`` zaehlen Stichproben, die mehr als ``tolerance`` Kelvin
-    unter bzw. ueber dem Soll liegen, als Zeitanteil aller Stichproben.
+    ``under``/``over`` zählen Stichproben, die mehr als ``tolerance`` Kelvin
+    unter bzw. über dem Soll liegen, als Zeitanteil aller Stichproben.
     """
     values = [reading.deviation for reading in readings]
     if not values:
@@ -88,10 +88,10 @@ def heating_up_times(
 ) -> list[float]:
     """Zeit bis zum Erreichen des neuen Solls nach einer Sollwert-Anhebung.
 
-    Flankenerkennung: Steigt das Soll um mindestens ``trigger`` Kelvin, laeuft
+    Flankenerkennung: Steigt das Soll um mindestens ``trigger`` Kelvin, läuft
     die Messung, bis Ist mindestens ``target - tolerance`` erreicht. Wird das
     Ziel nicht innerhalb von ``max_minutes`` erreicht oder sinkt das Soll
-    wieder, entfaellt der Versuch.
+    wieder, entfällt der Versuch.
     """
     ordered = sorted(readings, key=lambda item: item.at)
     results: list[float] = []
@@ -134,7 +134,7 @@ def median_heating_up(minutes: Sequence[float]) -> float | None:
 
 
 def rank_rooms(stats: Mapping[str, RoomDeviation]) -> list[tuple[str, float]]:
-    """Raeume nach Median-Abweichung, kalt zuerst (nur mit Stichproben)."""
+    """Räume nach Median-Abweichung, kalt zuerst (nur mit Stichproben)."""
     scored = [(room_id, result.median) for room_id, result in stats.items() if result.median is not None]
     return sorted(scored, key=lambda item: item[1])
 

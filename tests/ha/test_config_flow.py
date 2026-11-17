@@ -1,4 +1,4 @@
-"""Einrichtung ueber die Benutzeroberflaeche."""
+"""Einrichtung über die Benutzeroberfläche."""
 
 from __future__ import annotations
 
@@ -73,7 +73,7 @@ async def test_wrong_unit_is_rejected(hass: HomeAssistant) -> None:
 
 
 async def test_unavailable_source_is_rejected(hass: HomeAssistant) -> None:
-    """Eine nicht verfuegbare Quelle wird abgelehnt."""
+    """Eine nicht verfügbare Quelle wird abgelehnt."""
     _seed_sources(hass)
     hass.states.async_set("sensor.wp_strom", "unavailable", ENERGY)
 
@@ -96,7 +96,7 @@ async def test_second_instance_is_rejected(hass: HomeAssistant) -> None:
 
 
 async def test_options_flow_adds_circuit_and_room(hass: HomeAssistant) -> None:
-    """Kreise und Raeume werden im Optionsdialog angelegt und gespeichert."""
+    """Kreise und Räume werden im Optionsdialog angelegt und gespeichert."""
     _seed_sources(hass)
     entry = MockConfigEntry(domain=DOMAIN, data=MANDATORY, unique_id=DOMAIN)
     entry.add_to_hass(hass)
@@ -151,7 +151,7 @@ async def test_options_flow_adds_circuit_and_room(hass: HomeAssistant) -> None:
 
 
 async def test_room_without_thermostat_is_allowed(hass: HomeAssistant) -> None:
-    """Raeume ohne Climate-Entity (Livisi-Schlafzimmer) sind zulaessig."""
+    """Räume ohne Climate-Entity (Livisi-Schlafzimmer) sind zulässig."""
     _seed_sources(hass)
     entry = MockConfigEntry(
         domain=DOMAIN,
@@ -182,7 +182,7 @@ async def test_room_without_thermostat_is_allowed(hass: HomeAssistant) -> None:
 
 
 async def test_duplicate_room_name_is_rejected(hass: HomeAssistant) -> None:
-    """Namen werden ohne Ruecksicht auf Gross-/Kleinschreibung geprueft."""
+    """Namen werden ohne Rücksicht auf Gross-/Kleinschreibung geprüft."""
     _seed_sources(hass)
     entry = MockConfigEntry(
         domain=DOMAIN,
@@ -210,7 +210,7 @@ async def test_duplicate_room_name_is_rejected(hass: HomeAssistant) -> None:
 
 
 async def test_circuit_in_use_cannot_be_removed(hass: HomeAssistant) -> None:
-    """Ein Kreis mit Raeumen laesst sich nicht entfernen."""
+    """Ein Kreis mit Räumen lässt sich nicht entfernen."""
     _seed_sources(hass)
     entry = MockConfigEntry(
         domain=DOMAIN,
@@ -238,7 +238,7 @@ async def test_circuit_in_use_cannot_be_removed(hass: HomeAssistant) -> None:
 
 
 async def test_options_flow_sets_thresholds(hass: HomeAssistant) -> None:
-    """Schwellen der Findings lassen sich im Optionsdialog aendern."""
+    """Schwellen der Findings lassen sich im Optionsdialog ändern."""
     _seed_sources(hass)
     entry = MockConfigEntry(domain=DOMAIN, data=MANDATORY, unique_id=DOMAIN)
     entry.add_to_hass(hass)

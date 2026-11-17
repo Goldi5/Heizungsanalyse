@@ -1,7 +1,7 @@
-"""Datenmodell fuer Heizkreise und Raeume.
+"""Datenmodell für Heizkreise und Räume.
 
-Reines Python ohne Home-Assistant-Abhaengigkeit, damit sich das Modell
-unabhaengig testen und spaeter in raumklima-2 wiederverwenden laesst.
+Reines Python ohne Home-Assistant-Abhängigkeit, damit sich das Modell
+unabhängig testen und später in raumklima-2 wiederverwenden lässt.
 """
 
 from __future__ import annotations
@@ -102,5 +102,5 @@ def circuits_from_options(options: dict[str, Any]) -> list[HeatingCircuit]:
 
 
 def rooms_from_options(options: dict[str, Any]) -> list[Room]:
-    """Raeume aus den Optionsdaten lesen."""
+    """Räume aus den Optionsdaten lesen."""
     return [Room.from_dict(item) for item in options.get("rooms") or []]

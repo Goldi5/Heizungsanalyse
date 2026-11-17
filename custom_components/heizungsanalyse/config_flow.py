@@ -1,8 +1,8 @@
 """Konfigurationsdialog.
 
 M1: Pflichtquellen im Einrichtungsdialog, optionale Quellen, Heizkreise und
-Raeume im Optionsdialog. Alle Quellen sind Entity-Selectoren; unpassende
-Einheiten oder nicht verfuegbare Entities werden abgelehnt.
+Räume im Optionsdialog. Alle Quellen sind Entity-Selectoren; unpassende
+Einheiten oder nicht verfügbare Entities werden abgelehnt.
 """
 
 from __future__ import annotations
@@ -128,7 +128,7 @@ def _optional(key: str, current: dict[str, Any], option_selector: selector.Selec
 
 
 def _validate_sources(hass, data: dict[str, Any]) -> dict[str, str]:
-    """Optionale Quellen pruefen. Leere Felder werden uebersprungen."""
+    """Optionale Quellen prüfen. Leere Felder werden übersprungen."""
     errors: dict[str, str] = {}
     for key, value in data.items():
         if not value:
@@ -182,7 +182,7 @@ class HeizungsanalyseConfigFlow(ConfigFlow, domain=DOMAIN):
         return self.async_show_form(step_id="user", data_schema=self._mandatory_schema(user_input or {}), errors=errors)
 
     async def async_step_reconfigure(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        """Pflichtquellen nachtraeglich aendern."""
+        """Pflichtquellen nachträglich ändern."""
         entry = self._get_reconfigure_entry()
         errors: dict[str, str] = {}
         if user_input is not None:
@@ -203,10 +203,10 @@ class HeizungsanalyseConfigFlow(ConfigFlow, domain=DOMAIN):
 
 
 class HeizungsanalyseOptionsFlow(OptionsFlowWithReload):
-    """Optionale Quellen, Heizkreise und Raeume pflegen."""
+    """Optionale Quellen, Heizkreise und Räume pflegen."""
 
     def _draft(self) -> dict[str, Any]:
-        """Arbeitskopie der Optionen, die ueber mehrere Schritte erhalten bleibt."""
+        """Arbeitskopie der Optionen, die über mehrere Schritte erhalten bleibt."""
         if not hasattr(self, "_working"):
             self._working = dict(self.config_entry.options)
         return self._working

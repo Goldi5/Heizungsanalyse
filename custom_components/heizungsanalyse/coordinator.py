@@ -361,7 +361,7 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
         return list(self.entry.options.get(CONF_CIRCUITS) or [])
 
     def _track(self, now: datetime) -> None:
-        """Aktuelle Zustaende als Stichprobe sichern (nur lesend)."""
+        """Aktuelle Zustände als Stichprobe sichern (nur lesend)."""
         compressor_id = self.entry.data[CONF_COMPRESSOR_ENTITY]
         compressor_state = self.hass.states.get(compressor_id)
         compressor_known = compressor_state is not None and compressor_state.state not in (
@@ -443,7 +443,7 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
         primary_id: str,
         fallback_id: str | None,
     ) -> tuple[str | None, str | None]:
-        """Primaerquelle, solange sie Daten liefert; sonst die Ersatzquelle."""
+        """Primärquelle, solange sie Daten liefert; sonst die Ersatzquelle."""
         if energy_by_day(daily.get(primary_id, [])):
             return POWER_SOURCE_PRIMARY, primary_id
         if fallback_id and energy_by_day(daily.get(fallback_id, [])):
@@ -459,10 +459,10 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
         target_flow_id: str | None,
         compressor_id: str | None,
     ) -> tuple[list[HourSample], bool]:
-        """Stundenwerte fuer die Vorlauf-Abweichung.
+        """Stundenwerte für die Vorlauf-Abweichung.
 
-        Liefert zusaetzlich, ob nach Verdichterlauf gefiltert werden konnte.
-        Ohne Verdichterstatistik wird ueber alle Stunden gerechnet; das wird
+        Liefert zusätzlich, ob nach Verdichterlauf gefiltert werden konnte.
+        Ohne Verdichterstatistik wird über alle Stunden gerechnet; das wird
         am Sensor als Attribut ausgewiesen.
         """
         if not flow_id or not target_flow_id:

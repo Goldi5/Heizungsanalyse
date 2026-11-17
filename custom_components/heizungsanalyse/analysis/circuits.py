@@ -1,8 +1,8 @@
 """Kreiskennzahlen: Pumpen-Leerlauf und Mischer-Impulse (reines Python).
 
-Grundlage sind Stichproben im Takt des Coordinators (Standard: fuenf Minuten).
+Grundlage sind Stichproben im Takt des Coordinators (Standard: fünf Minuten).
 Mischer-Impulse werden deshalb nur im Stichprobenraster erkannt; schnelleres
-Takten wird unterschaetzt und das ist an den Sensoren ausgewiesen.
+Takten wird unterschätzt und das ist an den Sensoren ausgewiesen.
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ class CircuitSample:
 
 @dataclass(slots=True, frozen=True)
 class CircuitStats:
-    """Pumpenlaufzeit und Anteil ohne Waermebedarf."""
+    """Pumpenlaufzeit und Anteil ohne Wärmebedarf."""
 
     pump_minutes: float
     idle_minutes: float
@@ -43,7 +43,7 @@ class CircuitStats:
 def pump_idle(samples: Sequence[CircuitSample], *, interval_minutes: float = 5.0) -> CircuitStats:
     """Anteil der Pumpenlaufzeit ohne laufenden Verdichter.
 
-    Nur Stichproben mit laufender Pumpe zaehlen; steht die Pumpe still, ist das
+    Nur Stichproben mit laufender Pumpe zählen; steht die Pumpe still, ist das
     kein Leerlauf, sondern Ruhe.
     """
     running = [sample for sample in samples if sample.pump_on]
@@ -111,6 +111,6 @@ def pulses_per_day(pulses: Mapping[date, int]) -> float | None:
 
 
 def rank_circuits(stats: Mapping[str, CircuitStats]) -> list[tuple[str, float]]:
-    """Kreise mit Leerlaufanteil, hoechster Anteil zuerst."""
+    """Kreise mit Leerlaufanteil, höchster Anteil zuerst."""
     scored = [(circuit_id, result.idle_share) for circuit_id, result in stats.items() if result.idle_share is not None]
     return sorted(scored, key=lambda item: item[1], reverse=True)

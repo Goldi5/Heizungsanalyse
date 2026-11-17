@@ -3,34 +3,34 @@
     "step": {
       "user": {
         "title": "Heizungsanalyse einrichten",
-        "description": "Ordne die Pflichtquellen zu. Die Analyse liest nur; sie steuert nichts. Strom, Waerme und Aussentemperatur muessen in passender Einheit vorliegen.",
+        "description": "Ordne die Pflichtquellen zu. Die Analyse liest nur; sie steuert nichts. Strom, Wärme und Außentemperatur müssen in passender Einheit vorliegen.",
         "data": {
-          "power_entity": "WP-Strom (kWh, Primaerquelle)",
-          "heat_entity": "WP-Heizwaerme (kWh)",
-          "outdoor_entity": "Aussentemperatur",
+          "power_entity": "WP-Strom (kWh, Primärquelle)",
+          "heat_entity": "WP-Heizwärme (kWh)",
+          "outdoor_entity": "Außentemperatur",
           "compressor_entity": "Verdichter-Status"
         },
         "data_description": {
-          "power_entity": "Gemessener Netzstrom der Waermepumpe, vorzugsweise 1KOMMA5GRAD oder ein lokaler Zaehler.",
-          "heat_entity": "Erzeugte Heizwaerme ohne Warmwasser, falls verfuegbar.",
-          "outdoor_entity": "Aussentemperatur am Standort der Anlage.",
+          "power_entity": "Gemessener Netzstrom der Wärmepumpe, vorzugsweise 1KOMMA5GRAD oder ein lokaler Zähler.",
+          "heat_entity": "Erzeugte Heizwärme ohne Warmwasser, falls verfügbar.",
+          "outdoor_entity": "Außentemperatur am Standort der Anlage.",
           "compressor_entity": "Sensor oder Binary-Sensor, der den Verdichterlauf anzeigt."
         }
       },
       "reconfigure": {
-        "title": "Pflichtquellen aendern",
-        "description": "Nur die Pflichtquellen. Optionale Quellen, Heizkreise und Raeume stehen im Optionsdialog.",
+        "title": "Pflichtquellen ändern",
+        "description": "Nur die Pflichtquellen. Optionale Quellen, Heizkreise und Räume stehen im Optionsdialog.",
         "data": {
-          "power_entity": "WP-Strom (kWh, Primaerquelle)",
-          "heat_entity": "WP-Heizwaerme (kWh)",
-          "outdoor_entity": "Aussentemperatur",
+          "power_entity": "WP-Strom (kWh, Primärquelle)",
+          "heat_entity": "WP-Heizwärme (kWh)",
+          "outdoor_entity": "Außentemperatur",
           "compressor_entity": "Verdichter-Status"
         }
       }
     },
     "error": {
       "not_found": "Die Entity existiert nicht.",
-      "unavailable": "Die Entity ist derzeit nicht verfuegbar.",
+      "unavailable": "Die Entity ist derzeit nicht verfügbar.",
       "wrong_unit": "Die Einheit passt nicht zu dieser Quelle.",
       "wrong_domain": "Der Entity-Typ passt nicht zu dieser Quelle."
     },
@@ -45,23 +45,23 @@
         "title": "Heizungsanalyse einstellen",
         "menu_options": {
           "sources": "Optionale Quellen",
-          "add_circuit": "Heizkreis hinzufuegen",
+          "add_circuit": "Heizkreis hinzufügen",
           "remove_circuit": "Heizkreis entfernen",
-          "add_room": "Raum hinzufuegen",
+          "add_room": "Raum hinzufügen",
           "remove_room": "Raum entfernen",
           "save": "Speichern"
         },
-        "description": "Quellen, Heizkreise, Raeume oder Schwellen aendern."
+        "description": "Quellen, Heizkreise, Räume oder Schwellen ändern."
       },
       "sources": {
         "title": "Optionale Quellen",
         "description": "Alles optional. Leere Felder bleiben ungenutzt; die betroffenen Kennzahlen werden dann 'unbekannt'.",
         "data": {
           "power_fallback_entity": "WP-Strom Ersatzquelle",
-          "dhw_heat_entity": "Warmwasserwaerme (kWh)",
+          "dhw_heat_entity": "Warmwasserwärme (kWh)",
           "flow_entity": "Vorlauftemperatur (Ist)",
           "target_flow_entity": "Vorlauftemperatur (Soll)",
-          "return_entity": "Ruecklauftemperatur",
+          "return_entity": "Rücklauftemperatur",
           "buffer_entity": "Puffertemperatur",
           "defrost_entity": "Abtauung-Status",
           "aux_heater_entity": "Heizstab/NHZ-Status",
@@ -70,17 +70,17 @@
         }
       },
       "add_circuit": {
-        "title": "Heizkreis hinzufuegen",
+        "title": "Heizkreis hinzufügen",
         "data": {
           "name": "Name",
           "type": "Typ",
           "temperature_entity": "Ist-Temperatur des Kreises",
           "pump_entity": "Kreispumpe",
-          "mixer_open_entity": "Mischer oeffnet",
-          "mixer_close_entity": "Mischer schliesst"
+          "mixer_open_entity": "Mischer öffnet",
+          "mixer_close_entity": "Mischer schließt"
         },
         "data_description": {
-          "type": "Puffer, Heizkoerper, Fussbodenheizung oder Warmwasser. Die Zuordnung kommt vom Nutzer, nie aus Entity-Namen."
+          "type": "Puffer, Heizkörper, Fußbodenheizung oder Warmwasser. Die Zuordnung kommt vom Nutzer, nie aus Entity-Namen."
         }
       },
       "remove_circuit": {
@@ -90,7 +90,7 @@
         }
       },
       "add_room": {
-        "title": "Raum hinzufuegen",
+        "title": "Raum hinzufügen",
         "data": {
           "name": "Name",
           "circuit": "Heizkreis",
@@ -98,7 +98,7 @@
           "valve_position_entity": "Ventilposition"
         },
         "data_description": {
-          "climate_entity": "Optional. Ohne Thermostat wird der Raum ohne Regelung gefuehrt und loest keine Komfort-Findings aus.",
+          "climate_entity": "Optional. Ohne Thermostat wird der Raum ohne Regelung geführt und löst keine Komfort-Findings aus.",
           "valve_position_entity": "Optional. Livisi-Thermostate liefern keine Ventilposition."
         }
       },
@@ -127,13 +127,13 @@
     },
     "error": {
       "not_found": "Die Entity existiert nicht.",
-      "unavailable": "Die Entity ist derzeit nicht verfuegbar.",
+      "unavailable": "Die Entity ist derzeit nicht verfügbar.",
       "wrong_unit": "Die Einheit passt nicht zu dieser Quelle.",
       "wrong_domain": "Der Entity-Typ passt nicht zu dieser Quelle.",
       "invalid_name": "Bitte einen Namen angeben.",
       "duplicate_name": "Diesen Namen gibt es bereits.",
       "unknown_circuit": "Der Heizkreis existiert nicht.",
-      "circuit_in_use": "Der Heizkreis ist noch Raeumen zugeordnet. Entferne zuerst diese Raeume."
+      "circuit_in_use": "Der Heizkreis ist noch Räumen zugeordnet. Entferne zuerst diese Räume."
     },
     "abort": {
       "no_circuits": "Lege zuerst einen Heizkreis an."
@@ -143,8 +143,8 @@
     "circuit_type": {
       "options": {
         "buffer": "Pufferspeicher",
-        "radiators": "Heizkoerper",
-        "underfloor": "Fussbodenheizung",
+        "radiators": "Heizkörper",
+        "underfloor": "Fußbodenheizung",
         "dhw": "Warmwasser"
       }
     }
@@ -192,7 +192,7 @@
   "services": {
     "update_inventory": {
       "name": "Inventar aktualisieren",
-      "description": "Stammdaten von Pumpe, Thermostat oder Hydraulik setzen; jede Aenderung wird protokolliert.",
+      "description": "Stammdaten von Pumpe, Thermostat oder Hydraulik setzen; jede Änderung wird protokolliert.",
       "fields": {
         "object": {
           "name": "Objekt",
@@ -200,17 +200,17 @@
         },
         "values": {
           "name": "Werte",
-          "description": "Felder und neue Werte. Erlaubte Felder haengen vom Bereich ab."
+          "description": "Felder und neue Werte. Erlaubte Felder hängen vom Bereich ab."
         },
         "note": {
           "name": "Notiz",
-          "description": "Optionaler Grund oder Hinweis zur Aenderung."
+          "description": "Optionaler Grund oder Hinweis zur Änderung."
         }
       }
     },
     "log_change": {
-      "name": "Aenderung dokumentieren",
-      "description": "Freie Aenderung festhalten, ohne Stammdaten zu setzen.",
+      "name": "Änderung dokumentieren",
+      "description": "Freie Änderung festhalten, ohne Stammdaten zu setzen.",
       "fields": {
         "object": {
           "name": "Objekt"
@@ -230,22 +230,22 @@
       }
     },
     "compare_periods": {
-      "name": "Zeitraeume vergleichen",
+      "name": "Zeiträume vergleichen",
       "description": "Kennzahlen vor und nach einem Stichtag vergleichen.",
       "fields": {
         "days": {
-          "name": "Fenstergroesse",
+          "name": "Fenstergröße",
           "description": "Anzahl Tage vor und nach dem Stichtag."
         },
         "change_time": {
           "name": "Stichtag",
-          "description": "Ohne Angabe gilt der letzte Eintrag im Aenderungsverlauf."
+          "description": "Ohne Angabe gilt der letzte Eintrag im Änderungsverlauf."
         }
       }
     },
     "export_report": {
       "name": "Bericht erzeugen",
-      "description": "Kennzahlen, Inventar und Aenderungsverlauf als Markdown oder JSON.",
+      "description": "Kennzahlen, Inventar und Änderungsverlauf als Markdown oder JSON.",
       "fields": {
         "format": {
           "name": "Format"

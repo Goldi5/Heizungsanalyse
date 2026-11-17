@@ -1,7 +1,7 @@
 """Diagnose ohne personenbezogene Daten.
 
-Entity-IDs, Raumnamen und Wohnungsbezeichnungen koennen Namen enthalten und
-bleiben deshalb draussen. Ausgegeben werden nur Zaehler, Domaenen und
+Entity-IDs, Raumnamen und Wohnungsbezeichnungen können Namen enthalten und
+bleiben deshalb draußen. Ausgegeben werden nur Zähler, Domänen und
 Kennzahlen.
 """
 

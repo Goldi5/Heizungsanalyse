@@ -11,8 +11,8 @@ class DayValue:
     """Ein Tageswert aus der Langzeitstatistik.
 
     ``change`` ist die vom Recorder berechnete Differenz, ``state`` der letzte
-    Zaehlerstand des Tages. Je nach ``state_class`` ist nur eines von beiden
-    gesetzt; deshalb werden beide mitgefuehrt.
+    Zählerstand des Tages. Je nach ``state_class`` ist nur eines von beiden
+    gesetzt; deshalb werden beide mitgeführt.
     """
 
     day: date
@@ -31,7 +31,7 @@ class HourValue:
 
 @dataclass(slots=True)
 class DaySample:
-    """Tageswerte einer Anlage, aus mehreren Quellen zusammengefuehrt."""
+    """Tageswerte einer Anlage, aus mehreren Quellen zusammengeführt."""
 
     day: date
     heat_kwh: float | None = None
@@ -48,7 +48,7 @@ class DaySample:
 
 @dataclass(slots=True)
 class HourSample:
-    """Stundenwerte fuer die Vorlauf-Abweichung bei laufendem Verdichter."""
+    """Stundenwerte für die Vorlauf-Abweichung bei laufendem Verdichter."""
 
     hour: datetime
     flow_c: float | None = None

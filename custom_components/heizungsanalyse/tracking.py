@@ -1,4 +1,4 @@
-"""Fensterpuffer fuer Raum- und Kreiskennzahlen (reines Python).
+"""Fensterpuffer für Raum- und Kreiskennzahlen (reines Python).
 
 Die Stichproben leben im Arbeitsspeicher und werden nach dem in
 ``window_days`` festgelegten Zeitraum verworfen. Nach einem Neustart von Home
@@ -25,7 +25,7 @@ from .analysis.rooms import (
 
 
 class RoomTracker:
-    """Haelt die letzten Stichproben je Raum."""
+    """Hält die letzten Stichproben je Raum."""
 
     def __init__(self, window_days: int = 7, max_per_room: int = 3000) -> None:
         self._window = timedelta(days=window_days)
@@ -60,7 +60,7 @@ class RoomTracker:
 
 
 class CircuitTracker:
-    """Haelt die letzten Stichproben je Kreis."""
+    """Hält die letzten Stichproben je Kreis."""
 
     def __init__(self, window_days: int = 7, max_per_circuit: int = 3000) -> None:
         self._window = timedelta(days=window_days)
@@ -82,7 +82,7 @@ class CircuitTracker:
 
 
 class MixerTracker:
-    """Zaehlt steigende Flanken der Mischer-Stellglieder je Tag."""
+    """Zählt steigende Flanken der Mischer-Stellglieder je Tag."""
 
     def __init__(self, window_days: int = 7) -> None:
         self._window_days = window_days
@@ -123,6 +123,6 @@ class MixerTracker:
 
 
 def rank_rooms_with_circuits(stats: dict[str, RoomDeviation], circuit_of: dict[str, str | None]) -> dict[str, object]:
-    """Rangliste der Raeume und Mittel je Kreis."""
+    """Rangliste der Räume und Mittel je Kreis."""
     ranked = [{"room_id": room_id, "median": median} for room_id, median in rank_rooms(stats)]
     return {"rooms": ranked, "by_circuit": circuit_ranking(stats, circuit_of)}

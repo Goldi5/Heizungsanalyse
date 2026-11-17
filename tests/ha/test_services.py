@@ -1,4 +1,4 @@
-"""Dienste: Inventar, Aenderungsverlauf, Zeitraumvergleich, Bericht."""
+"""Dienste: Inventar, Änderungsverlauf, Zeitraumvergleich, Bericht."""
 
 from __future__ import annotations
 

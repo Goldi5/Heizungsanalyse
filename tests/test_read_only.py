@@ -1,7 +1,7 @@
-"""Statische Read-only-Pruefung.
+"""Statische Read-only-Prüfung.
 
 Es darf keinen Codepfad geben, der einen Dienst auf einer Fremd-Entity
-aufruft. Der Test prueft den Quelltext, damit ein neuer Aufruf sofort auffaellt.
+aufruft. Der Test prüft den Quelltext, damit ein neuer Aufruf sofort auffällt.
 """
 
 from __future__ import annotations

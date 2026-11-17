@@ -47,7 +47,7 @@ def _daily() -> dict[str, list[DayValue]]:
 
 
 def _cumulative(days: list[dict], key: str) -> list[DayValue]:
-    """Zaehlerstaende statt Tageswerte, wie sie der Recorder liefert."""
+    """Zählerstände statt Tageswerte, wie sie der Recorder liefert."""
     total = 0.0
     values: list[DayValue] = []
     for item in days:
@@ -166,7 +166,7 @@ async def test_flow_deviation_sensor(hass: HomeAssistant) -> None:
 
 
 async def test_fallback_power_source(hass: HomeAssistant) -> None:
-    """Ohne Primaerquelle wird die Ersatzquelle genutzt und markiert."""
+    """Ohne Primärquelle wird die Ersatzquelle genutzt und markiert."""
     entry = MockConfigEntry(
         domain=DOMAIN,
         data=MANDATORY,

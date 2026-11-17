@@ -1,6 +1,6 @@
-"""Pruefung der gemappten Quellen: Existenz, Verfuegbarkeit, Einheit, Domain.
+"""Prüfung der gemappten Quellen: Existenz, Verfügbarkeit, Einheit, Domain.
 
-Die Integration raet nicht: Was nicht passt, wird mit einer Fehlermeldung im
+Die Integration rät nicht: Was nicht passt, wird mit einer Fehlermeldung im
 Formular abgelehnt.
 """
 
@@ -32,7 +32,7 @@ def _domain(entity_id: str) -> str:
 
 
 def validate_energy(hass, entity_id: str) -> str | None:
-    """Energiequelle: Sensor mit Energie-Geraeteklasse oder Energie-Einheit."""
+    """Energiequelle: Sensor mit Energie-Geräteklasse oder Energie-Einheit."""
     error = _availability(hass, entity_id)
     if error:
         return error
@@ -48,7 +48,7 @@ def validate_energy(hass, entity_id: str) -> str | None:
 
 
 def validate_temperature(hass, entity_id: str) -> str | None:
-    """Temperaturquelle: Sensor mit Temperatur-Geraeteklasse oder °C/K."""
+    """Temperaturquelle: Sensor mit Temperatur-Geräteklasse oder °C/K."""
     error = _availability(hass, entity_id)
     if error:
         return error
@@ -64,14 +64,14 @@ def validate_temperature(hass, entity_id: str) -> str | None:
 
 
 def validate_status(hass, entity_id: str) -> str | None:
-    """Statusquelle: Sensor oder Binary-Sensor, verfuegbar."""
+    """Statusquelle: Sensor oder Binary-Sensor, verfügbar."""
     if _domain(entity_id) not in ("sensor", "binary_sensor"):
         return ERROR_WRONG_DOMAIN
     return _availability(hass, entity_id)
 
 
 def validate_climate(hass, entity_id: str) -> str | None:
-    """Klimaquelle: climate-Entity, verfuegbar."""
+    """Klimaquelle: climate-Entity, verfügbar."""
     if _domain(entity_id) != "climate":
         return ERROR_WRONG_DOMAIN
     return _availability(hass, entity_id)

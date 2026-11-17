@@ -1,4 +1,4 @@
-"""Repo-weite Konsistenzpruefungen (ohne Home Assistant lauffaehig)."""
+"""Repo-weite Konsistenzprüfungen (ohne Home Assistant lauffähig)."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ def _read_json(path: Path) -> dict:
 
 
 def test_manifest_required_fields() -> None:
-    """Pflichtfelder fuer hassfest und HACS sind gesetzt."""
+    """Pflichtfelder für hassfest und HACS sind gesetzt."""
     manifest = _read_json(COMPONENT / "manifest.json")
 
     assert manifest["domain"] == COMPONENT.name
@@ -46,7 +46,7 @@ def test_hacs_name_matches_manifest() -> None:
 
 
 def test_translations_cover_english_and_german() -> None:
-    """Beide geforderten Sprachen existieren und teilen die Schluessel."""
+    """Beide geforderten Sprachen existieren und teilen die Schlüssel."""
     strings = _read_json(COMPONENT / "strings.json")
     de = _read_json(COMPONENT / "translations" / "de.json")
     en = _read_json(COMPONENT / "translations" / "en.json")

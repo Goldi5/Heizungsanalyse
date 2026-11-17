@@ -2,7 +2,7 @@ update_inventory:
   name: Inventar aktualisieren
   description: >-
     Stammdaten eines Heizkreises, Thermostats oder der Hydraulik setzen. Jede
-    echte Aenderung wird automatisch im Aenderungsverlauf protokolliert.
+    echte Änderung wird automatisch im Änderungsverlauf protokolliert.
   fields:
     object:
       name: Objekt
@@ -12,20 +12,20 @@ update_inventory:
         text:
     values:
       name: Werte
-      description: Felder und neue Werte. Erlaubte Felder haengen vom Bereich ab.
+      description: Felder und neue Werte. Erlaubte Felder hängen vom Bereich ab.
       required: true
       selector:
         object:
     note:
       name: Notiz
-      description: Optionaler Grund oder Hinweis zur Aenderung.
+      description: Optionaler Grund oder Hinweis zur Änderung.
       selector:
         text:
 
 log_change:
-  name: Aenderung dokumentieren
+  name: Änderung dokumentieren
   description: >-
-    Freie Aenderung am Inventar festhalten, ohne Stammdaten zu setzen. Fuer
+    Freie Änderung am Inventar festhalten, ohne Stammdaten zu setzen. Für
     Vorher-Nachher-Vergleiche mit compare_periods.
   fields:
     object:
@@ -52,13 +52,13 @@ log_change:
         text:
 
 compare_periods:
-  name: Zeitraeume vergleichen
+  name: Zeiträume vergleichen
   description: >-
     Kennzahlen vor und nach einem Stichtag vergleichen. Ohne change_time wird
-    der letzte Eintrag im Aenderungsverlauf genommen.
+    der letzte Eintrag im Änderungsverlauf genommen.
   fields:
     days:
-      name: Fenstergroesse
+      name: Fenstergröße
       description: Anzahl Tage vor und nach dem Stichtag.
       selector:
         number:
@@ -72,7 +72,7 @@ compare_periods:
 
 export_report:
   name: Bericht erzeugen
-  description: Kennzahlen, Inventar und Aenderungsverlauf als Markdown oder JSON.
+  description: Kennzahlen, Inventar und Änderungsverlauf als Markdown oder JSON.
   fields:
     format:
       name: Format

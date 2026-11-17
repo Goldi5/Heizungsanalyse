@@ -12,7 +12,7 @@ def _usable(samples: Sequence[DaySample], days: int | None) -> list[DaySample]:
 
 
 def starts_per_day(samples: Sequence[DaySample], *, days: int | None = None) -> float | None:
-    """Durchschnittliche Verdichterstarts pro Tag mit Zaehlerwerten."""
+    """Durchschnittliche Verdichterstarts pro Tag mit Zählerwerten."""
     usable = [sample for sample in _usable(samples, days) if sample.starts is not None]
     if not usable:
         return None

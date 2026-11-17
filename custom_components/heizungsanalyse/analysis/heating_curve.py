@@ -54,7 +54,7 @@ def deviation(hours: Sequence[HourSample], *, compressor_only: bool = True) -> D
 
 
 def curve_bins(samples: Sequence[DaySample], *, bin_width: float = 2.0) -> list[CurveBin]:
-    """Soll-Vorlauf gegen Aussentemperatur, gebuendelt in ``bin_width``-Schritten."""
+    """Soll-Vorlauf gegen Außentemperatur, gebündelt in ``bin_width``-Schritten."""
     groups: dict[int, list[float]] = {}
     outdoor: dict[int, list[float]] = {}
     for sample in samples:

@@ -1,3 +1,39 @@
+## 0.2.0 – 2026-11-17
+
+### Neu
+- **Dashboard, das sich selbst anlegt:** Nach der Einrichtung erscheint
+  „Heizungsanalyse“ in der Seitenleiste – einmalig, nur für Admins angelegt,
+  ein vorhandenes Dashboard wird nie überschrieben. Die Kartendatei trägt sich
+  selbst als Lovelace-Ressource ein (YAML-Modus: Extra-Modul).
+- **Fünf Ansichten** aus einer Dashboard-Strategie (`custom:heizungsanalyse`),
+  ohne Entity-Namen von Hand:
+  - *Anlage*: Anlagen-Check (0–100), COP 7/30 Tage, Starts pro Tag, Laufzeit
+    je Zyklus, Vorlauf Ist − Soll – jeweils mit 30-Tage-Verlauf –, Hinweise
+    mit Beleg, COP-Kennlinie über der Außentemperatur, Energie, „Was fehlt?“.
+  - *Effizienz*: COP-Verlauf mit Außentemperatur und Änderungsmarken,
+    Heizkurve (Ist/Soll-Vorlauf), Takten nach Außentemperatur, Laufzeit je
+    Zyklus, Abtauen & Heizstab, Warmwasseranteil, Energie (30/90/365 Tage).
+  - *Räume & Kreise*: Abweichung zum Soll je Raum mit Toleranzband und p90,
+    Zeitanteile zu kalt/zu warm, Aufheizzeit, Live-Ist/Soll; Pumpe ohne
+    Verdichter und Mischer-Impulse je Kreis.
+  - *Vorher / Nachher*: Änderungen mit 7 Tagen davor/danach, wetterbereinigter
+    COP-Effekt über die eigene Kennlinie, Änderung direkt eintragen.
+  - *Inventar*: Pumpen, Thermostate, Hydraulik, Datenquellen, Bericht als
+    Markdown herunterladen.
+- „?“ an jeder Kachel mit Erklärung, Hell/Dunkel, Deutsch/Englisch,
+  Handy-Layout; Diagramme zeichnen sich in der echten Breite (Schrift bleibt
+  überall gleich groß).
+- Websocket `heizungsanalyse/summary`: alle Dashboard-Daten in einem Aufruf
+  (rein lesend), dazu `dashboard/status` und `dashboard/mark`.
+
+### Geändert
+- Texte durchgehend mit Umlauten (Hinweise, Einrichtung, Dienste, Doku).
+- Kommazahlen in deutschen Hinweistexten mit Komma.
+
+### Entfernt
+- Versehentlich eingecheckte Datei `.local/state/gh/device-id` (jetzt in
+  `.gitignore`).
+
 ## 0.1.1 – 2026-11-17
 
 ### Neu
@@ -5,31 +41,31 @@
   Regeln gegen Doppelungen, was raumklima-2 lesen kann, empfohlene Aufteilung.
 - **Isolationstest** (`tests/test_isolation.py`): keine raumklima-Importe, keine
   fest verdrahteten Entity-IDs, eigene Domain.
-- README um das Zusammenspiel und die Dokumentationsliste ergaenzt.
-- Brand-Icon (`brand/icon.png`) fuer HACS und Repo-Themen.
+- README um das Zusammenspiel und die Dokumentationsliste ergänzt.
+- Brand-Icon (`brand/icon.png`) für HACS und Repo-Themen.
 
 ### Behoben
-- `CONFIG_SCHEMA` ergaenzt (hassfest-Warnung).
-- Ueberzaehliger `options.init`-Block in den Uebersetzungen entfernt und
-  Beschreibung fuer den Optionsdialog ergaenzt (hassfest-Fehler).
+- `CONFIG_SCHEMA` ergänzt (hassfest-Warnung).
+- Überzähliger `options.init`-Block in den Übersetzungen entfernt und
+  Beschreibung für den Optionsdialog ergänzt (hassfest-Fehler).
 
-### Veroeffentlichung
-- Erstes oeffentliches Repo `Goldi5/Heizungsanalyse`; CI (ruff, pytest,
-  hassfest, HACS) gruen.
+### Veröffentlichung
+- Erstes öffentliches Repo `Goldi5/Heizungsanalyse`; CI (ruff, pytest,
+  hassfest, HACS) grün.
 
 ## 0.1.0 – 2026-11-17
 
-Erste Fassung fuer HACS (benutzerdefiniertes Repository). Die Zwischenstaende
-0.1.0b0 bis 0.7.0b0 waren Phasenmarker waehrend der Umsetzung.
+Erste Fassung für HACS (benutzerdefiniertes Repository). Die Zwischenstände
+0.1.0b0 bis 0.7.0b0 waren Phasenmarker während der Umsetzung.
 
 ### Enthalten
-- Einrichtung ueber die UI mit Pflichtquellen, optionalen Quellen, Heizkreisen,
-  Raeumen und Schwellen.
+- Einrichtung über die UI mit Pflichtquellen, optionalen Quellen, Heizkreisen,
+  Räumen und Schwellen.
 - Kennzahlen aus der Recorder-Statistik: COP (7/30 Tage), Starts pro Tag,
   Laufzeit je Zyklus, Vorlauf-Abweichung, Tage mit Daten.
-- Geraeteinventar mit Aenderungsverlauf und Roll-ups; Dienste
+- Geräteinventar mit Änderungsverlauf und Roll-ups; Dienste
   `update_inventory`, `log_change`, `compare_periods`, `export_report`.
-- Raum- und Kreisanalyse aus Stichproben, inklusive Raeumen ohne Ventilposition.
+- Raum- und Kreisanalyse aus Stichproben, inklusive Räumen ohne Ventilposition.
 - Findings F01 bis F13 mit konfigurierbaren Schwellen, Sensor und Ereignis.
 - Anonymisierte Diagnostics, Dokumentation und Dashboard-Beispiel.
 
@@ -42,7 +78,7 @@ Erste Fassung fuer HACS (benutzerdefiniertes Repository). Die Zwischenstaende
 ## 0.7.0b0 – 2026-11-17
 
 ### Neu
-- **Diagnostics** (`diagnostics.py`): Version, Quell-Domaenen, Zaehler,
+- **Diagnostics** (`diagnostics.py`): Version, Quell-Domänen, Zähler,
   Kennzahlen, Schwellen und Finding-IDs. Ohne Entity-IDs, Raumnamen oder
   Standortdaten.
 - **Dokumentation:** `docs/entities.md` mit allen Sensoren, Attributen und
@@ -59,12 +95,12 @@ Erste Fassung fuer HACS (benutzerdefiniertes Repository). Die Zwischenstaende
 ### Neu
 - **Findings-Engine** (`analysis/findings.py`) mit F01 bis F13: Vorlauf,
   Taktung, Pumpen-Leerlauf, Raum-Abweichung, Heizstab, Doppelsensoren,
-  verfuegbare Pflichtquellen, Abtauung, COP-Kennlinie, Mischer, fehlende
+  verfügbare Pflichtquellen, Abtauung, COP-Kennlinie, Mischer, fehlende
   Statistik und Stromquellen-Vergleich.
 - **Konfigurierbare Schwellen** im Optionsdialog (zehn Werte, Standard aus dem
   Arbeitsauftrag), gespeichert unter `options.thresholds`.
-- **Sensor `findings`** mit Anzahl, Schwere-Zaehlern, Details und Schwellen als
-  Attribute; Ereignis `heizungsanalyse_findings` bei Aenderung.
+- **Sensor `findings`** mit Anzahl, Schwere-Zählern, Details und Schwellen als
+  Attribute; Ereignis `heizungsanalyse_findings` bei Änderung.
 - **Zweisprachige Hinweistexte** (`findings_text.py`, de/en) mit Beleg und
   Empfehlung, ohne Handlungsanweisung an die Anlage.
 - **Tests:** je Regel mindestens ein positiver und ein negativer Fall, Schwellen,
@@ -72,26 +108,26 @@ Erste Fassung fuer HACS (benutzerdefiniertes Repository). Die Zwischenstaende
 
 ### Dokumentation
 - `docs/findings.md` mit Regeltabelle, Schwellen und Grenzen; `docs/services.md`
-  um das Findings-Ereignis ergaenzt.
+  um das Findings-Ereignis ergänzt.
 
 ## 0.5.0b0 – 2026-11-17
 
 ### Neu
 - **Raumkennzahlen** (`analysis/rooms.py`): Median und P90 der Abweichung
-  Ist minus Soll, Zeitanteile unter/ueber 1 K, Aufheizzeit nach
+  Ist minus Soll, Zeitanteile unter/über 1 K, Aufheizzeit nach
   Sollwert-Anhebung per Flankenerkennung, Rangliste kalt zuerst.
 - **Kreiskennzahlen** (`analysis/circuits.py`): Pumpen-Leerlaufanteil
   (Pumpenlaufzeit ohne Verdichter) und Mischer-Impulse je Tag.
 - **Stichprobenpuffer** (`tracking.py`): 7-Tage-Fenster je Raum und Kreis,
   getrennt nach Raum; alte Werte werden verworfen.
 - **Sensoren je Raum** (nur mit Climate-Entity): Abweichung und Aufheizzeit,
-  eigenes Geraet je Raum; Ventilposition ist optional (Livisi-Raeume
+  eigenes Gerät je Raum; Ventilposition ist optional (Livisi-Räume
   funktionieren ohne).
 - **Sensoren je Kreis:** Pumpen-Leerlaufanteil und Mischer-Impulse, eigenes
-  Geraet je Kreis.
-- **Diagnose:** Raum-Rangliste als Sensor mit Raeumen und Mittel je Kreis.
-- **Tests:** reine Logik fuer Abweichung, Aufheizzeit, Leerlauf, Impulse und
-  Fensterpruning; Integrationstest mit Climate-, Pumpen- und Mischerzustaenden
+  Gerät je Kreis.
+- **Diagnose:** Raum-Rangliste als Sensor mit Räumen und Mittel je Kreis.
+- **Tests:** reine Logik für Abweichung, Aufheizzeit, Leerlauf, Impulse und
+  Fensterpruning; Integrationstest mit Climate-, Pumpen- und Mischerzuständen
   inklusive Raum ohne Regelung und Raum ohne Messwerte.
 
 ### Dokumentation
@@ -101,19 +137,19 @@ Erste Fassung fuer HACS (benutzerdefiniertes Repository). Die Zwischenstaende
 ## 0.4.0b0 – 2026-11-17
 
 ### Neu
-- **Geraeteinventar** (`storage.py`): Pumpen, Thermostate und Hydraulik als
+- **Geräteinventar** (`storage.py`): Pumpen, Thermostate und Hydraulik als
   eigener Speicher je Konfigurationseintrag; Felder je Bereich sind in
   `const.INVENTORY_FIELDS` festgelegt.
-- **Aenderungsverlauf:** jede echte Aenderung wird mit Zeitstempel, altem und
-  neuem Wert sowie optionaler Notiz protokolliert; unveraenderte Werte nicht.
+- **Änderungsverlauf:** jede echte Änderung wird mit Zeitstempel, altem und
+  neuem Wert sowie optionaler Notiz protokolliert; unveränderte Werte nicht.
 - **Roll-ups:** Tagesproben werden gespeichert, damit Vergleiche auch nach
-  einem Recorder-Purge funktionieren; der laufende Tag wird uebersprungen.
+  einem Recorder-Purge funktionieren; der laufende Tag wird übersprungen.
 - **Dienste:** `update_inventory`, `log_change`, `compare_periods`,
   `export_report` (Markdown/JSON, mit Antwortdaten).
 - **Ereignisse** `heizungsanalyse_inventory_changed` und
-  `heizungsanalyse_period_comparison` fuer Automatisierungen.
+  `heizungsanalyse_period_comparison` für Automatisierungen.
 - **Dokumentation:** `docs/services.md` mit Feldern, Beispielen und
-  Rueckgabewerten.
+  Rückgabewerten.
 - **Tests:** Inventar und Verlauf, Persistenz, Roll-ups, alle Dienste und ein
   Quelltext-Test gegen steuernde Service-Aufrufe.
 
@@ -121,47 +157,47 @@ Erste Fassung fuer HACS (benutzerdefiniertes Repository). Die Zwischenstaende
 
 ### Neu
 - **Analyseschicht** `analysis/` ohne Home-Assistant-Import: COP, COP-Kennlinie,
-  Taktung (Starts pro Tag, Laufzeit je Zyklus), Zaehlerdifferenzen mit
+  Taktung (Starts pro Tag, Laufzeit je Zyklus), Zählerdifferenzen mit
   Reset-Erkennung, Heizkurve und Vorlauf-Abweichung (Median/P90).
 - **Datenzugriff** `data_access.py` liest Tages- und Stundenstatistik des
   Recorders; ohne Recorder bleiben die Kennzahlen `unknown`.
-- **Coordinator** im 5-Minuten-Takt: baut Tagesproben, waehlt die Stromquelle
-  (primaer oder Ersatz) und weist sie an jedem COP aus.
+- **Coordinator** im 5-Minuten-Takt: baut Tagesproben, wählt die Stromquelle
+  (primär oder Ersatz) und weist sie an jedem COP aus.
 - **Sensoren:** COP (7 Tage), COP (30 Tage), Verdichterstarts pro Tag,
   Laufzeit je Zyklus, Vorlauf-Abweichung, Tage mit Daten (diagnostisch).
 - **Tests:** 14-Tage-Referenzfixture aus dem Plan (COP ca. 3,8, Starts 7 bis 13
-  pro Tag), Zeitreihenaufbau, Zaehlerresets, Sensorzustaende, fehlende Daten.
+  pro Tag), Zeitreihenaufbau, Zählerresets, Sensorzustände, fehlende Daten.
 
 ### Dokumentation
 - Grenzen der Vorlauf-Abweichung und der Quellenwahl in
-  `docs/assumptions.md` und `docs/architecture.md` ergaenzt.
+  `docs/assumptions.md` und `docs/architecture.md` ergänzt.
 
 ## 0.2.0b0 – 2026-11-17
 
 ### Neu
-- **Pflichtquellen im Einrichtungsdialog:** Strom, Heizwaerme, Aussentemperatur
-  und Verdichter-Status ueber Entity-Selectoren. Einheit, Geraeteklasse und
-  Verfuegbarkeit werden geprueft; unpassende Entities werden abgelehnt.
-- **Optionsdialog:** optionale Quellen (Ersatzstrom, Warmwasserwaerme, Vor-/
-  Ruecklauf, Puffer, Abtauung, Heizstab, Verdichterstarts), Heizkreise und
-  Raeume anlegen und entfernen.
+- **Pflichtquellen im Einrichtungsdialog:** Strom, Heizwärme, Außentemperatur
+  und Verdichter-Status über Entity-Selectoren. Einheit, Geräteklasse und
+  Verfügbarkeit werden geprüft; unpassende Entities werden abgelehnt.
+- **Optionsdialog:** optionale Quellen (Ersatzstrom, Warmwasserwärme, Vor-/
+  Rücklauf, Puffer, Abtauung, Heizstab, Verdichterstarts), Heizkreise und
+  Räume anlegen und entfernen.
 - **Regeln statt Raten:** doppelte Namen, unbekannte Kreise und das Entfernen
   eines noch belegten Kreises werden abgelehnt.
-- **Rekonfiguration** der Pflichtquellen ueber *Neu konfigurieren*.
-- **Datenmodell** `models.py` (reines Python, ohne HA-Import) fuer Heizkreise
-  und Raeume, inklusive stabiler Bezeichner aus Namen.
-- **Tests:** Einheiten- und Verfuegbarkeitspruefung, Kreis- und Raumverwaltung,
-  Raeume ohne Thermostat, Modell-Roundtrip.
+- **Rekonfiguration** der Pflichtquellen über *Neu konfigurieren*.
+- **Datenmodell** `models.py` (reines Python, ohne HA-Import) für Heizkreise
+  und Räume, inklusive stabiler Bezeichner aus Namen.
+- **Tests:** Einheiten- und Verfügbarkeitsprüfung, Kreis- und Raumverwaltung,
+  Räume ohne Thermostat, Modell-Roundtrip.
 
 ### Dokumentation
 - `docs/assumptions.md` und `docs/architecture.md` um die M1-Entscheidung
-  ergaenzt: Kreise und Raeume liegen als Listen in `entry.options`, nicht als
+  ergänzt: Kreise und Räume liegen als Listen in `entry.options`, nicht als
   Config-Subentries.
 
 ## 0.1.0b0 – 2026-11-17
 
 ### Neu
-- **Repo-Geruest (M0):** Integrationsordner `custom_components/heizungsanalyse`
+- **Repo-Gerüst (M0):** Integrationsordner `custom_components/heizungsanalyse`
   mit Manifest, Konstanten, minimalem Config-Flow und Auf-/Abbau des
   Konfigurationseintrags.
 - **CI:** `hassfest`, HACS-Validierung, `ruff` und `pytest`.

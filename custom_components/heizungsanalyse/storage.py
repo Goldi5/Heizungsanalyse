@@ -1,4 +1,4 @@
-"""Persistenz: Geraeteinventar, Aenderungsverlauf und Tages-Roll-ups."""
+"""Persistenz: Geräteinventar, Änderungsverlauf und Tages-Roll-ups."""
 
 from __future__ import annotations
 
@@ -36,14 +36,14 @@ def _split_object(object_id: str) -> tuple[str, str | None]:
 
 
 class InventoryStore:
-    """Haelt Inventar, Aenderungsverlauf und Tageswerte im HA-Speicher."""
+    """Hält Inventar, Änderungsverlauf und Tageswerte im HA-Speicher."""
 
     def __init__(self, hass: HomeAssistant, entry_id: str) -> None:
         self._store: Store[dict[str, Any]] = Store(hass, STORAGE_VERSION, f"{DOMAIN}.{entry_id}")
         self._data: dict[str, Any] | None = None
 
     async def async_load(self) -> dict[str, Any]:
-        """Daten einmalig laden; fehlende Bereiche werden ergaenzt."""
+        """Daten einmalig laden; fehlende Bereiche werden ergänzt."""
         if self._data is None:
             stored = await self._store.async_load() or {}
             self._data = {
@@ -51,6 +51,7 @@ class InventoryStore:
                 | dict(stored.get("inventory") or {}),
                 "change_log": list(stored.get("change_log") or []),
                 "rollups": dict(stored.get("rollups") or {}),
+                "dashboard": dict(stored.get("dashboard") or {}),
             }
         return self._data
 
@@ -65,7 +66,7 @@ class InventoryStore:
         *,
         note: str | None = None,
     ) -> list[dict[str, Any]]:
-        """Stammdaten setzen und jede echte Aenderung protokollieren."""
+        """Stammdaten setzen und jede echte Änderung protokollieren."""
         data = await self.async_load()
         section, key = _split_object(object_id)
         target = data["inventory"].setdefault(section, {})
@@ -103,7 +104,7 @@ class InventoryStore:
         new_value: Any = None,
         note: str | None = None,
     ) -> dict[str, Any]:
-        """Freie Aenderung dokumentieren, ohne Stammdaten zu setzen."""
+        """Freie Änderung dokumentieren, ohne Stammdaten zu setzen."""
         data = await self.async_load()
         change = {
             "ts": dt_util.utcnow().isoformat(),
@@ -128,7 +129,7 @@ class InventoryStore:
     async def async_save_rollups(self, samples: Iterable[DaySample]) -> None:
         """Abgeschlossene Tage dauerhaft sichern.
 
-        Der heutige Tag ist unvollstaendig und wird nicht gespeichert, damit
+        Der heutige Tag ist unvollständig und wird nicht gespeichert, damit
         Auswertungen nicht mit Teilwerten arbeiten.
         """
         data = await self.async_load()
@@ -161,10 +162,25 @@ class InventoryStore:
         if changed:
             await self.async_save()
 
+    async def async_dashboard(self) -> dict[str, Any]:
+        """Merkzeichen für das automatisch angelegte Dashboard."""
+        return dict((await self.async_load()).get("dashboard") or {})
+
+    async def async_mark_dashboard(self, *, url_path: str | None, created: bool) -> None:
+        """Einmal angelegt (oder vorhanden) - danach nie wieder automatisch anlegen."""
+        data = await self.async_load()
+        data["dashboard"] = {
+            "handled": True,
+            "url_path": url_path,
+            "created": created,
+            "ts": dt_util.utcnow().isoformat(),
+        }
+        await self.async_save()
+
     async def async_rollups(self) -> dict[str, dict[str, Any]]:
         return dict((await self.async_load())["rollups"])
 
 
 def rollup_days(rollups: dict[str, dict[str, Any]]) -> list[date]:
-    """Tage, fuer die Roll-ups vorliegen."""
+    """Tage, für die Roll-ups vorliegen."""
     return sorted(date.fromisoformat(day) for day in rollups)

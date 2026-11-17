@@ -1,4 +1,4 @@
-"""Zaehlerdifferenzen und Reset-Erkennung."""
+"""Zählerdifferenzen und Reset-Erkennung."""
 
 from __future__ import annotations
 

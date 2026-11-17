@@ -1,7 +1,7 @@
 """Schmaler Adapter zur Langzeitstatistik des Recorders.
 
 Nur dieses Modul kennt den Recorder. Die Analyseschicht bekommt neutrale
-Werte und weiss nichts davon, woher sie stammen.
+Werte und weiß nichts davon, woher sie stammen.
 """
 
 from __future__ import annotations

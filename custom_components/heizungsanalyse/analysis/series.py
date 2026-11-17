@@ -14,7 +14,7 @@ def energy_by_day(values: Sequence[DayValue]) -> dict[date, float]:
     """Energieverbrauch je Tag.
 
     Bevorzugt die vom Recorder berechnete Differenz (``change``). Fehlt sie
-    (z. B. bei ``state_class: total``), wird sie aus den Zaehlerstaenden
+    (z. B. bei ``state_class: total``), wird sie aus den Zählerständen
     berechnet, inklusive Reset-Erkennung.
     """
     by_day: dict[date, float] = {}
@@ -32,13 +32,13 @@ def energy_by_day(values: Sequence[DayValue]) -> dict[date, float]:
 
 
 def counter_by_day(values: Sequence[DayValue]) -> dict[date, float]:
-    """Zaehlerdifferenz je Tag (Starts, Laufzeit, ...)."""
+    """Zählerdifferenz je Tag (Starts, Laufzeit, ...)."""
     states = [(value.day, value.state) for value in values if value.state is not None]
     return deltas_from_states(states)
 
 
 def mean_by_day(values: Sequence[DayValue]) -> dict[date, float]:
-    """Tagesmittel je Tag (Aussentemperatur, Vorlauf, ...)."""
+    """Tagesmittel je Tag (Außentemperatur, Vorlauf, ...)."""
     return {value.day: value.mean for value in values if value.mean is not None}
 
 
@@ -57,8 +57,8 @@ def build_samples(
 ) -> list[DaySample]:
     """Tagesproben aus den vorhandenen Reihen zusammensetzen.
 
-    Massgeblich ist der Tag, an dem Waerme oder Strom vorliegt; weitere Reihen
-    fuellen nur auf. Tage ohne Waerme und ohne Strom entfallen.
+    Maßgeblich ist der Tag, an dem Wärme oder Strom vorliegt; weitere Reihen
+    füllen nur auf. Tage ohne Wärme und ohne Strom entfallen.
     """
     heat = heat or {}
     power = power or {}
@@ -84,5 +84,5 @@ def build_samples(
 
 
 def bin_index(value: float, width: float) -> int:
-    """Index des Bins, in den ``value`` faellt."""
+    """Index des Bins, in den ``value`` fällt."""
     return math.floor(value / width)

@@ -1,4 +1,4 @@
-"""Inventar, Aenderungsverlauf und Roll-ups."""
+"""Inventar, Änderungsverlauf und Roll-ups."""
 
 from __future__ import annotations
 

@@ -1,9 +1,9 @@
 """Zweisprachige Texte der Findings.
 
-Home Assistant bietet fuer freie Hinweistexte keinen Uebersetzungsplatz in den
+Home Assistant bietet für freie Hinweistexte keinen Übersetzungsplatz in den
 Strings-Dateien. Deshalb liegen die Vorlagen hier, getrennt von der Logik und
 mit denselben Parametern wie ``analysis/findings.py``. Fehlt eine Sprache,
-faellt die Ausgabe auf Deutsch zurueck.
+fällt die Ausgabe auf Deutsch zurück.
 """
 
 from __future__ import annotations
@@ -13,64 +13,64 @@ from typing import Any
 TEXTS: dict[str, dict[str, dict[str, str]]] = {
     "de": {
         "flow_deviation": {
-            "text": "Der Ist-Vorlauf liegt im Median {median} K ueber dem Soll (Schwelle {threshold} K).",
-            "suggestion": "Sollwert, Heizkurve und Pufferfuehrung pruefen; die Abweichung ist der staerkste Optimierungskandidat.",
+            "text": "Der Ist-Vorlauf liegt im Median {median} K über dem Soll (Schwelle {threshold} K).",
+            "suggestion": "Sollwert, Heizkurve und Pufferführung prüfen; die Abweichung ist der stärkste Optimierungskandidat.",
         },
         "too_many_starts": {
-            "text": "{starts} Verdichterstarts pro Tag bei Aussentemperatur ueber 0 Grad (Schwelle {threshold}).",
-            "suggestion": "Hysterese, Mindestlaufzeit und Puffervolumen pruefen, damit der Verdichter laenger laeuft.",
+            "text": "{starts} Verdichterstarts pro Tag bei Außentemperatur über 0 Grad (Schwelle {threshold}).",
+            "suggestion": "Hysterese, Mindestlaufzeit und Puffervolumen prüfen, damit der Verdichter länger läuft.",
         },
         "short_cycles": {
-            "text": "Die mittlere Laufzeit je Zyklus betraegt {minutes} Minuten (Schwelle {threshold} Minuten).",
-            "suggestion": "Takten reduzieren: Sperrzeiten, Hysterese und Waermebedarf abstimmen.",
+            "text": "Die mittlere Laufzeit je Zyklus beträgt {minutes} Minuten (Schwelle {threshold} Minuten).",
+            "suggestion": "Takten reduzieren: Sperrzeiten, Hysterese und Wärmebedarf abstimmen.",
         },
         "pump_idle": {
-            "text": "Die Pumpe in {circuit} laeuft {share} % ihrer Laufzeit ohne Verdichter (Schwelle {threshold} %).",
-            "suggestion": "Pumpenschaltung und Mischerfuehrung pruefen; Dauerlauf ohne Waermebedarf kostet Strom.",
+            "text": "Die Pumpe in {circuit} läuft {share} % ihrer Laufzeit ohne Verdichter (Schwelle {threshold} %).",
+            "suggestion": "Pumpenschaltung und Mischerführung prüfen; Dauerlauf ohne Wärmebedarf kostet Strom.",
         },
         "room_underheated": {
             "text": "{room} liegt im Median {median} K unter dem Soll (Schwelle {threshold} K).",
-            "suggestion": "Heizkoerperventil, Voreinstellung und Raumzuordnung pruefen; kein automatischer Eingriff.",
+            "suggestion": "Heizkörperventil, Voreinstellung und Raumzuordnung prüfen; kein automatischer Eingriff.",
         },
         "room_overheated": {
-            "text": "{room} liegt im Median {median} K ueber dem Soll (Schwelle {threshold} K).",
-            "suggestion": "Regelung, Ventil und Fremdwaerme pruefen; Ueberheizung kostet Energie.",
+            "text": "{room} liegt im Median {median} K über dem Soll (Schwelle {threshold} K).",
+            "suggestion": "Regelung, Ventil und Fremdwärme prüfen; Überheizung kostet Energie.",
         },
         "aux_heater": {
-            "text": "Der Heizstab laeuft im Mittel {hours} Stunden pro Tag (Schwelle {threshold} h).",
-            "suggestion": "Einsatzgrenzen und Sperrzeiten pruefen; der Heizstab senkt die Effizienz.",
+            "text": "Der Heizstab läuft im Mittel {hours} Stunden pro Tag (Schwelle {threshold} h).",
+            "suggestion": "Einsatzgrenzen und Sperrzeiten prüfen; der Heizstab senkt die Effizienz.",
         },
         "duplicate_sensors": {
             "text": "{count} Sensorpaare liefern identische Tageswerte.",
-            "suggestion": "Fuehlerzuordnung klaeren, bevor Spreizung oder Ruecklauf daraus berechnet werden.",
+            "suggestion": "Fühlerzuordnung klären, bevor Spreizung oder Rücklauf daraus berechnet werden.",
         },
         "source_unavailable": {
-            "text": "{entity} ist seit {hours} Stunden nicht verfuegbar.",
-            "suggestion": "Integration und Verbindung des Sensors pruefen; Kennzahlen bleiben bis dahin unbekannt.",
+            "text": "{entity} ist seit {hours} Stunden nicht verfügbar.",
+            "suggestion": "Integration und Verbindung des Sensors prüfen; Kennzahlen bleiben bis dahin unbekannt.",
         },
         "defrost": {
-            "text": "Die Abtauung laeuft im Mittel {hours} Stunden pro Tag (Schwelle {threshold} h).",
+            "text": "Die Abtauung läuft im Mittel {hours} Stunden pro Tag (Schwelle {threshold} h).",
             "suggestion": "Abtauverhalten bei milden Temperaturen beobachten; Werte sind stichprobenbasiert.",
         },
         "cop_curve": {
             "text": "Der COP {cop} weicht {deviation} % von der eigenen Kennlinie ({expected}) ab (Schwelle {threshold} %).",
-            "suggestion": "Betriebsbedingungen des Zeitraums pruefen; die Kennlinie braucht mehr Daten.",
+            "suggestion": "Betriebsbedingungen des Zeitraums prüfen; die Kennlinie braucht mehr Daten.",
         },
         "mixer_unrest": {
             "text": "Der Mischer in {circuit} taktet {pulses} mal pro Tag (Schwelle {threshold}).",
-            "suggestion": "Mischerlaufzeit und Regelparameter pruefen; haeufiges Takten verschleisst.",
+            "suggestion": "Mischerlaufzeit und Regelparameter prüfen; häufiges Takten verschleißt.",
         },
         "missing_statistics": {
             "text": "{count} Pflichtquellen liefern keine Langzeitstatistik.",
-            "suggestion": "state_class und Recorder-Einstellungen der Entities pruefen.",
+            "suggestion": "state_class und Recorder-Einstellungen der Entities prüfen.",
         },
         "power_source_fallback": {
             "text": "Die Integration rechnet mit der Ersatzstromquelle.",
-            "suggestion": "Primaerquelle wiederherstellen; die Kennzahlen sind bis dahin als Ersatz gekennzeichnet.",
+            "suggestion": "Primärquelle wiederherstellen; die Kennzahlen sind bis dahin als Ersatz gekennzeichnet.",
         },
         "power_source_deviation": {
-            "text": "Primaer- und Ersatzstromquelle weichen {deviation} % voneinander ab (Schwelle {threshold} %).",
-            "suggestion": "Messpunkte abgleichen; eine Quelle schaetzt, die andere misst.",
+            "text": "Primär- und Ersatzstromquelle weichen {deviation} % voneinander ab (Schwelle {threshold} %).",
+            "suggestion": "Messpunkte abgleichen; eine Quelle schätzt, die andere misst.",
         },
     },
     "en": {
@@ -139,7 +139,7 @@ TEXTS: dict[str, dict[str, dict[str, str]]] = {
 
 
 def render(key: str, params: dict[str, Any] | None, language: str | None = None) -> dict[str, str]:
-    """Text und Empfehlung zu einem Finding-Schluessel."""
+    """Text und Empfehlung zu einem Finding-Schlüssel."""
     base = (language or "de").replace("-", "_").split("_")[0].lower()
     lang = base if base in TEXTS else "de"
     templates = TEXTS.get(lang, TEXTS["de"]).get(key) or TEXTS["de"].get(key) or {}

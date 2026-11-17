@@ -23,7 +23,7 @@ MANDATORY = {
 
 
 async def test_setup_and_unload(hass: HomeAssistant) -> None:
-    """Der Eintrag laedt auch ohne Statistik und laesst sich sauber entladen."""
+    """Der Eintrag lädt auch ohne Statistik und lässt sich sauber entladen."""
     entry = MockConfigEntry(domain=DOMAIN, data=MANDATORY, unique_id=DOMAIN)
     entry.add_to_hass(hass)
 

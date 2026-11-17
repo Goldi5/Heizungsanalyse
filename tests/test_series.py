@@ -15,7 +15,7 @@ def test_energy_prefers_change() -> None:
 
 
 def test_energy_falls_back_to_state_delta() -> None:
-    """Bei state_class total fehlt change; dann zaehlen die Staende."""
+    """Bei state_class total fehlt change; dann zählen die Stände."""
     values = [
         DayValue(date(2026, 11, 1), state=1000.0),
         DayValue(date(2026, 11, 2), state=1030.0),

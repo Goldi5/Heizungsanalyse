@@ -38,7 +38,7 @@ def cop_from_totals(
     days: int = 0,
     source: str | None = None,
 ) -> CopResult:
-    """COP aus zwei Mengen. Ohne Strom oder Waerme bleibt er unbekannt."""
+    """COP aus zwei Mengen. Ohne Strom oder Wärme bleibt er unbekannt."""
     if heat_kwh <= 0 or power_kwh <= 0:
         return CopResult(None, heat_kwh, power_kwh, days, source)
     return CopResult(heat_kwh / power_kwh, heat_kwh, power_kwh, days, source)
@@ -50,9 +50,9 @@ def cop_window(
     days: int | None = None,
     source: str | None = None,
 ) -> CopResult:
-    """COP ueber die letzten ``days`` Tagesproben.
+    """COP über die letzten ``days`` Tagesproben.
 
-    Nur Tage mit Waerme und Strom gehen ein; fehlende Tage werden nicht durch
+    Nur Tage mit Wärme und Strom gehen ein; fehlende Tage werden nicht durch
     Nullen ersetzt.
     """
     selected = list(samples) if days is None else list(samples)[-days:]
@@ -75,7 +75,7 @@ def cop_per_day(samples: Sequence[DaySample]) -> list[tuple[date, float]]:
 
 
 def cop_curve(samples: Sequence[DaySample], *, bin_width: float = 2.0) -> list[CopBin]:
-    """Tages-COP gegen Aussentemperatur, gebuendelt in ``bin_width``-Schritten."""
+    """Tages-COP gegen Außentemperatur, gebündelt in ``bin_width``-Schritten."""
     groups: dict[int, list[float]] = {}
     heat: dict[int, float] = {}
     power: dict[int, float] = {}

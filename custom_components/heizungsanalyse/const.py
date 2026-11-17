@@ -22,6 +22,11 @@ VERSION: Final = _read_version()
 
 PLATFORMS: Final[list[str]] = ["sensor"]
 
+# Dashboard
+CARD_URL: Final = "/heizungsanalyse_static/heizungsanalyse-card.js"
+DASHBOARD_PATH: Final = "heizungsanalyse"
+DASHBOARD_ICON: Final = "mdi:heat-pump"
+
 # Aktualisierung und Auswertungsfenster
 UPDATE_INTERVAL_MINUTES: Final = 5
 HISTORY_DAYS: Final = 31
@@ -94,7 +99,7 @@ OPTIONAL_SOURCES: Final = (
     CONF_COMPRESSOR_RUNTIME_ENTITY,
 )
 
-# --- Heizkreise und Raeume -------------------------------------------------------
+# --- Heizkreise und Räume -------------------------------------------------------
 CONF_CIRCUITS: Final = "circuits"
 CONF_ROOMS: Final = "rooms"
 

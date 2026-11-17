@@ -1,14 +1,14 @@
 # Zusammenspiel mit raumklima-2
 
-`raumklima-2` regelt Heizkoerperthermostate. Die Heizungsanalyse beobachtet die
-Anlage. Beide laufen nebeneinander, ohne Codeabhaengigkeit und ohne gemeinsame
+`raumklima-2` regelt Heizkörperthermostate. Die Heizungsanalyse beobachtet die
+Anlage. Beide laufen nebeneinander, ohne Codeabhängigkeit und ohne gemeinsame
 Speicher.
 
 ## Regeln
 
-1. **Keine Codeabhaengigkeit.** Die Heizungsanalyse importiert nichts aus
+1. **Keine Codeabhängigkeit.** Die Heizungsanalyse importiert nichts aus
    `custom_components.raumklima` und registriert dort keine Dienste. Ein Test
-   prueft das (`tests/test_isolation.py`).
+   prüft das (`tests/test_isolation.py`).
 2. **Keine Steuerung.** Die Heizungsanalyse ruft keinen Dienst auf, der ein
    Thermostat, eine Pumpe oder einen Mischer stellt. Auch nicht von
    raumklima-2.
@@ -18,7 +18,7 @@ Speicher.
    Heizungsanalyse wie normale Entities lesen. Umgekehrt ist keine
    raumklima-Entity Pflicht; die Integration funktioniert ohne raumklima-2.
 5. **Ein Eintrag je Anlage.** Die Heizungsanalyse erlaubt genau einen Eintrag.
-   Fuer die Berliner Wohnung aus raumklima-2 („Mehrere Wohnungen“) gilt sie
+   Für die Berliner Wohnung aus raumklima-2 („Mehrere Wohnungen“) gilt sie
    nicht; deren Entities werden nicht gemappt.
 
 ## Was raumklima-2 lesen kann
@@ -58,10 +58,10 @@ Das ist reine Anzeige. Keine Aktion an der Anlage.
 
 ## Was die Heizungsanalyse nicht doppelt baut
 
-| Thema in raumklima-2 | Uebernahme |
+| Thema in raumklima-2 | Übernahme |
 |---|---|
 | Heizbericht (Heizstunden, wetterbereinigter Vergleich) | bleibt dort; die Heizungsanalyse liefert COP und Taktung der Anlage |
-| Heizsaison und Heizgrenze | bleibt dort; die Heizungsanalyse nutzt nur die Aussentemperatur |
+| Heizsaison und Heizgrenze | bleibt dort; die Heizungsanalyse nutzt nur die Außentemperatur |
 | Gelernte Aufheizzeit je Raum | bleibt dort. Die Heizungsanalyse misst Aufheizzeit nur als Kontrollwert je Raum, ohne Regelung |
 | Gesundheitscheck („Raum wird nicht warm“) | bleibt dort (Ereignis `raumklima_event`, Typ `health`). Die Heizungsanalyse meldet F04/F05 als 7-Tage-Median |
 | Mehrere Wohnungen | bleibt dort; die Heizungsanalyse kennt nur die Anlage am Standort |
@@ -69,18 +69,18 @@ Das ist reine Anzeige. Keine Aktion an der Anlage.
 ## Empfohlene Aufteilung
 
 - **raumklima-2** entscheidet, wann und wie warm geheizt wird.
-- **Heizungsanalyse** sagt, ob die Anlage dafuer effizient laeuft (COP,
+- **Heizungsanalyse** sagt, ob die Anlage dafür effizient läuft (COP,
   Takten, Vorlauf, Pumpen, Mischer) und wo Hinweise mit Beleg stehen.
-- Beide Ereignisse duerfen nebeneinander existieren. Wer beides auswertet,
-  sollte in Automatisierungen den Ausloeser nennen
+- Beide Ereignisse dürfen nebeneinander existieren. Wer beides auswertet,
+  sollte in Automatisierungen den Auslöser nennen
   (`raumklima_event` gegen `heizungsanalyse_findings`), damit die Quelle klar
   bleibt.
 
-## Pruefung
+## Prüfung
 
 ```bash
 .venv/bin/pytest tests/test_isolation.py tests/test_read_only.py -q -p no:logging
 ```
 
-Der Test schlaegt fehl, sobald die Integration raumklima-Code importiert,
+Der Test schlägt fehl, sobald die Integration raumklima-Code importiert,
 fremde Dienste aufruft oder Entity-IDs fest verdrahtet.

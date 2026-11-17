@@ -1,7 +1,7 @@
 """Findings-Engine: Hinweise mit Beleg (reines Python).
 
 Jedes Finding nennt Kennzahl, Schwellenwert und Zeitfenster. Die Texte selbst
-liegen in den Uebersetzungen; hier stehen nur Schluessel und Parameter.
+liegen in den Übersetzungen; hier stehen nur Schlüssel und Parameter.
 Keine Regel erzeugt einen Hinweis ohne Messwerte.
 """
 
@@ -22,7 +22,7 @@ SEVERITY_INFO = "info"
 
 @dataclass(slots=True, frozen=True)
 class Thresholds:
-    """Schwellen der Findings, per Optionsdialog aenderbar."""
+    """Schwellen der Findings, per Optionsdialog änderbar."""
 
     flow_deviation_k: float = 5.0
     starts_per_day: float = 20.0
@@ -77,13 +77,13 @@ class Finding:
         }
 
     def signature(self) -> str:
-        """Stabile Kennung fuer den Ereignisvergleich."""
+        """Stabile Kennung für den Ereignisvergleich."""
         return f"{self.id}:{self.key}:{sorted(self.params.items())}:{sorted(self.evidence.items())}"
 
 
 @dataclass(slots=True)
 class FindingsInput:
-    """Alle Messwerte, die die Regeln beurteilen duerfen."""
+    """Alle Messwerte, die die Regeln beurteilen dürfen."""
 
     cop: float | None = None
     cop_days: int = 0
@@ -407,5 +407,5 @@ def evaluate(results: FindingsInput, thresholds: Thresholds | None = None) -> li
 
 
 def signature(findings: Sequence[Finding]) -> str:
-    """Kennung des Gesamtergebnisses fuer Ereignisvergleiche."""
+    """Kennung des Gesamtergebnisses für Ereignisvergleiche."""
     return "|".join(sorted(finding.signature() for finding in findings))

@@ -41,7 +41,7 @@ from .findings_text import render
 
 
 class HeizungsanalyseSensor(CoordinatorEntity[HeizungsanalyseCoordinator], SensorEntity):
-    """Basis: haengt am Coordinator, kein eigenes Polling."""
+    """Basis: hängt am Coordinator, kein eigenes Polling."""
 
     _attr_has_entity_name = True
     _attr_should_poll = False
@@ -65,7 +65,7 @@ class HeizungsanalyseSensor(CoordinatorEntity[HeizungsanalyseCoordinator], Senso
 
 
 def _sub_device(coordinator: HeizungsanalyseCoordinator, object_id: str, name: str, model: str) -> DeviceInfo:
-    """Geraet je Raum bzw. Kreis, untergeordnet dem Hauptgeraet."""
+    """Gerät je Raum bzw. Kreis, untergeordnet dem Hauptgerät."""
     return DeviceInfo(
         identifiers={(DOMAIN, f"{coordinator.entry.entry_id}_{object_id}")},
         name=name,
@@ -192,7 +192,7 @@ class FlowDeviationSensor(HeizungsanalyseSensor):
 
 
 class DataDaysSensor(HeizungsanalyseSensor):
-    """Anzahl der Tage mit Waermedaten im Auswertungsfenster."""
+    """Anzahl der Tage mit Wärmedaten im Auswertungsfenster."""
 
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = "d"
@@ -315,7 +315,7 @@ class PumpIdleSensor(HeizungsanalyseSensor):
 
 
 class MixerPulsesSensor(HeizungsanalyseSensor):
-    """Mischer-Impulse pro Tag, im Stichprobenraster gezaehlt."""
+    """Mischer-Impulse pro Tag, im Stichprobenraster gezählt."""
 
     _attr_native_unit_of_measurement = "/d"
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -344,7 +344,7 @@ class MixerPulsesSensor(HeizungsanalyseSensor):
 
 
 class RoomRankingSensor(HeizungsanalyseSensor):
-    """Diagnose: Rangliste der Raeume nach Soll-Abweichung."""
+    """Diagnose: Rangliste der Räume nach Soll-Abweichung."""
 
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_entity_category = EntityCategory.DIAGNOSTIC

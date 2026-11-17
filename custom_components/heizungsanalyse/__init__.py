@@ -1,6 +1,6 @@
-"""Heizungsanalyse - rein beobachtende Auswertung einer Waermepumpenheizung.
+"""Heizungsanalyse - rein beobachtende Auswertung einer Wärmepumpenheizung.
 
-Die Integration liest ausschliesslich vorhandene Home-Assistant-Zustaende und
+Die Integration liest ausschließlich vorhandene Home-Assistant-Zustände und
 Recorder-Statistiken. Es gibt keinen Codepfad, der Fremd-Entities steuert.
 """
 
@@ -14,8 +14,10 @@ from homeassistant.helpers import config_validation as cv
 
 from .const import DOMAIN, PLATFORMS
 from .coordinator import HeizungsanalyseCoordinator
+from .frontend import async_register_frontend
 from .services import async_setup_services
 from .storage import InventoryStore
+from .websocket_api import async_register as async_register_websocket
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
@@ -33,8 +35,10 @@ class HeizungsanalyseRuntime:
 
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
-    """Dienste einmalig beim Start registrieren."""
+    """Dienste, Websocket-Befehle und Dashboard-Karten einmalig registrieren."""
     await async_setup_services(hass)
+    async_register_websocket(hass)
+    await async_register_frontend(hass)
     return True
 
 
