@@ -13,7 +13,7 @@ Test prüft den Quelltext auf steuernde Aufrufe.
 ## Dashboard
 
 Nach der Einrichtung legt die Integration das Dashboard **Heizungsanalyse**
-selbst an (Seitenleiste) – fünf Ansichten, keine Entity-Namen von Hand, mit
+selbst an (Seitenleiste) – sechs Ansichten, keine Entity-Namen von Hand, mit
 „?“-Erklärung an jeder Kachel, hell und dunkel, auf Deutsch und Englisch.
 
 ![Ansicht Anlage](docs/images/anlage.png)
@@ -24,14 +24,19 @@ selbst an (Seitenleiste) – fünf Ansichten, keine Entity-Namen von Hand, mit
 | **Vorher / Nachher** | **Handy, dunkel** |
 | ![Vorher / Nachher](docs/images/vergleich.png) | ![Handy](docs/images/handy-dunkel.png) |
 
+**Protokoll** (Systemstatus, Quellen-Check, filterbares Protokoll):
+
+![Protokoll](docs/images/protokoll.png)
+
 Bilder mit Beispieldaten. Details: [Dashboard](docs/dashboard.md).
 
 ## Status
 
-Version 0.2.1. Alle Analysestufen sind vorhanden: Repo-Gerüst (M0),
+Version 0.3.0. Alle Analysestufen sind vorhanden: Repo-Gerüst (M0),
 Einrichtung (M1), Kennzahlen (M2), Inventar und Dienste (M3), Raum- und
 Kreisanalyse (M4), Findings (M5), Doku (M6), die dokumentierte Schnittstelle
-zu raumklima-2 (M7) und das selbst angelegte Dashboard (M8–M12).
+zu raumklima-2 (M7), das selbst angelegte Dashboard (M8–M12) sowie
+Protokoll, Diagnose und Debug-Spur (M13).
 Veröffentlicht als `Goldi5/Heizungsanalyse`; CI mit ruff, pytest, hassfest,
 HACS-Validierung und Dashboard-Tests (Node).
 
@@ -49,8 +54,9 @@ HACS-Validierung und Dashboard-Tests (Node).
 | M8 | Frontend-Bündel, Strategie, Ressource automatisch | erledigt (0.2.0) |
 | M9 | Dashboard legt sich selbst an | erledigt (0.2.0) |
 | M10 | Websocket `summary` – alle Daten in einem Aufruf | erledigt (0.2.0) |
-| M11 | Fünf Ansichten: Anlage, Effizienz, Räume & Kreise, Vorher/Nachher, Inventar | erledigt (0.2.0) |
+| M11 | Ansichten: Anlage, Effizienz, Räume & Kreise, Vorher/Nachher, Inventar, Protokoll | erledigt (0.3.0) |
 | M12 | „?“-Hilfe, Hell/Dunkel, DE/EN, Handy-Layout | erledigt (0.2.0) |
+| M13 | Ereignisprotokoll, Diagnose, Debug-Spur, Reiter „Protokoll“ | erledigt (0.3.0) |
 
 ## Voraussetzungen
 
@@ -93,7 +99,8 @@ Die Zuordnung der Pflichtquellen lässt sich über *Neu konfigurieren*
 
 - [Entities](docs/entities.md): Sensoren, Attribute, Datenfenster.
 - [Dienste](docs/services.md): Inventar pflegen, Zeiträume vergleichen,
-  Bericht exportieren.
+  Bericht exportieren, neu berechnen.
+- [Protokoll](docs/protokoll.md): Ereignisse, Diagnose, Debug-Spur, Datenschutz.
 - [Hinweise](docs/findings.md)
 - [Zusammenspiel mit raumklima-2](docs/raumklima-2.md): Regeln F01 bis F13, Schwellen, Grenzen.
 - [Dashboard](docs/dashboard.md) – legt sich selbst an; ein YAML-Beispiel für

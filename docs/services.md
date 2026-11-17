@@ -96,6 +96,16 @@ response_variable: bericht
 Rückgabe: `{"format": "markdown", "report": "# Heizungsanalyse ..."}`.
 Der Bericht enthält keine Entity-Namen und keine UUIDs.
 
+## refresh
+
+```yaml
+action: heizungsanalyse.refresh
+```
+
+Wertet die vorhandenen Daten neu aus. Das ist ein Lesevorgang: Es wird kein
+Gerät geschaltet, kein Dienst an einer Fremd-Entity aufgerufen. Die Antwort
+enthält `{"ok": true, "last_duration_ms": 812}`.
+
 ## Ereignisse
 
 | Ereignis | Wann | Nutzlast |

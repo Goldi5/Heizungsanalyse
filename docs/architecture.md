@@ -211,3 +211,20 @@ Die Schnittstelle ist rein lesend und in `docs/raumklima-2.md` beschrieben.
 `tests/test_isolation.py` hält die Trennung fest (keine raumklima-Importe,
 keine festen Entity-IDs). Geteilte Konstanten wandern später höchstens in eine
 eigene Bibliothek, nicht per Copy-and-paste.
+
+## 12. Umsetzung M13 – Protokoll, Diagnose, Debug-Spur
+
+- `analysis/event_log.py` hält den Puffer und die Filter rein (2000 Einträge,
+  30 Tage, neueste zuerst, Drosselung der update-Einträge, Neustart-Marker).
+- `event_log.py` verbindet Puffer und `Store` (verzögertes Speichern im Feld
+  `log`); `debug_log.py` ist ein eigener Logging-Handler (3000 Zeilen,
+  12 Stunden, Sichern beim Stoppen).
+- `diagnostics.py` baut Diagnose und Quellen-Check; Download und
+  `heizungsanalyse/diagnostics` nutzen denselben Code.
+- `websocket_api.py` ergänzt `log`, `diagnostics` (nur Admin) und `trace`
+  (max. 20 Meldungen pro Minute).
+- Der Coordinator protokolliert Start, Auswertung, Quellen, Hinweise,
+  Konfiguration und Fehler; `services.py` protokolliert Inventar und kennt
+  `refresh`.
+- Das Frontend zeigt die sechste Ansicht „Protokoll“ mit Filter, Suche,
+  Aufklappen, Download, Kopieren und Aktualisierung.

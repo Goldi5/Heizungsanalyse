@@ -39,6 +39,7 @@ view: anlage   # anlage | effizienz | raeume | vergleich | inventar
 | Räume & Kreise | Abweichung zum Soll je Raum (Median, p90, Toleranzband), Zeitanteile zu kalt/zu warm, Aufheizzeit, aktuelle Ist-/Soll-Temperatur; je Kreis Pumpe ohne Verdichter und Mischer-Impulse |
 | Vorher / Nachher | Eingetragene Änderungen mit 7 Tagen davor/danach (COP, Starts, Zykluslänge, Ø außen) und wetterbereinigtem COP-Effekt; Änderung direkt eintragen |
 | Inventar | Pumpen, Thermostate, Hydraulik, zugeordnete Datenquellen, Bericht als Markdown |
+| Protokoll | Systemstatus, Quellen-Check, filterbares Ereignisprotokoll, Diagnose-Download |
 
 ## Begriffe
 

@@ -1,3 +1,35 @@
+## 0.3.0 – 2026-11-17
+
+### Neu
+- **Ereignisprotokoll** (`event_log.py`): höchstens 2000 Einträge oder 30 Tage,
+  verzögert im eigenen Speicher (Feld `log`). Kategorien: Start (mit Marker
+  „— Neustart —“), Auswertung (Dauer, Statistikzeilen, Tage – gedrosselt auf
+  jede Änderung oder jeden 12. Lauf), Quelle, Hinweis, Konfiguration, Inventar,
+  Dashboard, Karte und Fehler.
+- **Diagnose** (`diagnostics.py`): Versionen, Konfiguration mit Entity-IDs,
+  Quellen-Check mit Ampel und Handlungstipp, Kennzahlen und Summary, Tageswerte
+  (31), COP-/Kurven-Bins, Vorlauf-Stunden, Hinweise mit Beleg, Raum- und
+  Kreisliste mit Stichproben und Verwerfungsgründen, Speicher, Laufzeit,
+  Protokoll (48 h) und Debug-Spur (12 h). Als Download und über
+  `heizungsanalyse/diagnostics` (nur Admin), geschwärzt.
+- **Debug-Spur** (`debug_log.py`): eigener Logging-Handler auf die Integration,
+  3000 Zeilen / 12 Stunden, beim Start geladen, beim Stoppen gesichert.
+- **Sechster Reiter „Protokoll“** in der Dashboard-Strategie: Systemstatus
+  (Backend/Karte, letzter und nächster Lauf, Fehler, Speicherstand),
+  Quellen-Check als Tabelle, Protokoll mit Kategorie-/Stufen-Chips, Suche,
+  Zeitraum (24 h / 7 / 30 Tage), nach Tag gruppiert, aufklappbaren Details,
+  Neustart-Trennlinien, Aktualisierung alle 30 Sekunden. Werkzeuge:
+  Diagnose herunterladen, Protokoll kopieren, „Jetzt neu berechnen“.
+- **Websocket:** `heizungsanalyse/log` (Filter `since`, `level`, `cat`, `q`,
+  `limit`; neueste zuerst), `heizungsanalyse/diagnostics` (Admin),
+  `heizungsanalyse/trace` (Kartenfehler, max. 20/min).
+- **Dienst `heizungsanalyse.refresh`** – Coordinator neu rechnen, rein lesend.
+- Karte meldet Lade- und Darstellungsfehler selbst über `heizungsanalyse/trace`.
+
+### Doku
+- Neu: [docs/protokoll.md](docs/protokoll.md) – Inhalt, Aufbewahrung,
+  Diagnose, Datenschutz. README, Dashboard- und Dienste-Doku ergänzt.
+
 ## 0.2.1 – 2026-11-17
 
 ### Behoben
