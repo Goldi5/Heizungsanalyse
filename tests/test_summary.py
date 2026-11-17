@@ -61,7 +61,15 @@ class Snap:
 def test_score_levels() -> None:
     warn = Finding("F01", "warning", "flow_deviation")
     info = Finding("F09", "info", "defrost")
-    assert score([], 10) | {} == {"value": 100, "level": "very_good", "warnings": 0, "infos": 0, "checks": [], "active": 0, "total": 0}
+    assert score([], 10) | {} == {
+        "value": 100,
+        "level": "very_good",
+        "warnings": 0,
+        "infos": 0,
+        "checks": [],
+        "active": 0,
+        "total": 0,
+    }
     assert score([warn, info], 10)["value"] == 80
     assert score([warn, info], 10)["level"] == "good"
     assert score([warn] * 4, 10)["level"] == "action"

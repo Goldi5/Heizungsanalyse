@@ -65,7 +65,7 @@ async def test_diagnostics_has_all_sections(hass: HomeAssistant) -> None:
     assert result["versions"]["integration"]
     assert result["versions"]["card"]["backend"] == result["versions"]["integration"]
     assert result["sources"]["power_entity"] == "sensor"
-    assert result["thresholds"]["flow_deviation_k"] == 5.0
+    assert result["thresholds"]["flow_deviation_k"] == 2.0
     assert isinstance(result["source_checks"], list)
 
 
