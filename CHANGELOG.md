@@ -1,3 +1,26 @@
+## 0.5.0 – 2026-11-17
+
+### Neu
+- **Einstellungsseite** im Dashboard (Ansicht „Einstellungen“): Pflicht- und
+  optionale Quellen, Heizkreise, Räume und Schwellen direkt im Browser
+  ändern; Speichern lädt die Integration neu. Websocket `heizungsanalyse/config`
+  (lesen) und `heizungsanalyse/config/save` (Admin).
+- **Anlagenschema** (Ansicht „Schema“): Fließbild Wärmepumpe → Puffer →
+  Heizkreise → Räume mit Live-Werten (COP, Vorlauf, Pumpenleerlauf,
+  Ist/Soll, Abweichung).
+- **Anlagenblatt** als Service `heizungsanalyse.export_plant_sheet`: Markdown
+  mit Aufbau, Einstellungen, Kennzahlen, Inventar und Hinweisen – druckbar.
+- **Hydraulischer Abgleich**: Inventar-Bereich `radiators` (Ventilpreset,
+  Soll-/Ist-Durchfluss, Spreizung), Finding F15 (Rücklauftemperatur zu hoch),
+  Schwelle `return_temp_max_c`.
+- **Warmwasserbetrieb** als optionale Quelle (`dhw_operation_entity`): Stunden
+  mit Warmwasser-Ladung werden aus Vorlauf-Abweichung und Puffer-Ladung
+  herausgerechnet.
+- **Aufheizzeit** korrigiert (keine 0-minütigen Scheinwerte nach Backfill).
+
+### Aufräumen
+- Veraltete Tags/Releases `v0.1.0`, `v0.2.0`, `v0.2.1` entfernt.
+
 ## 0.4.1 – 2026-11-17
 
 ### Neu
