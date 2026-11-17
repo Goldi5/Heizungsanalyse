@@ -1,3 +1,12 @@
+## 0.1.1b0 – 2026-11-17
+
+### Neu
+- **Zusammenspiel mit raumklima-2** (`docs/raumklima-2.md`): Schnittstelle,
+  Regeln gegen Doppelungen, was raumklima-2 lesen kann, empfohlene Aufteilung.
+- **Isolationstest** (`tests/test_isolation.py`): keine raumklima-Importe, keine
+  fest verdrahteten Entity-IDs, eigene Domain.
+- README um das Zusammenspiel und die Dokumentationsliste ergaenzt.
+
 ## 0.1.0 – 2026-11-17
 
 Erste Fassung fuer HACS (benutzerdefiniertes Repository). Die Zwischenstaende

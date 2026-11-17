@@ -202,3 +202,12 @@ Entscheidungen:
   unplausible Werte werden ignoriert und durch den Standard ersetzt.
 - Das Ereignis wird nur bei geaenderter Signatur gefeuert, nicht bei jedem
   Coordinator-Lauf.
+
+## 11. Umsetzung M7
+
+Die Heizungsanalyse bleibt ein eigenstaendiges Projekt neben raumklima-2:
+keine Importe, keine gemeinsamen Speicher, keine Dienste am anderen Projekt.
+Die Schnittstelle ist rein lesend und in `docs/raumklima-2.md` beschrieben.
+`tests/test_isolation.py` haelt die Trennung fest (keine raumklima-Importe,
+keine festen Entity-IDs). Geteilte Konstanten wandern spaeter hoechstens in eine
+eigene Bibliothek, nicht per Copy-and-paste.

@@ -14,9 +14,10 @@ Test prueft den Quelltext auf steuernde Aufrufe.
 
 Version 0.1.0. Alle Analysestufen sind vorhanden: Repo-Geruest (M0),
 Einrichtung (M1), Kennzahlen (M2), Inventar und Dienste (M3), Raum- und
-Kreisanalyse (M4), Findings (M5) sowie Doku und Dashboard-Beispiel (M6). Der
-Tag `v0.1.0` ist lokal gesetzt; das Veroeffentlichen ueber GitHub steht aus,
-weil das Repo noch kein Remote hat.
+Kreisanalyse (M4), Findings (M5), Doku und Dashboard-Beispiel (M6) sowie die
+dokumentierte Schnittstelle zu raumklima-2 (M7). Der Tag `v0.1.0` ist lokal
+gesetzt; das Veroeffentlichen ueber GitHub steht aus, weil das Repo noch kein
+Remote hat.
 
 | Phase | Inhalt | Stand |
 |---|---|---|
@@ -27,7 +28,7 @@ weil das Repo noch kein Remote hat.
 | M4 | Raum- und Kreisanalyse | erledigt |
 | M5 | Findings-Engine | erledigt |
 | M6 | Doku, Dashboard-Beispiel, Release 0.1.0 | erledigt (Tag lokal) |
-| M7 | Zusammenspiel mit raumklima-2 | offen |
+| M7 | Zusammenspiel mit raumklima-2 | erledigt (Doku + Isolationstest) |
 
 ## Voraussetzungen
 
@@ -71,7 +72,8 @@ aendern.
 - [Entities](docs/entities.md): Sensoren, Attribute, Datenfenster.
 - [Dienste](docs/services.md): Inventar pflegen, Zeitraeume vergleichen,
   Bericht exportieren.
-- [Hinweise](docs/findings.md): Regeln F01 bis F13, Schwellen, Grenzen.
+- [Hinweise](docs/findings.md)
+- [Zusammenspiel mit raumklima-2](docs/raumklima-2.md): Regeln F01 bis F13, Schwellen, Grenzen.
 - [Dashboard-Beispiel](docs/dashboard-example.yaml).
 
 ## Grenzen
