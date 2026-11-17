@@ -1,7 +1,7 @@
-/* Heizungsanalyse 0.6.1 - gebaut aus frontend/src (npm run build). Nicht von Hand bearbeiten. */
+/* Heizungsanalyse 0.7.0b0 - gebaut aus frontend/src (npm run build). Nicht von Hand bearbeiten. */
 (() => {
   // src/version.js
-  var HA_VERSION = "0.6.1";
+  var HA_VERSION = "0.7.0b0";
 
   // src/i18n.js
   var EN = {
@@ -582,6 +582,18 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
 .sroom .smut { font-size:.7rem; }
 .slegend { color:var(--hz-mut); font-size:.78rem; text-align:center; margin-top:8px; }
 
+
+.nav { display:flex; flex-wrap:wrap; gap:6px; margin:4px 0 8px; }
+.navpill { font:inherit; font-size:.78rem; font-weight:700; border:1px solid var(--hz-line); background:var(--hz-card); color:var(--hz-mut); border-radius:999px; padding:6px 12px; cursor:pointer; transition: all .15s ease; }
+.navpill:hover { border-color:var(--hz-heat); color:var(--hz-heat); }
+.navpill.on { background:color-mix(in srgb, var(--hz-heat) 14%, transparent); border-color:transparent; color:color-mix(in srgb, var(--hz-heat) 80%, var(--hz-ink)); }
+.skeleton .sk { background:linear-gradient(90deg, var(--hz-soft) 25%, color-mix(in srgb, var(--hz-ink) 6%, transparent) 50%, var(--hz-soft) 75%); background-size:200% 100%; animation: shimmer 1.4s infinite; border-radius:8px; height:14px; margin-bottom:10px; }
+.skeleton .sk-title { height:24px; width:40%; }
+.skeleton .sk-line { width:90%; }
+.skeleton .sk-line.short { width:60%; }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+@media (max-width: 760px) { .nav { overflow-x:auto; flex-wrap:nowrap; padding-bottom:4px; } .navpill { white-space:nowrap; } }
+
 .flash { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--hz-ink); color:var(--hz-card); padding:9px 16px; border-radius:999px; font-size:.85rem; font-weight:600; z-index:9; }
 `;
 
@@ -954,12 +966,24 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
   function evidence(ev) {
     return Object.entries(ev || {}).filter(([, v]) => v != null && typeof v !== "object").slice(0, 5).map(([k, v]) => `<span>${esc(EVIDENCE[k] ? EVIDENCE[k](v) : `${k}: ${typeof v === "number" ? fmt(v, Math.abs(v) < 10 ? 1 : 0) : v}`)}</span>`).join("");
   }
+  var NAV = [
+    ["anlage", "Anlage"],
+    ["effizienz", "Effizienz"],
+    ["raeume", "Räume & Kreise"],
+    ["vergleich", "Vorher / Nachher"],
+    ["inventar", "Inventar"],
+    ["protokoll", "Protokoll"],
+    ["einstellungen", "Einstellungen"],
+    ["schema", "Schema"]
+  ];
   function header(d, view) {
-    const names = { anlage: "Anlage", effizienz: "Effizienz", raeume: "Räume & Kreise", vergleich: "Vorher / Nachher", inventar: "Inventar", protokoll: "Protokoll" };
+    const names = { anlage: "Anlage", effizienz: "Effizienz", raeume: "Räume & Kreise", vergleich: "Vorher / Nachher", inventar: "Inventar", protokoll: "Protokoll", einstellungen: "Einstellungen", schema: "Schema" };
     const at = d.generated ? new Date(d.generated) : null;
     const time = at ? at.toLocaleTimeString(getLang() === "de" ? "de-DE" : "en-GB", { hour: "2-digit", minute: "2-digit" }) : "";
+    const nav = NAV.map(([v, label]) => `<button class="navpill ${v === view ? "on" : ""}" data-nav="${v}">${esc(t(label))}</button>`).join("");
     return `<div class="head"><h1>${esc(t(names[view] || "Anlage"))}</h1><span class="muted">${esc(d.title || t("Heizungsanalyse"))}</span>
-    <span class="meta"><span class="dot ${d.last_update_success === false ? "off" : ""}"></span>${esc(t("Aktualisiert {t}", { t: time }))} · ${esc(t("Version {v}", { v: d.version }))}</span></div>`;
+    <span class="meta"><span class="dot ${d.last_update_success === false ? "off" : ""}"></span>${esc(t("Aktualisiert {t}", { t: time }))} · ${esc(t("Version {v}", { v: d.version }))}</span></div>
+    <nav class="nav">${nav}</nav>`;
   }
   function copFit(d) {
     return linearFit(d.series.filter((r) => r.cop != null && r.outdoor != null && r.cop < 12).map((r) => ({ x: r.outdoor, y: r.cop })));
@@ -1607,7 +1631,7 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     }
     async _load(force = false) {
       if (!this._hass) return;
-      if (!this._data) this._paint(`<div class="c">${esc(t("Lade …"))}</div>`);
+      if (!this._data) this._paint(`<div class="c skeleton"><div class="sk sk-title"></div><div class="sk sk-line"></div><div class="sk sk-line"></div><div class="sk sk-line short"></div></div>`);
       try {
         this._data = await loadSummary(this._hass, { force });
         this._error = null;
@@ -1766,8 +1790,12 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
       });
     }
     _click(e) {
-      const el = e.target.closest("[data-help],[data-range],[data-act],[data-log-cat],[data-log-level],[data-log-range],[data-log-open]");
+      const el = e.target.closest("[data-help],[data-range],[data-act],[data-log-cat],[data-log-level],[data-log-range],[data-log-open],[data-nav]");
       if (!el) return;
+      if (el.dataset.nav) {
+        this._hass.navigate(`/heizungsanalyse/${el.dataset.nav}`);
+        return;
+      }
       if (el.dataset.help) this._ui.help = this._ui.help === el.dataset.help ? null : el.dataset.help;
       else if (el.dataset.range) this._ui.range = Number(el.dataset.range);
       else if (el.dataset.logCat !== void 0) {

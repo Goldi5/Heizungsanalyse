@@ -37,12 +37,25 @@ function evidence(ev) {
     .join("");
 }
 
+const NAV = [
+  ["anlage", "Anlage"],
+  ["effizienz", "Effizienz"],
+  ["raeume", "Räume & Kreise"],
+  ["vergleich", "Vorher / Nachher"],
+  ["inventar", "Inventar"],
+  ["protokoll", "Protokoll"],
+  ["einstellungen", "Einstellungen"],
+  ["schema", "Schema"],
+];
+
 export function header(d, view) {
-  const names = { anlage: "Anlage", effizienz: "Effizienz", raeume: "Räume & Kreise", vergleich: "Vorher / Nachher", inventar: "Inventar", protokoll: "Protokoll" };
+  const names = { anlage: "Anlage", effizienz: "Effizienz", raeume: "Räume & Kreise", vergleich: "Vorher / Nachher", inventar: "Inventar", protokoll: "Protokoll", einstellungen: "Einstellungen", schema: "Schema" };
   const at = d.generated ? new Date(d.generated) : null;
   const time = at ? at.toLocaleTimeString(getLang() === "de" ? "de-DE" : "en-GB", { hour: "2-digit", minute: "2-digit" }) : "";
+  const nav = NAV.map(([v, label]) => `<button class="navpill ${v === view ? "on" : ""}" data-nav="${v}">${esc(t(label))}</button>`).join("");
   return `<div class="head"><h1>${esc(t(names[view] || "Anlage"))}</h1><span class="muted">${esc(d.title || t("Heizungsanalyse"))}</span>
-    <span class="meta"><span class="dot ${d.last_update_success === false ? "off" : ""}"></span>${esc(t("Aktualisiert {t}", { t: time }))} · ${esc(t("Version {v}", { v: d.version }))}</span></div>`;
+    <span class="meta"><span class="dot ${d.last_update_success === false ? "off" : ""}"></span>${esc(t("Aktualisiert {t}", { t: time }))} · ${esc(t("Version {v}", { v: d.version }))}</span></div>
+    <nav class="nav">${nav}</nav>`;
 }
 
 function copFit(d) {

@@ -1,3 +1,15 @@
+## 0.7.0b0 – 2026-11-17 (Beta)
+
+### Neu
+- **Dashboard-Navigation**: In-Card-Navigationsleiste mit Pills für alle
+  Ansichten (Anlage, Effizienz, Räume, Vorher/Nachher, Inventar, Protokoll,
+  Einstellungen, Schema); Wechsel ohne Umweg über HA-Tabs.
+- **Loading-Skeleton** und einheitliche Navigation auf allen Ansichten.
+- **Live-Refresh** auf allen Views (bisher nur Räume).
+
+### Geändert
+- Navigations-Pills, Skeleton-Animation, Mobile-Overflow-Scroll.
+
 ## 0.6.1 – 2026-11-17
 
 ### Neu

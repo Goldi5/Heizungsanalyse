@@ -32,7 +32,7 @@ Bilder mit Beispieldaten. Details: [Dashboard](docs/dashboard.md).
 
 ## Status
 
-Version 0.6.1. Alle Analysestufen sind vorhanden: Repo-Gerüst (M0),
+Version 0.7.0b0 (Beta). Alle Analysestufen sind vorhanden: Repo-Gerüst (M0),
 Einrichtung (M1), Kennzahlen (M2), Inventar und Dienste (M3), Raum- und
 Kreisanalyse (M4), Findings (M5), Doku (M6), die dokumentierte Schnittstelle
 zu raumklima-2 (M7), das selbst angelegte Dashboard (M8–M12) sowie

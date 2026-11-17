@@ -195,5 +195,17 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
 .sroom .smut { font-size:.7rem; }
 .slegend { color:var(--hz-mut); font-size:.78rem; text-align:center; margin-top:8px; }
 
+
+.nav { display:flex; flex-wrap:wrap; gap:6px; margin:4px 0 8px; }
+.navpill { font:inherit; font-size:.78rem; font-weight:700; border:1px solid var(--hz-line); background:var(--hz-card); color:var(--hz-mut); border-radius:999px; padding:6px 12px; cursor:pointer; transition: all .15s ease; }
+.navpill:hover { border-color:var(--hz-heat); color:var(--hz-heat); }
+.navpill.on { background:color-mix(in srgb, var(--hz-heat) 14%, transparent); border-color:transparent; color:color-mix(in srgb, var(--hz-heat) 80%, var(--hz-ink)); }
+.skeleton .sk { background:linear-gradient(90deg, var(--hz-soft) 25%, color-mix(in srgb, var(--hz-ink) 6%, transparent) 50%, var(--hz-soft) 75%); background-size:200% 100%; animation: shimmer 1.4s infinite; border-radius:8px; height:14px; margin-bottom:10px; }
+.skeleton .sk-title { height:24px; width:40%; }
+.skeleton .sk-line { width:90%; }
+.skeleton .sk-line.short { width:60%; }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+@media (max-width: 760px) { .nav { overflow-x:auto; flex-wrap:nowrap; padding-bottom:4px; } .navpill { white-space:nowrap; } }
+
 .flash { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--hz-ink); color:var(--hz-card); padding:9px 16px; border-radius:999px; font-size:.85rem; font-weight:600; z-index:9; }
 `;

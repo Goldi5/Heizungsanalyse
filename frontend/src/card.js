@@ -80,7 +80,7 @@ export class HeizungsanalyseCard extends HTMLElement {
 
   async _load(force = false) {
     if (!this._hass) return;
-    if (!this._data) this._paint(`<div class="c">${esc(t("Lade …"))}</div>`);
+    if (!this._data) this._paint(`<div class="c skeleton"><div class="sk sk-title"></div><div class="sk sk-line"></div><div class="sk sk-line"></div><div class="sk sk-line short"></div></div>`);
     try {
       this._data = await loadSummary(this._hass, { force });
       this._error = null;
@@ -241,8 +241,9 @@ export class HeizungsanalyseCard extends HTMLElement {
   }
 
   _click(e) {
-    const el = e.target.closest("[data-help],[data-range],[data-act],[data-log-cat],[data-log-level],[data-log-range],[data-log-open]");
+    const el = e.target.closest("[data-help],[data-range],[data-act],[data-log-cat],[data-log-level],[data-log-range],[data-log-open],[data-nav]");
     if (!el) return;
+    if (el.dataset.nav) { this._hass.navigate(`/heizungsanalyse/${el.dataset.nav}`); return; }
     if (el.dataset.help) this._ui.help = this._ui.help === el.dataset.help ? null : el.dataset.help;
     else if (el.dataset.range) this._ui.range = Number(el.dataset.range);
     else if (el.dataset.logCat !== undefined) { this._ui.logCat = this._ui.logCat === el.dataset.logCat && el.dataset.logCat ? "" : el.dataset.logCat; this._loadLog(true); return; }
