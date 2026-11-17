@@ -26,6 +26,7 @@ from .const import (
     SENSOR_COP_LONG,
     SENSOR_COP_SHORT,
     SENSOR_DATA_DAYS,
+    SENSOR_FINDINGS,
     SENSOR_FLOW_DEVIATION,
     SENSOR_MIXER_PULSES,
     SENSOR_PUMP_IDLE,
@@ -36,6 +37,7 @@ from .const import (
     SENSOR_STARTS_PER_DAY,
 )
 from .coordinator import HeizungsanalyseCoordinator
+from .findings_text import render
 
 
 class HeizungsanalyseSensor(CoordinatorEntity[HeizungsanalyseCoordinator], SensorEntity):
@@ -365,6 +367,31 @@ class RoomRankingSensor(HeizungsanalyseSensor):
         }
 
 
+class FindingsSensor(HeizungsanalyseSensor):
+    """Anzahl der Hinweise, Details als Attribute."""
+
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_icon = "mdi:alert-circle-check-outline"
+
+    def __init__(self, coordinator: HeizungsanalyseCoordinator) -> None:
+        super().__init__(coordinator, SENSOR_FINDINGS)
+
+    @property
+    def native_value(self) -> int:
+        return len(self.coordinator.data.findings)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, object]:
+        findings = self.coordinator.data.findings
+        language = self.hass.config.language
+        return {
+            "warning_count": sum(1 for finding in findings if finding.severity == "warning"),
+            "info_count": sum(1 for finding in findings if finding.severity == "info"),
+            "findings": [{**finding.as_dict(), **render(finding.key, finding.params, language)} for finding in findings],
+            "thresholds": self.coordinator.data.thresholds.as_dict(),
+        }
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
@@ -380,6 +407,7 @@ async def async_setup_entry(
         FlowDeviationSensor(coordinator),
         DataDaysSensor(coordinator),
         RoomRankingSensor(coordinator),
+        FindingsSensor(coordinator),
     ]
 
     for room in entry.options.get(CONF_ROOMS) or []:

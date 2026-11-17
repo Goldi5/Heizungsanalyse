@@ -105,3 +105,12 @@ Der Bericht enthaelt keine Entity-Namen und keine UUIDs.
 
 Damit lassen sich Automatisierungen ausloesen, ohne die Integration zu
 beschreiben (z. B. Benachrichtigung "Pumpe umgestellt, Vergleich in 14 Tagen").
+
+## Weiteres Ereignis
+
+| Ereignis | Wann | Nutzlast |
+|---|---|---|
+| `heizungsanalyse_findings` | wenn sich das Ergebnis der Findings aendert | `count`, `findings` |
+
+Die Findings selbst stehen am Sensor `sensor.heizungsanalyse_findings`; siehe
+[Hinweise](findings.md).

@@ -42,6 +42,8 @@ class DaySample:
     flow_c: float | None = None
     target_flow_c: float | None = None
     dhw_heat_kwh: float | None = None
+    aux_hours: float | None = None
+    defrost_hours: float | None = None
 
 
 @dataclass(slots=True)

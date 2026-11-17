@@ -106,6 +106,22 @@
         "data": {
           "id": "Room"
         }
+      },
+      "thresholds": {
+        "title": "Finding thresholds",
+        "description": "Starting values are placeholders. A rule only applies when measurements exist.",
+        "data": {
+          "flow_deviation_k": "Flow deviation (K)",
+          "starts_per_day": "Compressor starts per day",
+          "runtime_minutes": "Runtime per cycle (min)",
+          "pump_idle_share": "Pump idle share (0-1)",
+          "room_deviation_k": "Room deviation (K)",
+          "aux_hours_per_day": "Aux heater (h/day)",
+          "defrost_hours_per_day": "Defrost (h/day)",
+          "cop_curve_deviation": "COP curve (0-1)",
+          "mixer_pulses_per_day": "Mixer pulses per day",
+          "power_source_deviation": "Power sources deviation (0-1)"
+        }
       }
     },
     "error": {
@@ -120,6 +136,11 @@
     },
     "abort": {
       "no_circuits": "Add a heating circuit first."
+    },
+    "init": {
+      "menu_options": {
+        "thresholds": "Finding thresholds"
+      }
     }
   },
   "selector": {
@@ -166,6 +187,9 @@
       },
       "room_ranking": {
         "name": "Room ranking"
+      },
+      "findings": {
+        "name": "Findings"
       }
     }
   },

@@ -19,12 +19,14 @@ from homeassistant.util import dt as dt_util
 from .analysis.circuits import CircuitSample, CircuitStats, MixerSample, MixerStats
 from .analysis.cop import CopBin, CopResult, cop_curve, cop_window
 from .analysis.cycling import mean_runtime_per_cycle, starts_per_day
+from .analysis.findings import Finding, FindingsInput, Thresholds, evaluate, signature
 from .analysis.heating_curve import CurveBin, DeviationResult, curve_bins, deviation
 from .analysis.rooms import RoomDeviation, RoomReading
 from .analysis.series import build_samples, counter_by_day, energy_by_day, mean_by_day
 from .analysis.types import DaySample, HourSample
 from .const import (
     CIRCUIT_TYPES,
+    CONF_AUX_HEATER_ENTITY,
     CONF_BUFFER_ENTITY,
     CONF_CIRCUIT,
     CONF_CIRCUITS,
@@ -32,23 +34,27 @@ from .const import (
     CONF_COMPRESSOR_ENTITY,
     CONF_COMPRESSOR_RUNTIME_ENTITY,
     CONF_COMPRESSOR_STARTS_ENTITY,
+    CONF_DEFROST_ENTITY,
     CONF_DHW_HEAT_ENTITY,
     CONF_FLOW_ENTITY,
     CONF_HEAT_ENTITY,
     CONF_ID,
     CONF_MIXER_CLOSE_ENTITY,
     CONF_MIXER_OPEN_ENTITY,
+    CONF_NAME,
     CONF_OUTDOOR_ENTITY,
     CONF_POWER_ENTITY,
     CONF_POWER_FALLBACK_ENTITY,
     CONF_PUMP_ENTITY,
     CONF_ROOMS,
     CONF_TARGET_FLOW_ENTITY,
+    CONF_THRESHOLDS,
     CONF_VALVE_POSITION_ENTITY,
     COP_LONG_DAYS,
     COP_SHORT_DAYS,
     DEVIATION_DAYS,
     DOMAIN,
+    EVENT_FINDINGS,
     HEATING_UP_MAX_MINUTES,
     HEATING_UP_TOLERANCE,
     HEATING_UP_TRIGGER,
@@ -86,9 +92,21 @@ class AnalysisSnapshot:
     circuits: dict[str, CircuitStats]
     mixer: dict[str, MixerStats]
     rankings: dict[str, object]
+    findings: list[Finding]
+    thresholds: Thresholds
 
 
 EMPTY_COP = CopResult(None, 0.0, 0.0, 0, None)
+
+
+def _hours_by_day(values) -> dict:
+    """Tagesmittel eines Status-Sensors als Stunden."""
+    return {value.day: round(value.mean * 24, 2) for value in values if value.mean is not None}
+
+
+def _energy_total(values) -> float | None:
+    total = energy_by_day(values)
+    return round(sum(total.values()), 1) if total else None
 
 
 def _as_float(value) -> float | None:
@@ -112,6 +130,7 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
         self._rooms = RoomTracker(window_days=ROOM_WINDOW_DAYS)
         self._circuit_tracker = CircuitTracker(window_days=ROOM_WINDOW_DAYS)
         self._mixer_tracker = MixerTracker(window_days=ROOM_WINDOW_DAYS)
+        self._findings_signature: str | None = None
 
     async def _async_update_data(self) -> AnalysisSnapshot:
         try:
@@ -131,6 +150,8 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
 
         starts_id = self._entity(CONF_COMPRESSOR_STARTS_ENTITY)
         runtime_id = self._entity(CONF_COMPRESSOR_RUNTIME_ENTITY)
+        aux_id = self._entity(CONF_AUX_HEATER_ENTITY)
+        defrost_id = self._entity(CONF_DEFROST_ENTITY)
         dhw_id = self._entity(CONF_DHW_HEAT_ENTITY)
         flow_id = self._entity(CONF_FLOW_ENTITY)
         target_flow_id = self._entity(CONF_TARGET_FLOW_ENTITY)
@@ -147,6 +168,8 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
             flow_id,
             target_flow_id,
             buffer_id,
+            aux_id,
+            defrost_id,
         }
         daily = await async_read_daily(self.hass, wanted, HISTORY_DAYS)
 
@@ -161,6 +184,8 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
             flow=mean_by_day(daily.get(flow_id, [])) if flow_id else {},
             target_flow=mean_by_day(daily.get(target_flow_id, [])) if target_flow_id else {},
             dhw_heat=energy_by_day(daily.get(dhw_id, [])) if dhw_id else {},
+            aux_hours=_hours_by_day(daily.get(aux_id, [])) if aux_id else {},
+            defrost_hours=_hours_by_day(daily.get(defrost_id, [])) if defrost_id else {},
         )
 
         hours, compressor_filtered = await self._read_hours(flow_id, target_flow_id, compressor_id)
@@ -169,6 +194,18 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
         self._track(now)
         room_stats = self._rooms.stats(ROOM_TOLERANCE)
         circuit_of = {room[CONF_ID]: room.get(CONF_CIRCUIT) for room in self._rooms_config() if CONF_ID in room}
+
+        thresholds = Thresholds.from_options(self.entry.options.get(CONF_THRESHOLDS))
+        findings = self._evaluate_findings(
+            daily=daily,
+            samples=samples,
+            thresholds=thresholds,
+            room_stats=room_stats,
+            power_source=power_source,
+            cop_short=cop_window(samples, days=COP_SHORT_DAYS, source=power_source),
+            trend=cop_curve(samples),
+            flow_hours=hours,
+        )
 
         return AnalysisSnapshot(
             cop_short=cop_window(samples, days=COP_SHORT_DAYS, source=power_source),
@@ -191,7 +228,131 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
             circuits=self._circuit_tracker.stats(MIXER_RESOLUTION_MINUTES),
             mixer=self._mixer_tracker.stats(),
             rankings=rank_rooms_with_circuits(room_stats, circuit_of),
+            findings=findings,
+            thresholds=thresholds,
         )
+
+    def _evaluate_findings(
+        self,
+        *,
+        daily: dict[str, list],
+        samples: list[DaySample],
+        thresholds: Thresholds,
+        room_stats: dict,
+        power_source: str | None,
+        cop_short: CopResult,
+        trend: list[CopBin],
+        flow_hours: list[HourSample],
+    ) -> list[Finding]:
+        """Messwerte sammeln und die Regeln anwenden."""
+        heat_id = self.entry.data[CONF_HEAT_ENTITY]
+        primary_id = self.entry.data[CONF_POWER_ENTITY]
+        fallback_id = self.entry.options.get(CONF_POWER_FALLBACK_ENTITY)
+        mandatory = (
+            primary_id,
+            heat_id,
+            self.entry.data[CONF_OUTDOOR_ENTITY],
+            self.entry.data[CONF_COMPRESSOR_ENTITY],
+        )
+
+        rooms = self._rooms_config()
+        circuits = self._circuits_config()
+        recent = samples[-COP_SHORT_DAYS:]
+        outdoor = [sample.outdoor_c for sample in recent if sample.outdoor_c is not None]
+
+        results = FindingsInput(
+            cop=cop_short.cop,
+            cop_days=cop_short.days,
+            cop_trend=trend,
+            outdoor_mean=sum(outdoor) / len(outdoor) if outdoor else None,
+            deviation_median=self._deviation_median(flow_hours),
+            deviation_p90=self._deviation_p90(flow_hours),
+            deviation_hours=len(flow_hours),
+            starts_per_day=starts_per_day(samples, days=COP_SHORT_DAYS),
+            runtime_per_cycle=mean_runtime_per_cycle(samples, days=COP_SHORT_DAYS),
+            room_stats=room_stats,
+            room_names={str(room[CONF_ID]): str(room.get(CONF_NAME, room[CONF_ID])) for room in rooms if CONF_ID in room},
+            circuit_stats=self._circuit_tracker.stats(MIXER_RESOLUTION_MINUTES),
+            circuit_names={str(item[CONF_ID]): str(item.get(CONF_NAME, item[CONF_ID])) for item in circuits if CONF_ID in item},
+            mixer_stats=self._mixer_tracker.stats(),
+            samples=samples,
+            duplicate_pairs=self._duplicate_pairs(
+                daily,
+                (
+                    heat_id,
+                    primary_id,
+                    self._entity(CONF_FLOW_ENTITY),
+                    self._entity(CONF_TARGET_FLOW_ENTITY),
+                    self._entity(CONF_BUFFER_ENTITY),
+                ),
+            ),
+            missing_statistics=[entity_id for entity_id in (heat_id, primary_id) if entity_id and not daily.get(entity_id)],
+            unavailable_hours=self._unavailable_hours(mandatory),
+            power_source=power_source,
+            primary_energy=_energy_total(daily.get(primary_id, [])),
+            fallback_energy=_energy_total(daily.get(fallback_id, [])) if fallback_id else None,
+        )
+        findings = evaluate(results, thresholds)
+        self._publish_findings(findings)
+        return findings
+
+    def _publish_findings(self, findings: list[Finding]) -> None:
+        current = signature(findings)
+        if self._findings_signature is not None and current != self._findings_signature:
+            self.hass.bus.async_fire(
+                EVENT_FINDINGS,
+                {"count": len(findings), "findings": [finding.as_dict() for finding in findings]},
+            )
+        self._findings_signature = current
+
+    def _duplicate_pairs(self, daily: dict[str, list], entity_ids) -> list[tuple[str, str]]:
+        series: dict[str, dict] = {}
+        for entity_id in entity_ids:
+            if not entity_id:
+                continue
+            means = {value.day: round(value.mean, 3) for value in daily.get(entity_id, []) if value.mean is not None}
+            if len(means) >= 7:
+                series[entity_id] = means
+        pairs: list[tuple[str, str]] = []
+        ordered = sorted(series)
+        for index, left in enumerate(ordered):
+            for right in ordered[index + 1 :]:
+                common = set(series[left]) & set(series[right])
+                if len(common) >= 7 and all(series[left][day] == series[right][day] for day in common):
+                    pairs.append((left, right))
+        return pairs
+
+    def _unavailable_hours(self, entity_ids) -> dict[str, float]:
+        now = dt_util.utcnow()
+        result: dict[str, float] = {}
+        for entity_id in entity_ids:
+            state = self.hass.states.get(entity_id)
+            if state is None or state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+                continue
+            hours = (now - state.last_changed).total_seconds() / 3600
+            if hours > 1.0:
+                result[entity_id] = round(hours, 1)
+        return result
+
+    @staticmethod
+    def _deviation_median(hours: list[HourSample]) -> float | None:
+        values = [
+            hour.flow_c - hour.target_flow_c for hour in hours if hour.flow_c is not None and hour.target_flow_c is not None
+        ]
+        if not values:
+            return None
+        values.sort()
+        middle = len(values) // 2
+        return values[middle] if len(values) % 2 else (values[middle - 1] + values[middle]) / 2
+
+    @staticmethod
+    def _deviation_p90(hours: list[HourSample]) -> float | None:
+        from .analysis.heating_curve import percentile
+
+        values = [
+            hour.flow_c - hour.target_flow_c for hour in hours if hour.flow_c is not None and hour.target_flow_c is not None
+        ]
+        return percentile(values, 90)
 
     def _rooms_config(self) -> list[dict]:
         return list(self.entry.options.get(CONF_ROOMS) or [])

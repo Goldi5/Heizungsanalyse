@@ -15,6 +15,7 @@ from homeassistant.core import callback
 from homeassistant.helpers import selector
 import voluptuous as vol
 
+from .analysis.findings import Thresholds
 from .const import (
     CIRCUIT_TYPES,
     CONF_AUX_HEATER_ENTITY,
@@ -41,6 +42,7 @@ from .const import (
     CONF_ROOMS,
     CONF_TARGET_FLOW_ENTITY,
     CONF_TEMPERATURE_ENTITY,
+    CONF_THRESHOLDS,
     CONF_TYPE,
     CONF_VALVE_POSITION_ENTITY,
     DOMAIN,
@@ -51,6 +53,19 @@ from .models import HeatingCircuit, Room, unique_id
 from .validation import validate_climate, validate_energy, validate_status, validate_temperature
 
 SENSOR_DOMAIN = "sensor"
+
+_THRESHOLD_FIELDS: tuple[tuple[str, float, float, float], ...] = (
+    ("flow_deviation_k", 0, 20, 0.5),
+    ("starts_per_day", 0, 100, 1),
+    ("runtime_minutes", 0, 240, 1),
+    ("pump_idle_share", 0, 1, 0.05),
+    ("room_deviation_k", 0, 10, 0.5),
+    ("aux_hours_per_day", 0, 24, 0.5),
+    ("defrost_hours_per_day", 0, 24, 0.5),
+    ("cop_curve_deviation", 0, 1, 0.05),
+    ("mixer_pulses_per_day", 0, 200, 1),
+    ("power_source_deviation", 0, 1, 0.05),
+)
 
 
 def _entity(domain: str | list[str], device_class: str | None = None) -> selector.EntitySelector:
@@ -203,7 +218,7 @@ class HeizungsanalyseOptionsFlow(OptionsFlowWithReload):
         return list(self._draft().get(CONF_ROOMS) or [])
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        menu_options = ["sources", "add_circuit"]
+        menu_options = ["sources", "add_circuit", "thresholds"]
         if self._circuits():
             menu_options.extend(["remove_circuit", "add_room"])
         if self._rooms():
@@ -240,6 +255,24 @@ class HeizungsanalyseOptionsFlow(OptionsFlowWithReload):
             fields[marker] = option_selector
 
         return self.async_show_form(step_id="sources", data_schema=vol.Schema(fields), errors=errors)
+
+    async def async_step_thresholds(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        current = Thresholds.from_options(self._draft().get(CONF_THRESHOLDS) or {}).as_dict()
+        if user_input is not None:
+            self._draft()[CONF_THRESHOLDS] = {key: float(value) for key, value in user_input.items()}
+            return await self.async_step_init()
+
+        fields: dict[Any, Any] = {}
+        for key, minimum, maximum, step in _THRESHOLD_FIELDS:
+            fields[vol.Required(key, default=current[key])] = selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=minimum,
+                    max=maximum,
+                    step=step,
+                    mode=selector.NumberSelectorMode.BOX,
+                )
+            )
+        return self.async_show_form(step_id="thresholds", data_schema=vol.Schema(fields))
 
     async def async_step_add_circuit(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         errors: dict[str, str] = {}

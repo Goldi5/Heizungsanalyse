@@ -1,3 +1,23 @@
+## 0.6.0b0 – 2026-11-17
+
+### Neu
+- **Findings-Engine** (`analysis/findings.py`) mit F01 bis F13: Vorlauf,
+  Taktung, Pumpen-Leerlauf, Raum-Abweichung, Heizstab, Doppelsensoren,
+  verfuegbare Pflichtquellen, Abtauung, COP-Kennlinie, Mischer, fehlende
+  Statistik und Stromquellen-Vergleich.
+- **Konfigurierbare Schwellen** im Optionsdialog (zehn Werte, Standard aus dem
+  Arbeitsauftrag), gespeichert unter `options.thresholds`.
+- **Sensor `findings`** mit Anzahl, Schwere-Zaehlern, Details und Schwellen als
+  Attribute; Ereignis `heizungsanalyse_findings` bei Aenderung.
+- **Zweisprachige Hinweistexte** (`findings_text.py`, de/en) mit Beleg und
+  Empfehlung, ohne Handlungsanweisung an die Anlage.
+- **Tests:** je Regel mindestens ein positiver und ein negativer Fall, Schwellen,
+  Sortierung, Ereignis und Sprache.
+
+### Dokumentation
+- `docs/findings.md` mit Regeltabelle, Schwellen und Grenzen; `docs/services.md`
+  um das Findings-Ereignis ergaenzt.
+
 ## 0.5.0b0 – 2026-11-17
 
 ### Neu

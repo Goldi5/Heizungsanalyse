@@ -43,6 +43,7 @@ SENSOR_ROOM_HEATING_UP: Final = "room_heating_up"
 SENSOR_PUMP_IDLE: Final = "pump_idle_share"
 SENSOR_MIXER_PULSES: Final = "mixer_pulses"
 SENSOR_ROOM_RANKING: Final = "room_ranking"
+SENSOR_FINDINGS: Final = "findings"
 
 ROOM_WINDOW_DAYS: Final = 7
 ROOM_TOLERANCE: Final = 1.0
@@ -122,8 +123,11 @@ SERVICE_LOG_CHANGE: Final = "log_change"
 SERVICE_COMPARE_PERIODS: Final = "compare_periods"
 SERVICE_EXPORT_REPORT: Final = "export_report"
 
+CONF_THRESHOLDS: Final = "thresholds"
+
 EVENT_INVENTORY_CHANGED: Final = f"{DOMAIN}_inventory_changed"
 EVENT_PERIOD_COMPARISON: Final = f"{DOMAIN}_period_comparison"
+EVENT_FINDINGS: Final = f"{DOMAIN}_findings"
 
 DEFAULT_COMPARE_DAYS: Final = 14
 REPORT_CHANGE_LIMIT: Final = 20

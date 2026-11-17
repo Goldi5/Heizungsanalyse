@@ -177,3 +177,28 @@ Entscheidungen:
 - Je Raum und je Kreis entsteht ein eigenes Geraet unter dem Hauptgeraet.
   Damit bleiben Entity-Namen lesbar, ohne dass die Integration Raumnamen
   erfindet.
+
+## 10. Umsetzung M5
+
+```
+analysis/findings.py  Thresholds, Finding, FindingsInput, evaluate, signature
+findings_text.py      zweisprachige Text- und Empfehlungsvorlagen
+coordinator.py        sammelt Regel-Eingaben, veroeffentlicht Ergebnis
+sensor.py             Sensor findings mit Details und Schwellen
+config_flow.py        Schritt "thresholds" im Optionsdialog
+```
+
+Entscheidungen:
+
+- Regeln sind reine Funktionen ueber `FindingsInput`; die Texte liegen getrennt.
+  So laesst sich jede Regel ohne HA und ohne Uebersetzungen testen.
+- Jede Regel prueft zuerst, ob ihre Messwerte vorhanden sind. Fehlt etwas,
+  entsteht kein Finding; das unterscheidet "unauffaellig" von "unbekannt".
+- F09 heisst bewusst "Abtau-Stunden", weil die Statistik eines Binaersensors
+  keine Schaltvorgaenge liefert. Eine Umdeutung waere Scheinsicherheit.
+- F08 prueft nur vorhandene, aber nicht verfuegbare Quellen. Eine fehlende
+  Entity meldet F12 (keine Statistik) bzw. schon die Einrichtung.
+- Schwellen liegen als flaches Dict unter `options.thresholds`; unbekannte oder
+  unplausible Werte werden ignoriert und durch den Standard ersetzt.
+- Das Ereignis wird nur bei geaenderter Signatur gefeuert, nicht bei jedem
+  Coordinator-Lauf.

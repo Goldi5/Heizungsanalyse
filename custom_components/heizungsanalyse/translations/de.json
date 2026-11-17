@@ -106,6 +106,22 @@
         "data": {
           "id": "Raum"
         }
+      },
+      "thresholds": {
+        "title": "Schwellen der Hinweise",
+        "description": "Startwerte sind Platzhalter. Jede Regel greift erst, wenn Messwerte vorliegen.",
+        "data": {
+          "flow_deviation_k": "Vorlauf-Abweichung (K)",
+          "starts_per_day": "Verdichterstarts pro Tag",
+          "runtime_minutes": "Laufzeit je Zyklus (min)",
+          "pump_idle_share": "Pumpen-Leerlaufanteil (0-1)",
+          "room_deviation_k": "Raum-Abweichung (K)",
+          "aux_hours_per_day": "Heizstab (h/Tag)",
+          "defrost_hours_per_day": "Abtauung (h/Tag)",
+          "cop_curve_deviation": "COP-Kennlinie (0-1)",
+          "mixer_pulses_per_day": "Mischer-Impulse pro Tag",
+          "power_source_deviation": "Stromquellen-Abweichung (0-1)"
+        }
       }
     },
     "error": {
@@ -120,6 +136,11 @@
     },
     "abort": {
       "no_circuits": "Lege zuerst einen Heizkreis an."
+    },
+    "init": {
+      "menu_options": {
+        "thresholds": "Schwellen der Hinweise"
+      }
     }
   },
   "selector": {
@@ -166,6 +187,9 @@
       },
       "room_ranking": {
         "name": "Raum-Rangliste"
+      },
+      "findings": {
+        "name": "Hinweise"
       }
     }
   },

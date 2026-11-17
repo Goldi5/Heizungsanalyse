@@ -16,6 +16,7 @@ from custom_components.heizungsanalyse.const import (
     CONF_OUTDOOR_ENTITY,
     CONF_POWER_ENTITY,
     CONF_ROOMS,
+    CONF_THRESHOLDS,
     CONF_TYPE,
     DOMAIN,
     NAME,
@@ -234,3 +235,46 @@ async def test_circuit_in_use_cannot_be_removed(hass: HomeAssistant) -> None:
 
     assert result["type"] is data_entry_flow.FlowResultType.FORM
     assert result["errors"] == {CONF_CIRCUIT: "circuit_in_use"}
+
+
+async def test_options_flow_sets_thresholds(hass: HomeAssistant) -> None:
+    """Schwellen der Findings lassen sich im Optionsdialog aendern."""
+    _seed_sources(hass)
+    entry = MockConfigEntry(domain=DOMAIN, data=MANDATORY, unique_id=DOMAIN)
+    entry.add_to_hass(hass)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert "thresholds" in result["menu_options"]
+
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        user_input={"next_step_id": "thresholds"},
+    )
+    assert result["type"] is data_entry_flow.FlowResultType.FORM
+    assert result["step_id"] == "thresholds"
+
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        user_input={
+            "flow_deviation_k": 3,
+            "starts_per_day": 20,
+            "runtime_minutes": 20,
+            "pump_idle_share": 0.4,
+            "room_deviation_k": 1,
+            "aux_hours_per_day": 1,
+            "defrost_hours_per_day": 2,
+            "cop_curve_deviation": 0.15,
+            "mixer_pulses_per_day": 12,
+            "power_source_deviation": 0.15,
+        },
+    )
+    assert result["type"] is data_entry_flow.FlowResultType.MENU
+
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        user_input={"next_step_id": "save"},
+    )
+    assert result["type"] is data_entry_flow.FlowResultType.CREATE_ENTRY
+
+    assert entry.options[CONF_THRESHOLDS]["flow_deviation_k"] == 3.0
+    assert entry.options[CONF_THRESHOLDS]["mixer_pulses_per_day"] == 12.0

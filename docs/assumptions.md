@@ -161,3 +161,17 @@ abbildet; die Live-Zahl wird hier separat festgehalten.
   Impulse, die zwischen zwei Laeufen beginnen und enden.
 - **Livisi ohne Ventilposition.** Raumkennzahlen stuetzen sich auf Soll/Ist;
   eine Aussage ueber den hydraulischen Abgleich ist damit nicht moeglich.
+
+## 11. Grenzen aus M5
+
+- **Schwellen sind Platzhalter.** Sie stammen aus dem Arbeitsauftrag und sind
+  nicht gegen reale Langzeitdaten kalibriert. Ein ruhiger Normalbetrieb ist
+  deshalb nicht garantiert; die Zahlen stehen in `docs/findings.md`.
+- **F09 zaehlt Stunden, keine Abtauungen.** Die Statistik eines Binaersensors
+  liefert nur Mittelwerte.
+- **F07 erkennt nur identische Tagesmittel**, keine deckungsgleichen Kurven und
+  keine stundenlang unveraenderten Werte.
+- **Keine Push-Benachrichtigung, keine Repairs.** Findings sind Sensor und
+  Ereignis; was daraus folgt, entscheidet der Nutzer.
+- **Texte liegen im Modul**, nicht in den Strings-Dateien, weil Home Assistant
+  fuer freie Attributtexte keinen Uebersetzungsplatz bietet.
