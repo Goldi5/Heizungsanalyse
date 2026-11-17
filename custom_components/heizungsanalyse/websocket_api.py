@@ -12,6 +12,7 @@ import voluptuous as vol
 from .analysis.curve_suggestion import suggest_curve
 from .analysis.periods import merge_samples, samples_from_rollups
 from .const import (
+    CARD_URL,
     CONF_CIRCUITS,
     CONF_CO2_FACTOR,
     CONF_ENERGY_PRICE,
@@ -314,8 +315,8 @@ async def ws_status(hass: HomeAssistant, connection: websocket_api.ActiveConnect
     rollups = await runtime.store.async_rollups()
     log_entries = await runtime.log.async_last_hours(48)
     source_checks = []
-    for key, value in {**{k: runtime.entry.data.get(k) for k in MANDATORY_SOURCES},
-                        **{k: runtime.entry.options.get(k) for k in OPTIONAL_SOURCES}}.items():
+    for value in {**{k: runtime.entry.data.get(k) for k in MANDATORY_SOURCES},
+                  **{k: runtime.entry.options.get(k) for k in OPTIONAL_SOURCES}}.values():
         if not value:
             continue
         st = hass.states.get(value)

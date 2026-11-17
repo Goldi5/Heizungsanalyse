@@ -1,4 +1,4 @@
-## 0.7.0b1 – 2026-11-17 (Beta)
+## 0.7.0b2 – 2026-11-17 (Beta)
 
 ### Behoben
 - **Navigation**: `hass.navigate` existiert im Karten-Kontext nicht – Wechsel
