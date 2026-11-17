@@ -1,3 +1,12 @@
+## 0.6.1 – 2026-11-17
+
+### Neu
+- **Heizkurvenvorschlag in den Einstellungen**: Median-Abweichung je
+  Außentemperatur-Bin, geschätzter COP-Gewinn, Konfidenz, manuelle
+  Anpassung von Offset und Steigung.
+- **Dashboard-Upgrade (M21)**: Hero-Banner, Alert-Karten, größere KPIs,
+  verbesserte Sparklines und Dark-Mode-Polish.
+
 ## 0.6.0 – 2026-11-17
 
 ### Neu
