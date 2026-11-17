@@ -1,0 +1,139 @@
+# Beispiel-Dashboard (YAML)
+
+Kopieren nach *Dashboard bearbeiten, Rohkonfiguration*. Entity-Namen anpassen:
+`heizungsanalyse` ist der aus dem Eintragstitel abgeleitete Prefix,
+`arbeitszimmer` und `heizkreis_oben` kommen aus den Raum- und Kreisnamen.
+
+```yaml
+title: Heizungsanalyse
+views:
+  - title: Anlage
+    path: anlage
+    icon: mdi:heat-pump
+    cards:
+      - type: entities
+        title: Kennzahlen (7 Tage)
+        entities:
+          - entity: sensor.heizungsanalyse_cop_7_days
+            name: COP
+          - entity: sensor.heizungsanalyse_starts_per_day
+            name: Starts pro Tag
+          - entity: sensor.heizungsanalyse_runtime_per_cycle
+            name: Laufzeit je Zyklus
+          - entity: sensor.heizungsanalyse_flow_deviation
+            name: Vorlauf-Abweichung
+          - entity: sensor.heizungsanalyse_data_days
+            name: Tage mit Daten
+          - entity: sensor.heizungsanalyse_findings
+            name: Hinweise
+
+      - type: statistics-graph
+        title: COP-Verlauf
+        chart_type: line
+        period: day
+        days_to_show: 30
+        entities:
+          - entity: sensor.heizungsanalyse_cop_7_days
+            name: COP 7 Tage
+          - entity: sensor.heizungsanalyse_cop_30_days
+            name: COP 30 Tage
+
+      - type: markdown
+        title: Offene Hinweise
+        content: |
+          {% set findings = state_attr('sensor.heizungsanalyse_findings', 'findings') or [] %}
+          {% if findings | count == 0 %}
+          Keine Hinweise. Das heisst nicht, dass die Anlage optimal ist - nur,
+          dass keine Regel angesprochen hat.
+          {% else %}
+          {% for item in findings %}
+          - **{{ item.id }}** ({{ item.severity }}): {{ item.text }}
+            _Empfehlung:_ {{ item.suggestion }}
+          {% endfor %}
+          {% endif %}
+
+  - title: Raeume
+    path: raeume
+    icon: mdi:home-thermometer
+    cards:
+      - type: entities
+        title: Arbeitszimmer
+        entities:
+          - entity: sensor.arbeitszimmer_room_deviation
+            name: Abweichung zum Soll
+          - entity: sensor.arbeitszimmer_room_heating_up
+            name: Aufheizzeit
+          - entity: climate.arbeitszimmer
+      - type: history-graph
+        title: Raumtemperatur und Soll
+        hours_to_show: 48
+        entities:
+          - entity: climate.arbeitszimmer
+      - type: markdown
+        title: Rangliste
+        content: |
+          {% set rows = state_attr('sensor.heizungsanalyse_room_ranking', 'rooms') or [] %}
+          {% if not rows %}
+          Noch keine Raumdaten.
+          {% else %}
+          | Raum | Median Abweichung (K) |
+          |---|---|
+          {% for row in rows %}
+          | {{ row.room_id }} | {{ row.median }} |
+          {% endfor %}
+          {% endif %}
+
+  - title: Kreise
+    path: kreise
+    icon: mdi:pump
+    cards:
+      - type: entities
+        title: Heizkreis oben
+        entities:
+          - entity: sensor.heizkreis_oben_pump_idle_share
+            name: Pumpen-Leerlaufanteil
+          - entity: sensor.heizkreis_oben_mixer_pulses
+            name: Mischer-Impulse pro Tag
+      - type: markdown
+        title: Mittel je Kreis
+        content: |
+          {% set groups = state_attr('sensor.heizungsanalyse_room_ranking', 'by_circuit') or {} %}
+          {% for circuit, values in groups.items() %}
+          - **{{ circuit }}**: Median {{ values.median }} K aus {{ values.rooms }} Raeumen
+          {% endfor %}
+
+  - title: Inventar
+    path: inventar
+    icon: mdi:clipboard-list
+    cards:
+      - type: markdown
+        title: Letzte Aenderungen
+        content: |
+          Der Bericht entsteht ueber den Dienst `heizungsanalyse.export_report`.
+          Beispiel als Skript:
+
+          ```yaml
+          action: heizungsanalyse.export_report
+          data:
+            format: markdown
+          response_variable: bericht
+          ```
+
+      - type: button
+        name: Zeitraeume vergleichen
+        icon: mdi:compare
+        tap_action:
+          action: call-service
+          service: heizungsanalyse.compare_periods
+          data:
+            days: 14
+```
+
+Hinweise:
+
+- `statistics-graph` braucht die Langzeitstatistik; sie entsteht automatisch,
+  weil die Sensoren `state_class: measurement` und eine Einheit haben.
+- Raum- und Kreis-Entities existieren nur, wenn die Quelle im Optionsdialog
+  gemappt und der Raum eine Climate-Entity hat.
+- Das Dashboard steuert nichts. Der Button ruft nur einen lesenden Dienst der
+  Integration auf.

@@ -1,3 +1,18 @@
+## 0.7.0b0 – 2026-11-17
+
+### Neu
+- **Diagnostics** (`diagnostics.py`): Version, Quell-Domaenen, Zaehler,
+  Kennzahlen, Schwellen und Finding-IDs. Ohne Entity-IDs, Raumnamen oder
+  Standortdaten.
+- **Dokumentation:** `docs/entities.md` mit allen Sensoren, Attributen und
+  Datenfenstern; `docs/dashboard-example.yaml` mit Anlagen-, Raum-, Kreis- und
+  Inventaransicht.
+- **README:** Installation, Einrichtungsschritte, Grenzen und Datenschutz
+  ausgebaut.
+
+### Offen
+- GitHub-Release `v0.1.0` und HACS-Validierung brauchen ein Remote.
+
 ## 0.6.0b0 – 2026-11-17
 
 ### Neu
