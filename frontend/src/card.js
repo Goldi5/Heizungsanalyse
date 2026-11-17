@@ -1,4 +1,5 @@
 // Die eine Karte, die je Ansicht ein ganzes Dashboard-Blatt füllt.
+import { HA_VERSION } from "./version.js";
 import { setLang, t } from "./i18n.js";
 import { esc } from "./logic.js";
 import { STYLES } from "./styles.js";
@@ -9,11 +10,16 @@ export class HeizungsanalyseCard extends HTMLElement {
   setConfig(config) {
     this._config = { view: "anlage", ...(config || {}) };
     if (!VIEWS.includes(this._config.view)) this._config.view = "anlage";
-    this._ui = { help: null, range: 90, form: false, widths: {} };
+    this._ui = { help: null, range: 90, form: false, widths: {}, logCat: "", logLevel: "", logQ: "", logHours: 168, logOpen: null };
+    this._log = [];
+    this._diag = null;
+    this._logError = null;
+    this._diagError = null;
     if (!this.shadowRoot) {
       this.attachShadow({ mode: "open" });
       this.shadowRoot.addEventListener("click", (e) => this._click(e));
       this.shadowRoot.addEventListener("submit", (e) => this._submit(e));
+      this.shadowRoot.addEventListener("input", (e) => this._input(e));
     }
   }
 
@@ -30,6 +36,16 @@ export class HeizungsanalyseCard extends HTMLElement {
 
   connectedCallback() {
     this._timer = setInterval(() => this._load(), 5 * 60 * 1000 + 5000);
+    this._logTimer = setInterval(() => {
+      if (this._config.view === "protokoll" && document.visibilityState !== "hidden") this._loadLog(true);
+    }, 30 * 1000);
+    this._onError = (event) => this._reportTrace("Darstellungsfehler: " + ((event && event.message) || "unbekannt"));
+    this._onReject = (event) => {
+      const reason = event && event.reason;
+      this._reportTrace("Promise-Fehler: " + ((reason && (reason.message || reason.code)) || String(reason || "unbekannt")));
+    };
+    window.addEventListener("error", this._onError);
+    window.addEventListener("unhandledrejection", this._onReject);
     if (!this._ro && window.ResizeObserver) {
       this._ro = new ResizeObserver(() => {
         clearTimeout(this._roT);
@@ -40,6 +56,9 @@ export class HeizungsanalyseCard extends HTMLElement {
   }
   disconnectedCallback() {
     clearInterval(this._timer);
+    clearInterval(this._logTimer);
+    if (this._onError) window.removeEventListener("error", this._onError);
+    if (this._onReject) window.removeEventListener("unhandledrejection", this._onReject);
     if (this._ro) { this._ro.disconnect(); this._ro = null; }
   }
 
@@ -65,8 +84,44 @@ export class HeizungsanalyseCard extends HTMLElement {
       this._error = null;
     } catch (e) {
       this._error = e && (e.message || e.code) ? e.message || e.code : String(e);
+      this._reportTrace("summary failed: " + this._error);
+    }
+    if (this._config.view === "protokoll") {
+      await this._loadDiag();
+      await this._loadLog(force);
+      return;
     }
     this._render();
+  }
+
+  async _loadDiag() {
+    if (!this._hass) return;
+    try {
+      this._diag = await this._hass.callWS({ type: "heizungsanalyse/diagnostics" });
+      this._diagError = null;
+    } catch (e) {
+      this._diagError = e && (e.message || e.code) ? e.message || e.code : String(e);
+      this._diag = null;
+    }
+  }
+
+  async _loadLog(force = false) {
+    if (!this._hass) return;
+    const since = new Date(Date.now() - (this._ui.logHours || 168) * 3600 * 1000).toISOString();
+    const payload = { type: "heizungsanalyse/log", limit: 500, since };
+    if (this._ui.logCat) payload.cat = this._ui.logCat;
+    if (this._ui.logLevel) payload.level = this._ui.logLevel;
+    if (this._ui.logQ) payload.q = this._ui.logQ;
+    try {
+      const result = await this._hass.callWS(payload);
+      this._log = (result && result.entries) || [];
+      this._logError = null;
+    } catch (e) {
+      this._logError = e && (e.message || e.code) ? e.message || e.code : String(e);
+      this._log = [];
+      this._reportTrace("log failed: " + this._logError);
+    }
+    if (!force || this._config.view === "protokoll") this._render();
   }
 
   _live() {
@@ -90,7 +145,8 @@ export class HeizungsanalyseCard extends HTMLElement {
     if (!d) return;
     if (!d.configured) return this._paint(`<div class="c empty">${esc(t("Die Heizungsanalyse ist noch nicht eingerichtet."))}</div>`);
     const view = this._config.view;
-    this._paint(`${header(d, view)}${renderView(view, d, this._ui, this._live())}`);
+    const data = view === "protokoll" ? { ...d, diag: this._diag, log: { entries: this._log }, logError: this._logError } : d;
+    this._paint(`${header(d, view)}${renderView(view, data, this._ui, this._live())}`);
     if (!fromMeasure) requestAnimationFrame(() => this._measure());
   }
 
@@ -107,15 +163,38 @@ export class HeizungsanalyseCard extends HTMLElement {
     this._flashTimer = setTimeout(() => { this._flashText = null; this._render(); }, 2500);
   }
 
+  _reportTrace(message) {
+    if (!this._hass || !message) return;
+    const now = Date.now();
+    if (now - (this._traceAt || 0) < 60 * 1000) return;
+    this._traceAt = now;
+    this._hass.callWS({ type: "heizungsanalyse/trace", message: String(message).slice(0, 500), version: HA_VERSION, ua: navigator.userAgent }).catch(() => {});
+  }
+
   _click(e) {
-    const el = e.target.closest("[data-help],[data-range],[data-act]");
+    const el = e.target.closest("[data-help],[data-range],[data-act],[data-log-cat],[data-log-level],[data-log-range],[data-log-open]");
     if (!el) return;
     if (el.dataset.help) this._ui.help = this._ui.help === el.dataset.help ? null : el.dataset.help;
     else if (el.dataset.range) this._ui.range = Number(el.dataset.range);
+    else if (el.dataset.logCat !== undefined) { this._ui.logCat = this._ui.logCat === el.dataset.logCat && el.dataset.logCat ? "" : el.dataset.logCat; this._loadLog(true); return; }
+    else if (el.dataset.logLevel !== undefined) { this._ui.logLevel = this._ui.logLevel === el.dataset.logLevel && el.dataset.logLevel ? "" : el.dataset.logLevel; this._loadLog(true); return; }
+    else if (el.dataset.logRange) { this._ui.logHours = Number(el.dataset.logRange); this._loadLog(true); return; }
+    else if (el.dataset.logOpen) { const id = el.dataset.logOpen; this._ui.logOpen = this._ui.logOpen === id ? null : id; }
     else if (el.dataset.act === "form-open") this._ui.form = true;
     else if (el.dataset.act === "form-close") this._ui.form = false;
     else if (el.dataset.act === "report") return void this._report();
+    else if (el.dataset.act === "log-download") return void this._download();
+    else if (el.dataset.act === "log-copy") return void this._copy();
+    else if (el.dataset.act === "log-refresh") return void this._refresh();
     this._render();
+  }
+
+  _input(e) {
+    const el = e.target;
+    if (!el || !el.matches || !el.matches("[data-log-search]")) return;
+    this._ui.logQ = el.value;
+    clearTimeout(this._searchTimer);
+    this._searchTimer = setTimeout(() => this._loadLog(true), 250);
   }
 
   async _submit(e) {
@@ -147,6 +226,38 @@ export class HeizungsanalyseCard extends HTMLElement {
       a.download = `heizungsanalyse-${new Date().toISOString().slice(0, 10)}.md`;
       a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    } catch (err) {
+      this._flash(t("Fehler: {e}", { e: err.message || err }));
+    }
+  }
+
+  _download() {
+    const body = JSON.stringify(this._diag || { error: this._diagError || "Diagnose nicht verfügbar" }, null, 2);
+    const blob = new Blob([body], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `heizungsanalyse-diagnose-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    this._flash(t("Diagnose heruntergeladen"));
+  }
+
+  async _copy() {
+    const text = (this._log || []).map((e) => `${e.ts} ${e.level.toUpperCase()} [${e.cat}] ${e.msg}`).join("\n");
+    try {
+      await navigator.clipboard.writeText(text || t("Keine Einträge"));
+      this._flash(t("Kopiert"));
+    } catch (err) {
+      this._flash(t("Fehler: {e}", { e: err.message || err }));
+    }
+  }
+
+  async _refresh() {
+    try {
+      await this._hass.callService("heizungsanalyse", "refresh");
+      this._flash(t("Neu berechnet"));
+      invalidate();
+      setTimeout(() => this._load(true), 1500);
     } catch (err) {
       this._flash(t("Fehler: {e}", { e: err.message || err }));
     }

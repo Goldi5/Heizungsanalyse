@@ -4,7 +4,7 @@ import { helpText } from "./help.js";
 import { binChart, ring, scatterChart, sparkline, timeChart, withWidth } from "./charts.js";
 import { SCORE_LEVEL, binByOutdoor, dayLabel, esc, fmt, kpiTone, linearFit, rangeRows, signed, trend, weatherAdjusted } from "./logic.js";
 
-export const VIEWS = ["anlage", "effizienz", "raeume", "vergleich", "inventar"];
+export const VIEWS = ["anlage", "effizienz", "raeume", "vergleich", "inventar", "protokoll"];
 
 // Kopf einer Kachel mit „?“
 function head(title, key, ui, sub = "") {
@@ -38,7 +38,7 @@ function evidence(ev) {
 }
 
 export function header(d, view) {
-  const names = { anlage: "Anlage", effizienz: "Effizienz", raeume: "Räume & Kreise", vergleich: "Vorher / Nachher", inventar: "Inventar" };
+  const names = { anlage: "Anlage", effizienz: "Effizienz", raeume: "Räume & Kreise", vergleich: "Vorher / Nachher", inventar: "Inventar", protokoll: "Protokoll" };
   const at = d.generated ? new Date(d.generated) : null;
   const time = at ? at.toLocaleTimeString(getLang() === "de" ? "de-DE" : "en-GB", { hour: "2-digit", minute: "2-digit" }) : "";
   return `<div class="head"><h1>${esc(t(names[view] || "Anlage"))}</h1><span class="muted">${esc(d.title || t("Heizungsanalyse"))}</span>
@@ -332,12 +332,190 @@ export function viewInventar(d, ui) {
     <div class="c">${head(t("Datenquellen"), "sources", ui)}${src}</div></div>`;
 }
 
+// ---------------------------------------------------------------- Protokoll
+const LEVELS_LOG = [
+  ["error", "Fehler"],
+  ["warn", "Warnung"],
+  ["info", "Info"],
+];
+const CATS_LOG = [
+  ["start", "Start"],
+  ["update", "Auswertung"],
+  ["source", "Quelle"],
+  ["finding", "Hinweis"],
+  ["config", "Konfiguration"],
+  ["inventory", "Inventar"],
+  ["dashboard", "Dashboard"],
+  ["frontend", "Karte"],
+  ["error", "Fehler"],
+];
+const RANGES_LOG = [
+  [24, "24 Stunden"],
+  [168, "7 Tage"],
+  [720, "30 Tage"],
+];
+const SOURCE_STATUS = {
+  ok: ["ok", "ok"],
+  no_statistics: ["warn", "keine Statistik"],
+  unit_mismatch: ["bad", "unpassend"],
+  state_class_mismatch: ["bad", "unpassend"],
+  format: ["warn", "Format"],
+  not_found: ["bad", "nicht gefunden"],
+  unavailable: ["bad", "nicht verfügbar"],
+};
+
+const LOG_EN = {
+  "log.restart": "— restart —",
+  "update.run": "Analysis: {rows} statistic rows, {days} days with data, {duration} ms",
+  "source.lost": "Source {entity} is unavailable (for {hours} h)",
+  "source.back": "Source {entity} is available again",
+  "source.no_statistics": "Source {entity} has no long-term statistics",
+  "source.unit": "Source {entity}: unit {unit}, expected one of {expected}",
+  "source.state_class": "Source {entity}: state_class {state_class}, expected total or total_increasing",
+  "finding.new": "New finding {id}: {title}",
+  "finding.changed": "Finding {id} changed",
+  "finding.resolved": "Finding {id} resolved",
+  "config.option": "Option {field}: {old} → {new}",
+  "config.thresholds": "Threshold {field}: {old} → {new}",
+  "config.circuit_added": "Heating circuit added",
+  "config.circuit_removed": "Heating circuit removed",
+  "config.room_added": "Room added",
+  "config.room_removed": "Room removed",
+  "inventory.updated": "Inventory {object}: {count} fields changed",
+  "inventory.logged": "Change documented: {object}.{field}",
+  "dashboard.resource": "Card registered as resource ({mode} mode, {url})",
+  "dashboard.created": "Dashboard {path} created",
+  "dashboard.exists": "Dashboard {path} already exists",
+  "frontend.error": "Card reports: {message}",
+  "error.update": "Update failed: {error}",
+};
+
+function logMessage(entry) {
+  if (getLang() !== "en" || !entry.key) return entry.msg;
+  const template = LOG_EN[entry.key];
+  if (!template) return entry.msg;
+  return template.replace(/\{(\w+)\}/g, (match, key) => (entry.params && entry.params[key] != null ? entry.params[key] : match));
+}
+
+const timeOf = (iso) => {
+  const at = iso ? new Date(iso) : null;
+  if (!at || Number.isNaN(at.getTime())) return "–";
+  return at.toLocaleTimeString(getLang() === "de" ? "de-DE" : "en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+};
+const dayOf = (iso) => {
+  const at = iso ? new Date(iso) : null;
+  if (!at || Number.isNaN(at.getTime())) return "";
+  return at.toLocaleDateString(getLang() === "de" ? "de-DE" : "en-GB", { weekday: "short", day: "2-digit", month: "2-digit" });
+};
+
+function runtimeCard(d, ui) {
+  const rt = (d.diag && d.diag.runtime) || {};
+  const versions = (d.diag && d.diag.versions) || {};
+  const card = versions.card || {};
+  const mismatch = card.matches === false;
+  const storage = (d.diag && d.diag.storage) || {};
+  const k = (d.diag && d.diag.summary && d.diag.summary.kpis) || {};
+  const next = rt.next_run ? timeOf(rt.next_run) : "–";
+  const rows = [
+    [t("Backend"), esc(String(versions.integration || "–"))],
+    [t("Karte"), esc(String(card.version || "–"))],
+    [t("Letzter Lauf"), `${esc(String(rt.run_index ?? 0))}. ${esc(t("Lauf"))} · ${esc(fmt(rt.last_duration_ms, 0))} ${esc(t("ms"))}`],
+    [t("Nächster Lauf"), esc(next)],
+    [t("Letzter Fehler"), rt.last_error ? pill("bad", rt.last_error) : pill("ok", t("keiner"))],
+    [t("Tage mit Daten"), esc(fmt(k.days_with_data, 0))],
+    [t("Speicherstand"), `${esc(fmt(storage.rollups, 0))} ${esc(t("Roll-ups"))} · ${esc(fmt(storage.log_entries, 0))} ${esc(t("Protokollzeilen"))}`],
+  ];
+  return `<div class="c">${head(t("Systemstatus"), "runtime", ui)}${mismatch ? `<div class="fs">${pill("warn", t("Version weicht ab"))}</div>` : ""}
+    <table class="kv">${rows.map(([a, b]) => `<tr><th>${a}</th><td>${b}</td></tr>`).join("")}</table>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" data-act="log-download">${esc(t("Diagnose herunterladen"))}</button>
+      <button class="btn ghost" data-act="log-copy">${esc(t("Protokoll kopieren"))}</button>
+      <button class="btn primary" data-act="log-refresh">${esc(t("Jetzt neu berechnen"))}</button>
+    </div>
+    ${rt.last_error ? `<div class="fd" style="margin-top:8px">${esc(t("Letzter Fehler"))}: ${esc(rt.last_error)}</div>` : ""}
+  </div>`;
+}
+
+function sourcesCard(d, ui) {
+  const rows = (d.diag && d.diag.source_checks) || [];
+  if (!rows.length) return `<div class="c">${head(t("Quellen-Check"), "sources_check", ui)}<div class="empty">${esc(t("Keine Quellen zugeordnet."))}</div></div>`;
+  const body = rows
+    .map((row) => {
+      const [tone, label] = SOURCE_STATUS[row.status] || ["mut", row.status || "–"];
+      const last = row.daily_last ? `${dayOf(row.daily_last)} ${timeOf(row.daily_last)}` : "–";
+      return `<tr>
+        <td><b>${esc(row.entity)}</b><div class="muted">${esc(row.kind || "")}</div></td>
+        <td>${pill(tone, t(label))}${row.advice ? `<div class="fd">${esc(t(row.advice))}</div>` : ""}</td>
+        <td>${esc(row.unit || row.statistic_unit || "–")}<div class="muted">${esc(row.state_class || "")}</div></td>
+        <td>${esc(fmt(row.hourly_rows, 0))} / ${esc(fmt(row.daily_rows, 0))}</td>
+        <td>${esc(last)}</td>
+      </tr>`;
+    })
+    .join("");
+  return `<div class="c">${head(t("Quellen-Check"), "sources_check", ui)}
+    <table class="src"><tr><th>${esc(t("Quelle"))}</th><th>${esc(t("Status"))}</th><th>${esc(t("Einheit"))}</th><th>${esc(t("Zeilen 7/31"))}</th><th>${esc(t("Letzter Wert"))}</th></tr>
+    ${body}</table></div>`;
+}
+
+function logList(d, ui) {
+  const entries = (d.log && d.log.entries) || [];
+  const cats = [...new Set(entries.map((e) => e.cat))];
+  const chipRow = (items, current, attr) =>
+    [`<button class="chip ${current ? "" : "on"}" ${attr}="">${esc(t("Alle"))}</button>`]
+      .concat(items.map(([value, label]) => `<button class="chip ${current === value ? "on" : ""}" ${attr}="${esc(value)}">${esc(t(label))}</button>`))
+      .join("");
+  const catChips = chipRow(CATS_LOG.filter(([value]) => cats.includes(value) || !cats.length), ui.logCat, "data-log-cat");
+  const levelChips = LEVELS_LOG.some(([value]) => entries.some((e) => e.level === value))
+    ? chipRow(LEVELS_LOG.filter(([value]) => entries.some((e) => e.level === value)), ui.logLevel, "data-log-level")
+    : "";
+  const range = `<div class="seg">${RANGES_LOG.map(([h, label]) => `<button data-log-range="${h}" class="${(ui.logHours ?? 168) === h ? "on" : ""}">${esc(t(label))}</button>`).join("")}</div>`;
+  const search = `<input class="search" data-log-search type="search" value="${esc(ui.logQ || "")}" placeholder="${esc(t("Suchen"))}" aria-label="${esc(t("Suchen"))}">`;
+  const groups = [];
+  for (const entry of entries) {
+    const key = dayOf(entry.ts);
+    let group = groups[groups.length - 1];
+    if (!group || group.day !== key) {
+      group = { day: key, rows: [] };
+      groups.push(group);
+    }
+    if (entry.cat === "start" && entry.key === "log.restart") {
+      group.rows.push(`<div class="restart">${esc(t("Neustart"))}</div>`);
+      continue;
+    }
+    const tone = entry.level === "error" ? "bad" : entry.level === "warn" ? "warn" : "cool";
+    const id = entry.ts + entry.msg;
+    const open = ui.logOpen === id;
+    group.rows.push(`<div class="log ${open ? "open" : ""}">
+      <button class="logrow" data-log-open="${esc(id)}">
+        <span class="lt">${esc(timeOf(entry.ts))}</span>
+        <span class="pill tone-${tone}">${esc(t(entry.level))}</span>
+        <span class="cat">${esc(t(entry.cat))}</span>
+        <span class="msg">${esc(logMessage(entry))}</span>
+      </button>
+      ${open ? `<div class="details"><div class="muted">${esc(t("Details"))}</div><pre>${esc(JSON.stringify(entry.details || {}, null, 2))}</pre></div>` : ""}
+    </div>`);
+  }
+  return `<div class="c">${head(t("Protokoll"), "log", ui, `${entries.length} ${esc(t("Einträge"))}`)}
+    <div class="filters">${catChips}</div>
+    <div class="filters">${levelChips}${range}${search}</div>
+    ${entries.length ? groups.map((g) => `<div class="day">${esc(g.day)}</div>${g.rows.join("")}`).join("") : `<div class="empty">${esc(t("Keine Einträge für diesen Filter."))}</div>`}
+  </div>`;
+}
+
+export function viewProtokoll(d, ui) {
+  const diag = d.diag;
+  return `<div class="grid g2">${runtimeCard(d, ui)}${sourcesCard(d, ui)}</div>
+    <div class="grid">${logList(d, ui)}</div>
+    ${!diag ? `<div class="c empty">${esc(t("Diagnose nicht verfügbar – Protokoll wird trotzdem angezeigt."))}</div>` : ""}`;
+}
+
 export function renderView(view, d, ui, live) {
   switch (view) {
     case "effizienz": return viewEffizienz(d, ui);
     case "raeume": return viewRaeume(d, ui, live);
     case "vergleich": return viewVergleich(d, ui);
     case "inventar": return viewInventar(d, ui);
+    case "protokoll": return viewProtokoll(d, ui);
     default: return viewAnlage(d, ui);
   }
 }

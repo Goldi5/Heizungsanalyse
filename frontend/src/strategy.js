@@ -7,6 +7,7 @@ const VIEW_DEFS = [
   { view: "raeume", title: "Räume & Kreise", icon: "mdi:home-thermometer" },
   { view: "vergleich", title: "Vorher / Nachher", icon: "mdi:compare-horizontal" },
   { view: "inventar", title: "Inventar", icon: "mdi:clipboard-list-outline" },
+  { view: "protokoll", title: "Protokoll", icon: "mdi:text-box-search-outline" },
 ];
 
 export function buildDashboard(config = {}) {

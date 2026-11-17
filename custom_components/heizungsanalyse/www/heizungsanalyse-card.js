@@ -1,7 +1,7 @@
-/* Heizungsanalyse 0.2.1 - gebaut aus frontend/src (npm run build). Nicht von Hand bearbeiten. */
+/* Heizungsanalyse 0.3.0 - gebaut aus frontend/src (npm run build). Nicht von Hand bearbeiten. */
 (() => {
   // src/version.js
-  var HA_VERSION = "0.2.1";
+  var HA_VERSION = "0.3.0";
 
   // src/i18n.js
   var EN = {
@@ -150,7 +150,70 @@
     "Puffer": "Buffer",
     "Strom (Ersatz)": "Power (fallback)",
     "Starts": "Starts",
-    "Laufzeit": "Run time"
+    "Laufzeit": "Run time",
+    "Protokoll": "Log",
+    "Systemstatus": "System status",
+    "Backend": "Backend",
+    "Karte": "Card",
+    "Version weicht ab": "Version mismatch",
+    "Letzter Lauf": "Last run",
+    "Nächster Lauf": "Next run",
+    "Letzter Fehler": "Last error",
+    "keiner": "none",
+    "Tage mit Daten": "Days with data",
+    "Speicherstand": "Storage",
+    "Roll-ups": "roll-ups",
+    "Protokollzeilen": "log lines",
+    "ms": "ms",
+    "Lauf": "run",
+    "Quellen-Check": "Source check",
+    "Quelle": "Source",
+    "Status": "Status",
+    "Einheit": "Unit",
+    "Zeilen 7/31": "Rows 7/31",
+    "Letzter Wert": "Last value",
+    "keine Statistik": "no statistics",
+    "unpassend": "mismatched",
+    "nicht verfügbar": "unavailable",
+    "nicht gefunden": "not found",
+    "Format": "Format",
+    "Keine Quellen zugeordnet.": "No sources mapped.",
+    "Alle": "All",
+    "Details": "Details",
+    "Einträge": "entries",
+    "Neustart": "Restart",
+    "Suchen": "Search",
+    "24 Stunden": "24 hours",
+    "7 Tage": "7 days",
+    "30 Tage": "30 days",
+    "Keine Einträge für diesen Filter.": "No entries for this filter.",
+    "Diagnose herunterladen": "Download diagnostics",
+    "Protokoll kopieren": "Copy log",
+    "Jetzt neu berechnen": "Recalculate now",
+    "Diagnose heruntergeladen": "Diagnostics downloaded",
+    "Kopiert": "Copied",
+    "Keine Einträge": "No entries",
+    "Neu berechnet": "Recalculated",
+    "Diagnose nicht verfügbar – Protokoll wird trotzdem angezeigt.": "Diagnostics unavailable – the log is still shown.",
+    "Entity existiert nicht mehr. Unter Konfigurieren eine andere Quelle wählen.": "Entity no longer exists. Pick another source under Configure.",
+    "Quelle ist nicht verfügbar. Gerät prüfen; die Auswertung pausiert, bis sie wieder liefert.": "Source is unavailable. Check the device; analysis pauses until it delivers again.",
+    "Keine Langzeitstatistik. Recorder und state_class prüfen; ohne Statistik rechnet die Integration nicht.": "No long-term statistics. Check recorder and state_class; without statistics the integration does not calculate.",
+    "Einheit passt nicht zur Quelle. Sensor mit passender Einheit wählen.": "Unit does not match the source. Choose a sensor with a matching unit.",
+    "state_class passt nicht. Bei Zählern total oder total_increasing verwenden.": "state_class does not match. For meters use total or total_increasing.",
+    "Format der Statistikzeilen unerwartet. Recorder-Version prüfen.": "Unexpected statistics row format. Check the recorder version.",
+    "Start": "Start",
+    "Auswertung": "Analysis",
+    "Quelle": "Source",
+    "Hinweis": "Finding",
+    "Konfiguration": "Configuration",
+    "Inventar": "Inventory",
+    "Dashboard": "Dashboard",
+    "Fehler": "Error",
+    "Info": "Info",
+    "Warnung": "Warning",
+    "Neustart": "Restart",
+    "Einträge": "entries",
+    "Protokollzeilen": "log lines"
   };
   var lang = "de";
   function setLang(hass) {
@@ -376,6 +439,34 @@ th { text-align:left; color:var(--hz-mut); font-weight:600; font-size:.74rem; pa
 td { padding:7px 8px; border-bottom:1px solid var(--hz-line); vertical-align:top; }
 .src { display:flex; justify-content:space-between; gap:10px; padding:7px 0; border-top:1px solid var(--hz-line); font-size:.86rem; }
 .src:first-of-type { border-top:0; }
+.filters { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:10px; }
+.chip { font:inherit; font-size:.74rem; font-weight:700; border:1px solid var(--hz-line); background:var(--hz-card); color:var(--hz-mut);
+  border-radius:999px; padding:4px 10px; cursor:pointer; }
+.chip.on { background:var(--hz-soft); color:var(--hz-ink); border-color:transparent; }
+.search { margin-left:auto; font:inherit; font-size:.82rem; padding:6px 10px; border-radius:999px; border:1px solid var(--hz-line);
+  background:var(--hz-card); color:var(--hz-ink); min-width:150px; }
+table.kv { margin-top:6px; }
+table.kv th { border-bottom:0; width:38%; color:var(--hz-mut); font-weight:600; }
+table.kv td { border-bottom:1px solid var(--hz-line); }
+.day { font-size:.72rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--hz-mut); margin:14px 0 4px; }
+.day:first-of-type { margin-top:8px; }
+.log { border-top:1px solid var(--hz-line); }
+.log:first-of-type { border-top:0; }
+.logrow { display:grid; grid-template-columns: 62px auto 92px 1fr; gap:8px; align-items:baseline; width:100%; text-align:left;
+  font:inherit; font-size:.82rem; background:none; border:0; padding:7px 0; cursor:pointer; color:var(--hz-ink); }
+.logrow .lt { color:var(--hz-mut); font-variant-numeric:tabular-nums; }
+.logrow .cat { color:var(--hz-mut); font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; }
+.logrow .msg { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.log.open .logrow .msg { white-space:normal; }
+.log .details { padding:6px 10px 10px; background:var(--hz-soft); border-radius:10px; margin-bottom:8px; }
+.log pre { margin:6px 0 0; font-size:.74rem; white-space:pre-wrap; word-break:break-word; max-height:260px; overflow:auto; }
+.restart { display:flex; align-items:center; gap:8px; color:var(--hz-mut); font-size:.74rem; font-weight:700; margin:8px 0 4px; }
+.restart::before, .restart::after { content:""; flex:1; height:1px; background:var(--hz-line); }
+@media (max-width: 760px) {
+  .logrow { grid-template-columns: 54px auto 1fr; }
+  .logrow .cat { display:none; }
+  .search { width:100%; margin-left:0; }
+}
 .flash { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--hz-ink); color:var(--hz-card); padding:9px 16px; border-radius:999px; font-size:.85rem; font-weight:600; z-index:9; }
 `;
 
@@ -467,6 +558,18 @@ td { padding:7px 8px; border-bottom:1px solid var(--hz-line); vertical-align:top
     inventory: {
       de: "Stammdaten deiner Anlage: Pumpen, Thermostate, Hydraulik. Pflege sie über den Dienst „Heizungsanalyse: Inventar aktualisieren“ – jede Änderung landet automatisch im Verlauf.",
       en: "Master data of your system: pumps, thermostats, hydraulics. Maintain it via the service “Heating analysis: update inventory” – every change lands in the history automatically."
+    },
+    runtime: {
+      de: "Der Systemstatus zeigt, welche Version die Karte und welche das Backend hat, wann der letzte Lauf war und ob ein Fehler auftrat. Die Karte meldet eigene Fehler selbst mit – dann steht hier die gekürzte Meldung statt einer stillen Fehlfunktion.",
+      en: "System status shows which version the card and the backend have, when the last run happened and whether an error occurred. The card reports its own errors itself – then the shortened message appears here instead of a silent failure."
+    },
+    sources_check: {
+      de: "Für jede zugeordnete Quelle: Zustand, Einheit, Anzahl Statistikzeilen und letzter Wert. Grün heißt auswertbar. „Keine Statistik“ bedeutet: Sensor ohne Langzeitdaten – dann rechnet die Integration nicht. „Unpassend“ nennt die Abweichung; der Tipp darunter sagt, was zu tun ist.",
+      en: "For every mapped source: state, unit, number of statistics rows and last value. Green means usable. “No statistics” means a sensor without long-term data – the integration will not calculate. “Mismatched” names the deviation; the hint below says what to do."
+    },
+    log: {
+      de: "Das Protokoll hält Start, Auswertung, Quellen, Hinweise, Konfiguration, Inventar, Dashboard und Kartenfehler fest. Höchstens 2000 Einträge oder 30 Tage. Einträge lassen sich nach Kategorie, Stufe und Text filtern, nach Tag gruppiert aufklappen und als JSON exportieren.",
+      en: "The log keeps start, analysis, sources, findings, configuration, inventory, dashboard and card errors. At most 2000 entries or 30 days. Entries can be filtered by category, level and text, grouped by day, expanded and exported as JSON."
     },
     sources: {
       de: "Welche Sensoren zugeordnet sind. Fehlende optionale Sensoren schalten Auswertungen nicht frei – ergänzen lässt sich das unter Konfigurieren.",
@@ -679,7 +782,7 @@ td { padding:7px 8px; border-bottom:1px solid var(--hz-line); vertical-align:top
   }
 
   // src/views.js
-  var VIEWS = ["anlage", "effizienz", "raeume", "vergleich", "inventar"];
+  var VIEWS = ["anlage", "effizienz", "raeume", "vergleich", "inventar", "protokoll"];
   function head(title, key, ui, sub = "") {
     const open = ui.help === key;
     return `<div class="h">${esc(title)}${sub ? ` <span class="sub">${sub}</span>` : ""}<button class="q ${open ? "on" : ""}" data-help="${key}" aria-label="?">?</button></div>${open ? `<div class="help">${esc(helpText(key))}</div>` : ""}`;
@@ -701,7 +804,7 @@ td { padding:7px 8px; border-bottom:1px solid var(--hz-line); vertical-align:top
     return Object.entries(ev || {}).filter(([, v]) => v != null && typeof v !== "object").slice(0, 5).map(([k, v]) => `<span>${esc(EVIDENCE[k] ? EVIDENCE[k](v) : `${k}: ${typeof v === "number" ? fmt(v, Math.abs(v) < 10 ? 1 : 0) : v}`)}</span>`).join("");
   }
   function header(d, view) {
-    const names = { anlage: "Anlage", effizienz: "Effizienz", raeume: "Räume & Kreise", vergleich: "Vorher / Nachher", inventar: "Inventar" };
+    const names = { anlage: "Anlage", effizienz: "Effizienz", raeume: "Räume & Kreise", vergleich: "Vorher / Nachher", inventar: "Inventar", protokoll: "Protokoll" };
     const at = d.generated ? new Date(d.generated) : null;
     const time = at ? at.toLocaleTimeString(getLang() === "de" ? "de-DE" : "en-GB", { hour: "2-digit", minute: "2-digit" }) : "";
     return `<div class="head"><h1>${esc(t(names[view] || "Anlage"))}</h1><span class="muted">${esc(d.title || t("Heizungsanalyse"))}</span>
@@ -953,6 +1056,167 @@ td { padding:7px 8px; border-bottom:1px solid var(--hz-line); vertical-align:top
       <div class="c">${head(t("Inventar"), "inventory", ui)}<div class="row" style="margin-top:10px"><button class="btn" data-act="report">${esc(t("Bericht herunterladen"))}</button></div></div></div>
     <div class="c">${head(t("Datenquellen"), "sources", ui)}${src}</div></div>`;
   }
+  var LEVELS_LOG = [
+    ["error", "Fehler"],
+    ["warn", "Warnung"],
+    ["info", "Info"]
+  ];
+  var CATS_LOG = [
+    ["start", "Start"],
+    ["update", "Auswertung"],
+    ["source", "Quelle"],
+    ["finding", "Hinweis"],
+    ["config", "Konfiguration"],
+    ["inventory", "Inventar"],
+    ["dashboard", "Dashboard"],
+    ["frontend", "Karte"],
+    ["error", "Fehler"]
+  ];
+  var RANGES_LOG = [
+    [24, "24 Stunden"],
+    [168, "7 Tage"],
+    [720, "30 Tage"]
+  ];
+  var SOURCE_STATUS = {
+    ok: ["ok", "ok"],
+    no_statistics: ["warn", "keine Statistik"],
+    unit_mismatch: ["bad", "unpassend"],
+    state_class_mismatch: ["bad", "unpassend"],
+    format: ["warn", "Format"],
+    not_found: ["bad", "nicht gefunden"],
+    unavailable: ["bad", "nicht verfügbar"]
+  };
+  var LOG_EN = {
+    "log.restart": "— restart —",
+    "update.run": "Analysis: {rows} statistic rows, {days} days with data, {duration} ms",
+    "source.lost": "Source {entity} is unavailable (for {hours} h)",
+    "source.back": "Source {entity} is available again",
+    "source.no_statistics": "Source {entity} has no long-term statistics",
+    "source.unit": "Source {entity}: unit {unit}, expected one of {expected}",
+    "source.state_class": "Source {entity}: state_class {state_class}, expected total or total_increasing",
+    "finding.new": "New finding {id}: {title}",
+    "finding.changed": "Finding {id} changed",
+    "finding.resolved": "Finding {id} resolved",
+    "config.option": "Option {field}: {old} → {new}",
+    "config.thresholds": "Threshold {field}: {old} → {new}",
+    "config.circuit_added": "Heating circuit added",
+    "config.circuit_removed": "Heating circuit removed",
+    "config.room_added": "Room added",
+    "config.room_removed": "Room removed",
+    "inventory.updated": "Inventory {object}: {count} fields changed",
+    "inventory.logged": "Change documented: {object}.{field}",
+    "dashboard.resource": "Card registered as resource ({mode} mode, {url})",
+    "dashboard.created": "Dashboard {path} created",
+    "dashboard.exists": "Dashboard {path} already exists",
+    "frontend.error": "Card reports: {message}",
+    "error.update": "Update failed: {error}"
+  };
+  function logMessage(entry) {
+    if (getLang() !== "en" || !entry.key) return entry.msg;
+    const template = LOG_EN[entry.key];
+    if (!template) return entry.msg;
+    return template.replace(/\{(\w+)\}/g, (match, key) => entry.params && entry.params[key] != null ? entry.params[key] : match);
+  }
+  var timeOf = (iso) => {
+    const at = iso ? new Date(iso) : null;
+    if (!at || Number.isNaN(at.getTime())) return "–";
+    return at.toLocaleTimeString(getLang() === "de" ? "de-DE" : "en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  };
+  var dayOf = (iso) => {
+    const at = iso ? new Date(iso) : null;
+    if (!at || Number.isNaN(at.getTime())) return "";
+    return at.toLocaleDateString(getLang() === "de" ? "de-DE" : "en-GB", { weekday: "short", day: "2-digit", month: "2-digit" });
+  };
+  function runtimeCard(d, ui) {
+    const rt = d.diag && d.diag.runtime || {};
+    const versions = d.diag && d.diag.versions || {};
+    const card = versions.card || {};
+    const mismatch = card.matches === false;
+    const storage = d.diag && d.diag.storage || {};
+    const k = d.diag && d.diag.summary && d.diag.summary.kpis || {};
+    const next = rt.next_run ? timeOf(rt.next_run) : "–";
+    const rows = [
+      [t("Backend"), esc(String(versions.integration || "–"))],
+      [t("Karte"), esc(String(card.version || "–"))],
+      [t("Letzter Lauf"), `${esc(String(rt.run_index ?? 0))}. ${esc(t("Lauf"))} · ${esc(fmt(rt.last_duration_ms, 0))} ${esc(t("ms"))}`],
+      [t("Nächster Lauf"), esc(next)],
+      [t("Letzter Fehler"), rt.last_error ? pill("bad", rt.last_error) : pill("ok", t("keiner"))],
+      [t("Tage mit Daten"), esc(fmt(k.days_with_data, 0))],
+      [t("Speicherstand"), `${esc(fmt(storage.rollups, 0))} ${esc(t("Roll-ups"))} · ${esc(fmt(storage.log_entries, 0))} ${esc(t("Protokollzeilen"))}`]
+    ];
+    return `<div class="c">${head(t("Systemstatus"), "runtime", ui)}${mismatch ? `<div class="fs">${pill("warn", t("Version weicht ab"))}</div>` : ""}
+    <table class="kv">${rows.map(([a, b]) => `<tr><th>${a}</th><td>${b}</td></tr>`).join("")}</table>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" data-act="log-download">${esc(t("Diagnose herunterladen"))}</button>
+      <button class="btn ghost" data-act="log-copy">${esc(t("Protokoll kopieren"))}</button>
+      <button class="btn primary" data-act="log-refresh">${esc(t("Jetzt neu berechnen"))}</button>
+    </div>
+    ${rt.last_error ? `<div class="fd" style="margin-top:8px">${esc(t("Letzter Fehler"))}: ${esc(rt.last_error)}</div>` : ""}
+  </div>`;
+  }
+  function sourcesCard(d, ui) {
+    const rows = d.diag && d.diag.source_checks || [];
+    if (!rows.length) return `<div class="c">${head(t("Quellen-Check"), "sources_check", ui)}<div class="empty">${esc(t("Keine Quellen zugeordnet."))}</div></div>`;
+    const body = rows.map((row) => {
+      const [tone, label] = SOURCE_STATUS[row.status] || ["mut", row.status || "–"];
+      const last = row.daily_last ? `${dayOf(row.daily_last)} ${timeOf(row.daily_last)}` : "–";
+      return `<tr>
+        <td><b>${esc(row.entity)}</b><div class="muted">${esc(row.kind || "")}</div></td>
+        <td>${pill(tone, t(label))}${row.advice ? `<div class="fd">${esc(t(row.advice))}</div>` : ""}</td>
+        <td>${esc(row.unit || row.statistic_unit || "–")}<div class="muted">${esc(row.state_class || "")}</div></td>
+        <td>${esc(fmt(row.hourly_rows, 0))} / ${esc(fmt(row.daily_rows, 0))}</td>
+        <td>${esc(last)}</td>
+      </tr>`;
+    }).join("");
+    return `<div class="c">${head(t("Quellen-Check"), "sources_check", ui)}
+    <table class="src"><tr><th>${esc(t("Quelle"))}</th><th>${esc(t("Status"))}</th><th>${esc(t("Einheit"))}</th><th>${esc(t("Zeilen 7/31"))}</th><th>${esc(t("Letzter Wert"))}</th></tr>
+    ${body}</table></div>`;
+  }
+  function logList(d, ui) {
+    const entries = d.log && d.log.entries || [];
+    const cats = [...new Set(entries.map((e) => e.cat))];
+    const chipRow = (items, current, attr) => [`<button class="chip ${current ? "" : "on"}" ${attr}="">${esc(t("Alle"))}</button>`].concat(items.map(([value, label]) => `<button class="chip ${current === value ? "on" : ""}" ${attr}="${esc(value)}">${esc(t(label))}</button>`)).join("");
+    const catChips = chipRow(CATS_LOG.filter(([value]) => cats.includes(value) || !cats.length), ui.logCat, "data-log-cat");
+    const levelChips = LEVELS_LOG.some(([value]) => entries.some((e) => e.level === value)) ? chipRow(LEVELS_LOG.filter(([value]) => entries.some((e) => e.level === value)), ui.logLevel, "data-log-level") : "";
+    const range = `<div class="seg">${RANGES_LOG.map(([h, label]) => `<button data-log-range="${h}" class="${(ui.logHours ?? 168) === h ? "on" : ""}">${esc(t(label))}</button>`).join("")}</div>`;
+    const search = `<input class="search" data-log-search type="search" value="${esc(ui.logQ || "")}" placeholder="${esc(t("Suchen"))}" aria-label="${esc(t("Suchen"))}">`;
+    const groups = [];
+    for (const entry of entries) {
+      const key = dayOf(entry.ts);
+      let group = groups[groups.length - 1];
+      if (!group || group.day !== key) {
+        group = { day: key, rows: [] };
+        groups.push(group);
+      }
+      if (entry.cat === "start" && entry.key === "log.restart") {
+        group.rows.push(`<div class="restart">${esc(t("Neustart"))}</div>`);
+        continue;
+      }
+      const tone = entry.level === "error" ? "bad" : entry.level === "warn" ? "warn" : "cool";
+      const id = entry.ts + entry.msg;
+      const open = ui.logOpen === id;
+      group.rows.push(`<div class="log ${open ? "open" : ""}">
+      <button class="logrow" data-log-open="${esc(id)}">
+        <span class="lt">${esc(timeOf(entry.ts))}</span>
+        <span class="pill tone-${tone}">${esc(t(entry.level))}</span>
+        <span class="cat">${esc(t(entry.cat))}</span>
+        <span class="msg">${esc(logMessage(entry))}</span>
+      </button>
+      ${open ? `<div class="details"><div class="muted">${esc(t("Details"))}</div><pre>${esc(JSON.stringify(entry.details || {}, null, 2))}</pre></div>` : ""}
+    </div>`);
+    }
+    return `<div class="c">${head(t("Protokoll"), "log", ui, `${entries.length} ${esc(t("Einträge"))}`)}
+    <div class="filters">${catChips}</div>
+    <div class="filters">${levelChips}${range}${search}</div>
+    ${entries.length ? groups.map((g) => `<div class="day">${esc(g.day)}</div>${g.rows.join("")}`).join("") : `<div class="empty">${esc(t("Keine Einträge für diesen Filter."))}</div>`}
+  </div>`;
+  }
+  function viewProtokoll(d, ui) {
+    const diag = d.diag;
+    return `<div class="grid g2">${runtimeCard(d, ui)}${sourcesCard(d, ui)}</div>
+    <div class="grid">${logList(d, ui)}</div>
+    ${!diag ? `<div class="c empty">${esc(t("Diagnose nicht verfügbar – Protokoll wird trotzdem angezeigt."))}</div>` : ""}`;
+  }
   function renderView(view, d, ui, live) {
     switch (view) {
       case "effizienz":
@@ -963,6 +1227,8 @@ td { padding:7px 8px; border-bottom:1px solid var(--hz-line); vertical-align:top
         return viewVergleich(d, ui);
       case "inventar":
         return viewInventar(d, ui);
+      case "protokoll":
+        return viewProtokoll(d, ui);
       default:
         return viewAnlage(d, ui);
     }
@@ -973,11 +1239,16 @@ td { padding:7px 8px; border-bottom:1px solid var(--hz-line); vertical-align:top
     setConfig(config) {
       this._config = { view: "anlage", ...config || {} };
       if (!VIEWS.includes(this._config.view)) this._config.view = "anlage";
-      this._ui = { help: null, range: 90, form: false, widths: {} };
+      this._ui = { help: null, range: 90, form: false, widths: {}, logCat: "", logLevel: "", logQ: "", logHours: 168, logOpen: null };
+      this._log = [];
+      this._diag = null;
+      this._logError = null;
+      this._diagError = null;
       if (!this.shadowRoot) {
         this.attachShadow({ mode: "open" });
         this.shadowRoot.addEventListener("click", (e) => this._click(e));
         this.shadowRoot.addEventListener("submit", (e) => this._submit(e));
+        this.shadowRoot.addEventListener("input", (e) => this._input(e));
       }
     }
     set hass(hass) {
@@ -995,6 +1266,16 @@ td { padding:7px 8px; border-bottom:1px solid var(--hz-line); vertical-align:top
     }
     connectedCallback() {
       this._timer = setInterval(() => this._load(), 5 * 60 * 1e3 + 5e3);
+      this._logTimer = setInterval(() => {
+        if (this._config.view === "protokoll" && document.visibilityState !== "hidden") this._loadLog(true);
+      }, 30 * 1e3);
+      this._onError = (event) => this._reportTrace("Darstellungsfehler: " + (event && event.message || "unbekannt"));
+      this._onReject = (event) => {
+        const reason = event && event.reason;
+        this._reportTrace("Promise-Fehler: " + (reason && (reason.message || reason.code) || String(reason || "unbekannt")));
+      };
+      window.addEventListener("error", this._onError);
+      window.addEventListener("unhandledrejection", this._onReject);
       if (!this._ro && window.ResizeObserver) {
         this._ro = new ResizeObserver(() => {
           clearTimeout(this._roT);
@@ -1005,6 +1286,9 @@ td { padding:7px 8px; border-bottom:1px solid var(--hz-line); vertical-align:top
     }
     disconnectedCallback() {
       clearInterval(this._timer);
+      clearInterval(this._logTimer);
+      if (this._onError) window.removeEventListener("error", this._onError);
+      if (this._onReject) window.removeEventListener("unhandledrejection", this._onReject);
       if (this._ro) {
         this._ro.disconnect();
         this._ro = null;
@@ -1031,8 +1315,42 @@ td { padding:7px 8px; border-bottom:1px solid var(--hz-line); vertical-align:top
         this._error = null;
       } catch (e) {
         this._error = e && (e.message || e.code) ? e.message || e.code : String(e);
+        this._reportTrace("summary failed: " + this._error);
+      }
+      if (this._config.view === "protokoll") {
+        await this._loadDiag();
+        await this._loadLog(force);
+        return;
       }
       this._render();
+    }
+    async _loadDiag() {
+      if (!this._hass) return;
+      try {
+        this._diag = await this._hass.callWS({ type: "heizungsanalyse/diagnostics" });
+        this._diagError = null;
+      } catch (e) {
+        this._diagError = e && (e.message || e.code) ? e.message || e.code : String(e);
+        this._diag = null;
+      }
+    }
+    async _loadLog(force = false) {
+      if (!this._hass) return;
+      const since = new Date(Date.now() - (this._ui.logHours || 168) * 3600 * 1e3).toISOString();
+      const payload = { type: "heizungsanalyse/log", limit: 500, since };
+      if (this._ui.logCat) payload.cat = this._ui.logCat;
+      if (this._ui.logLevel) payload.level = this._ui.logLevel;
+      if (this._ui.logQ) payload.q = this._ui.logQ;
+      try {
+        const result = await this._hass.callWS(payload);
+        this._log = result && result.entries || [];
+        this._logError = null;
+      } catch (e) {
+        this._logError = e && (e.message || e.code) ? e.message || e.code : String(e);
+        this._log = [];
+        this._reportTrace("log failed: " + this._logError);
+      }
+      if (!force || this._config.view === "protokoll") this._render();
     }
     _live() {
       const out = {};
@@ -1054,7 +1372,8 @@ td { padding:7px 8px; border-bottom:1px solid var(--hz-line); vertical-align:top
       if (!d) return;
       if (!d.configured) return this._paint(`<div class="c empty">${esc(t("Die Heizungsanalyse ist noch nicht eingerichtet."))}</div>`);
       const view = this._config.view;
-      this._paint(`${header(d, view)}${renderView(view, d, this._ui, this._live())}`);
+      const data = view === "protokoll" ? { ...d, diag: this._diag, log: { entries: this._log }, logError: this._logError } : d;
+      this._paint(`${header(d, view)}${renderView(view, data, this._ui, this._live())}`);
       if (!fromMeasure) requestAnimationFrame(() => this._measure());
     }
     _paint(html) {
@@ -1071,15 +1390,48 @@ td { padding:7px 8px; border-bottom:1px solid var(--hz-line); vertical-align:top
         this._render();
       }, 2500);
     }
+    _reportTrace(message) {
+      if (!this._hass || !message) return;
+      const now = Date.now();
+      if (now - (this._traceAt || 0) < 60 * 1e3) return;
+      this._traceAt = now;
+      this._hass.callWS({ type: "heizungsanalyse/trace", message: String(message).slice(0, 500), version: HA_VERSION, ua: navigator.userAgent }).catch(() => {
+      });
+    }
     _click(e) {
-      const el = e.target.closest("[data-help],[data-range],[data-act]");
+      const el = e.target.closest("[data-help],[data-range],[data-act],[data-log-cat],[data-log-level],[data-log-range],[data-log-open]");
       if (!el) return;
       if (el.dataset.help) this._ui.help = this._ui.help === el.dataset.help ? null : el.dataset.help;
       else if (el.dataset.range) this._ui.range = Number(el.dataset.range);
-      else if (el.dataset.act === "form-open") this._ui.form = true;
+      else if (el.dataset.logCat !== void 0) {
+        this._ui.logCat = this._ui.logCat === el.dataset.logCat && el.dataset.logCat ? "" : el.dataset.logCat;
+        this._loadLog(true);
+        return;
+      } else if (el.dataset.logLevel !== void 0) {
+        this._ui.logLevel = this._ui.logLevel === el.dataset.logLevel && el.dataset.logLevel ? "" : el.dataset.logLevel;
+        this._loadLog(true);
+        return;
+      } else if (el.dataset.logRange) {
+        this._ui.logHours = Number(el.dataset.logRange);
+        this._loadLog(true);
+        return;
+      } else if (el.dataset.logOpen) {
+        const id = el.dataset.logOpen;
+        this._ui.logOpen = this._ui.logOpen === id ? null : id;
+      } else if (el.dataset.act === "form-open") this._ui.form = true;
       else if (el.dataset.act === "form-close") this._ui.form = false;
       else if (el.dataset.act === "report") return void this._report();
+      else if (el.dataset.act === "log-download") return void this._download();
+      else if (el.dataset.act === "log-copy") return void this._copy();
+      else if (el.dataset.act === "log-refresh") return void this._refresh();
       this._render();
+    }
+    _input(e) {
+      const el = e.target;
+      if (!el || !el.matches || !el.matches("[data-log-search]")) return;
+      this._ui.logQ = el.value;
+      clearTimeout(this._searchTimer);
+      this._searchTimer = setTimeout(() => this._loadLog(true), 250);
     }
     async _submit(e) {
       e.preventDefault();
@@ -1113,6 +1465,35 @@ td { padding:7px 8px; border-bottom:1px solid var(--hz-line); vertical-align:top
         this._flash(t("Fehler: {e}", { e: err.message || err }));
       }
     }
+    _download() {
+      const body = JSON.stringify(this._diag || { error: this._diagError || "Diagnose nicht verfügbar" }, null, 2);
+      const blob = new Blob([body], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `heizungsanalyse-diagnose-${(/* @__PURE__ */ new Date()).toISOString().slice(0, 10)}.json`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2e3);
+      this._flash(t("Diagnose heruntergeladen"));
+    }
+    async _copy() {
+      const text = (this._log || []).map((e) => `${e.ts} ${e.level.toUpperCase()} [${e.cat}] ${e.msg}`).join("\n");
+      try {
+        await navigator.clipboard.writeText(text || t("Keine Einträge"));
+        this._flash(t("Kopiert"));
+      } catch (err) {
+        this._flash(t("Fehler: {e}", { e: err.message || err }));
+      }
+    }
+    async _refresh() {
+      try {
+        await this._hass.callService("heizungsanalyse", "refresh");
+        this._flash(t("Neu berechnet"));
+        invalidate();
+        setTimeout(() => this._load(true), 1500);
+      } catch (err) {
+        this._flash(t("Fehler: {e}", { e: err.message || err }));
+      }
+    }
   };
 
   // src/strategy.js
@@ -1121,7 +1502,8 @@ td { padding:7px 8px; border-bottom:1px solid var(--hz-line); vertical-align:top
     { view: "effizienz", title: "Effizienz", icon: "mdi:chart-bell-curve-cumulative" },
     { view: "raeume", title: "Räume & Kreise", icon: "mdi:home-thermometer" },
     { view: "vergleich", title: "Vorher / Nachher", icon: "mdi:compare-horizontal" },
-    { view: "inventar", title: "Inventar", icon: "mdi:clipboard-list-outline" }
+    { view: "inventar", title: "Inventar", icon: "mdi:clipboard-list-outline" },
+    { view: "protokoll", title: "Protokoll", icon: "mdi:text-box-search-outline" }
   ];
   function buildDashboard(config = {}) {
     return {

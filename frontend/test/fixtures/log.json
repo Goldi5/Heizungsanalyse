@@ -1,0 +1,203 @@
+{
+  "title": "Heizungsanalyse",
+  "version": "0.3.0",
+  "generated": "2026-11-17T12:00:00+00:00",
+  "last_update_success": true,
+  "kpis": {
+    "days_with_data": 28
+  },
+  "log": {
+    "entries": [
+      {
+        "ts": "2026-11-17T11:58:00+00:00",
+        "level": "info",
+        "cat": "start",
+        "msg": "— Neustart —",
+        "key": "log.restart",
+        "params": {},
+        "details": {}
+      },
+      {
+        "ts": "2026-11-17T11:58:05+00:00",
+        "level": "info",
+        "cat": "update",
+        "msg": "Auswertung: 186 Statistikzeilen, 28 Tage mit Daten, 812 ms",
+        "key": "update.run",
+        "params": {
+          "rows": 186,
+          "days": 28,
+          "duration": 812
+        },
+        "details": {
+          "rows": 186,
+          "days_with_data": 28,
+          "duration_ms": 812,
+          "power_source": "primary",
+          "counts": {
+            "sensor.wp_strom": 31
+          }
+        }
+      },
+      {
+        "ts": "2026-11-17T11:58:06+00:00",
+        "level": "warn",
+        "cat": "source",
+        "msg": "Quelle sensor.aussentemperatur ist nicht verfügbar (seit 2.5 h)",
+        "key": "source.lost",
+        "params": {
+          "entity": "sensor.aussentemperatur",
+          "hours": 2.5
+        },
+        "details": {
+          "entity": "sensor.aussentemperatur",
+          "status": "unavailable"
+        }
+      },
+      {
+        "ts": "2026-11-17T11:58:07+00:00",
+        "level": "info",
+        "cat": "finding",
+        "msg": "Neuer Hinweis F01: Vorlauf liegt über Soll",
+        "key": "finding.new",
+        "params": {
+          "id": "F01",
+          "title": "Vorlauf liegt über Soll"
+        },
+        "details": {
+          "id": "F01",
+          "severity": "warning",
+          "params": {
+            "median_k": 2.4
+          },
+          "evidence": {
+            "median_k": 2.4
+          }
+        }
+      },
+      {
+        "ts": "2026-11-17T11:58:08+00:00",
+        "level": "info",
+        "cat": "config",
+        "msg": "Schwelle starts_per_day: 12 → 10",
+        "key": "config.thresholds",
+        "params": {
+          "field": "starts_per_day",
+          "old": 12,
+          "new": 10
+        },
+        "details": {
+          "field": "starts_per_day",
+          "old": 12,
+          "new": 10
+        }
+      },
+      {
+        "ts": "2026-11-17T11:58:09+00:00",
+        "level": "info",
+        "cat": "inventory",
+        "msg": "Inventar pumps.hk2: 2 Feld/Felder geändert",
+        "key": "inventory.updated",
+        "params": {
+          "object": "pumps.hk2",
+          "count": 2
+        },
+        "details": {
+          "object": "pumps.hk2",
+          "changes": []
+        }
+      },
+      {
+        "ts": "2026-11-17T11:58:10+00:00",
+        "level": "info",
+        "cat": "dashboard",
+        "msg": "Karte als Ressource eingetragen (storage-Modus, /heizungsanalyse_static/heizungsanalyse-card.js?v=0.3.0-abcdef1234)",
+        "key": "dashboard.resource",
+        "params": {
+          "mode": "storage",
+          "url": "/heizungsanalyse_static/heizungsanalyse-card.js?v=0.3.0-abcdef1234"
+        },
+        "details": {
+          "mode": "storage"
+        }
+      },
+      {
+        "ts": "2026-11-17T11:58:11+00:00",
+        "level": "warn",
+        "cat": "frontend",
+        "msg": "Karte meldet: summary failed: timeout",
+        "key": "frontend.error",
+        "params": {
+          "message": "summary failed: timeout"
+        },
+        "details": {
+          "version": "0.3.0",
+          "ua": "Mozilla/5.0 Test"
+        }
+      },
+      {
+        "ts": "2026-11-17T11:58:12+00:00",
+        "level": "error",
+        "cat": "error",
+        "msg": "Aktualisierung fehlgeschlagen: ValueError: kaputt",
+        "key": "error.update",
+        "params": {
+          "error": "ValueError: kaputt"
+        },
+        "details": {
+          "type": "ValueError"
+        }
+      }
+    ]
+  },
+  "diag": {
+    "versions": {
+      "integration": "0.3.0",
+      "homeassistant": "2026.11.1",
+      "card": {
+        "version": "0.3.0",
+        "backend": "0.3.0",
+        "matches": true
+      }
+    },
+    "runtime": {
+      "run_index": 42,
+      "last_duration_ms": 812,
+      "next_run": "2026-11-17T12:05:00",
+      "last_error": null,
+      "last_update_success": true
+    },
+    "storage": {
+      "rollups": 120,
+      "log_entries": 9
+    },
+    "summary": {
+      "kpis": {
+        "days_with_data": 28
+      }
+    },
+    "source_checks": [
+      {
+        "entity": "sensor.wp_strom",
+        "kind": "energy",
+        "unit": "kWh",
+        "state_class": "total_increasing",
+        "hourly_rows": 168,
+        "daily_rows": 31,
+        "daily_last": "2026-11-17T00:00:00",
+        "status": "ok",
+        "advice": ""
+      },
+      {
+        "entity": "sensor.aussentemperatur",
+        "kind": "temperature",
+        "unit": "°C",
+        "state_class": "measurement",
+        "hourly_rows": 168,
+        "daily_rows": 31,
+        "daily_last": "2026-11-17T00:00:00",
+        "status": "no_statistics",
+        "advice": "Keine Langzeitstatistik. Recorder und state_class prüfen; ohne Statistik rechnet die Integration nicht."
+      }
+    ]
+  }
+}

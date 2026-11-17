@@ -55,10 +55,10 @@ test("jeder t()-Text hat eine englische Übersetzung", () => {
   assert.deepEqual([...new Set(missing)], []);
 });
 
-test("Strategie baut fünf Ansichten mit der Karte", () => {
+test("Strategie baut sechs Ansichten mit der Karte", () => {
   setLang({ language: "de" });
   const d = buildDashboard({});
-  assert.equal(d.views.length, 5);
+  assert.equal(d.views.length, 6);
   assert.deepEqual(d.views.map((v) => v.path), VIEWS);
   for (const v of d.views) assert.equal(v.cards[0].type, "custom:heizungsanalyse-card");
 });
@@ -67,4 +67,29 @@ test("Objektnamen lesbar", () => {
   setLang({ language: "de" });
   assert.equal(objectLabel("pumps.hk1"), "Pumpe hk1");
   assert.equal(objectLabel("hydraulics"), "Hydraulik");
+});
+
+
+test("Ansicht Protokoll rendert in beiden Sprachen", () => {
+  const log = JSON.parse(readFileSync(new URL("./fixtures/log.json", import.meta.url)));
+  for (const language of ["de", "en"]) {
+    setLang({ language });
+    const html = renderView("protokoll", log, { help: null, range: 90, form: false, widths: {}, logCat: "", logLevel: "", logQ: "", logHours: 168, logOpen: null }, {});
+    assert.ok(html.length > 500, language);
+    assert.ok(!html.includes("undefined"), `${language}: undefined`);
+    assert.ok(!html.includes("NaN"), `${language}: NaN`);
+    assert.ok(html.includes("Systemstatus") || html.includes("System status"), language);
+  }
+  setLang({ language: "de" });
+});
+
+test("Protokoll zeigt Neustart-Marker und Details", () => {
+  setLang({ language: "de" });
+  const log = JSON.parse(readFileSync(new URL("./fixtures/log.json", import.meta.url)));
+  const closed = renderView("protokoll", log, { help: null, widths: {}, logCat: "", logLevel: "", logQ: "", logHours: 168, logOpen: null }, {});
+  assert.ok(closed.includes("Neustart"));
+  assert.ok(!closed.includes("<pre>"));
+  const opened = renderView("protokoll", log, { help: null, widths: {}, logCat: "", logLevel: "", logQ: "", logHours: 168, logOpen: "2026-11-17T11:58:07+00:00Neuer Hinweis F01: Vorlauf liegt über Soll" }, {});
+  assert.ok(opened.includes("<pre>"));
+  assert.ok(opened.includes("median_k"));
 });
