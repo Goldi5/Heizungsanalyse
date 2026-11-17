@@ -1,0 +1,13 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up Heating Analysis",
+        "description": "The analysis only reads existing entities and statistics. Sources are mapped in the next step."
+      }
+    },
+    "abort": {
+      "already_configured": "Heating Analysis is already set up."
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "domain": "heizungsanalyse",
+  "name": "Heizungsanalyse",
+  "after_dependencies": [
+    "recorder"
+  ],
+  "codeowners": [
+    "@Goldi5"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/Goldi5/Heizungsanalyse",
+  "integration_type": "hub",
+  "iot_class": "calculated",
+  "issue_tracker": "https://github.com/Goldi5/Heizungsanalyse/issues",
+  "requirements": [],
+  "version": "0.1.0b0"
+}

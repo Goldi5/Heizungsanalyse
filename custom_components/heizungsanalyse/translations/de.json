@@ -1,0 +1,13 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Heizungsanalyse einrichten",
+        "description": "Die Analyse liest nur vorhandene Entities und Statistiken. Quellen werden im naechsten Schritt zugeordnet."
+      }
+    },
+    "abort": {
+      "already_configured": "Die Heizungsanalyse ist bereits eingerichtet."
+    }
+  }
+}

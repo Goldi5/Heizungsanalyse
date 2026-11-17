@@ -1,0 +1,79 @@
+# Architektur
+
+Stand: M0 (Repo-Geruest). Die Phasen M1-M7 folgen gemaess Arbeitsauftrag.
+
+## 1. Grundsaetze
+
+- **Read-only.** Kein Codepfad ruft einen Dienst auf einer Fremd-Entity auf.
+  Die Regel wird durch einen Test abgesichert (`tests/ha/test_read_only.py`,
+  ab M1), der `hass.services.async_call` auf fremden Domains verbietet.
+- **Reines Python in `analysis/`.** Cop, Taktung, Heizkurve, Raeume und
+  Findings kennen weder Recorder noch Home Assistant und sind isoliert
+  testbar.
+- **Schmaler Adapter.** `data_access.py` liefert Statistik und Zustaende; nur
+  diese Datei kennt den Recorder.
+- **Kein Raten.** Fehlt eine Quelle, wird die Kennzahl `unknown`.
+
+## 2. Abgleich mit raumklima-2
+
+Gelesen wurden `manifest.json`, `hacs.json`, `pyproject.toml`,
+`requirements_test.txt`, `.github/workflows/*`, `const.py`, `config_flow.py`,
+`entity.py`, `__init__.py`, `docs/de/entwickeln.md`, `docs/de/referenz.md`,
+`CHANGELOG.md` und der Testaufbau.
+
+| Aspekt | raumklima-2 | heizungsanalyse | Begruendung |
+|---|---|---|---|
+| Domain | `raumklima` | `heizungsanalyse` | eigenes Projekt, keine Kopplung |
+| integration_type | `device` | `hub` | eine Analyse je Anlage, kein Einzelgeraet |
+| Coordinator | eigener Controller/Hub mit Listenern | noch offen, ab M1 `DataUpdateCoordinator` | Analyse laeuft zeitfensterbasiert, kein Event-Sturm |
+| Persistenz | `entry.data` = Verdrahtung, `entry.options` = Stellschrauben | ebenso; zusaetzlich `Store` fuer Inventar und Roll-ups | gleiche Trennung, plus Historie |
+| unique_id | `{entry_id}_{key}` | `{entry_id}_{key}` | identisches Schema |
+| Entity-Namen | `_attr_translation_key` + `has_entity_name` | ebenso | gleiche Mechanik, uebersetzbar |
+| EntityDescription | nicht verwendet | nicht verwendet | Konsistenz |
+| Reine Logik | `logic.py`, `stats.py`, ... ohne HA-Import | `analysis/*` ohne HA-Import | gleiches Muster |
+| Test-Alias | synthetisches Paket `rk` | synthetisches Paket `hz` | gleiche Technik |
+| Ruff | py313, line-length 130, feste Select-Liste | uebernommen | gleiche CI |
+| Mypy | nicht verwendet | nicht verwendet | gleiche CI |
+| Translations | `strings.json` + `translations/{de,en,fr}.json` | `strings.json` + `translations/{de,en}.json` | Plan fordert de/en |
+| Versionierung | `bN`-Suffixe, Changelog-Konvention | uebernommen | Release-Muster bleibt einheitlich |
+
+**Bewusste Unterschiede:** kein Frontend, keine Karte, kein PDF-Bericht in
+M0-M6 (Bericht als Markdown/JSON per Service), kein `fpdf2`. Die Heizungsanalyse
+ist das beobachtende Gegenstueck und darf raumklima-2 nie steuern.
+
+## 3. Geplante Modulstruktur
+
+```
+custom_components/heizungsanalyse/
+  __init__.py        Aufbau, Runtime, Plattform-Forwarding
+  config_flow.py     Einrichtung + Optionsdialog (M1)
+  coordinator.py     Zeitfenster-Aggregation (M2)
+  data_access.py     Recorder-Statistik + Zustaende (M2)
+  storage.py         Inventar + Aenderungsverlauf + Roll-ups (M3)
+  sensor.py          Kennzahlen (M2)
+  binary_sensor.py   Problem-/Statusanzeigen (M5)
+  diagnostics.py     anonymisierte Diagnose
+  services.yaml      Inventar, Vergleich, Bericht (M3)
+  analysis/          reines Python, ohne HA-Import
+    cop.py  cycling.py  heating_curve.py  rooms.py  findings.py
+```
+
+## 4. Datenfluss
+
+1. `data_access` liest Langzeitstatistik (`statistics_during_period`) und
+   Zustandsaenderungen in festen Fenstern (5 Minuten, Tag, Monat).
+2. `analysis/*` berechnet Kennzahlen aus neutralen Dictionaries.
+3. `coordinator` haelt den letzten Stand und schreibt Tages-Roll-ups in den
+   `Store`.
+4. Sensoren und Findings lesen nur aus dem Coordinator.
+5. Der Service `compare_periods` schneidet zwei Fenster um einen Eintrag im
+   Aenderungsverlauf und ruft dieselben Analysefunktionen auf.
+
+## 5. Offene Architekturentscheidungen
+
+- Ob der Coordinator `DataUpdateCoordinator` nutzt oder ein eigener Listener
+  (wie raumklima-2) sinnvoller ist, entscheidet sich in M2 anhand der
+  Statistik-Abfragekosten.
+- Ob Heizkreise und Raeume als Config-Subentries oder als `Store`-Daten
+  modelliert werden. Plan B3 erlaubt beides; `Store` ist einfacher, Subentries
+  sind UI-freundlicher. Entscheidung in M1 nach Ruecksprache.
