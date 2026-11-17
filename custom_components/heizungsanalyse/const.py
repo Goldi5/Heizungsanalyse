@@ -37,6 +37,20 @@ SENSOR_RUNTIME_PER_CYCLE: Final = "runtime_per_cycle"
 SENSOR_FLOW_DEVIATION: Final = "flow_deviation"
 SENSOR_DATA_DAYS: Final = "data_days"
 
+# Raum- und Kreisanalyse
+SENSOR_ROOM_DEVIATION: Final = "room_deviation"
+SENSOR_ROOM_HEATING_UP: Final = "room_heating_up"
+SENSOR_PUMP_IDLE: Final = "pump_idle_share"
+SENSOR_MIXER_PULSES: Final = "mixer_pulses"
+SENSOR_ROOM_RANKING: Final = "room_ranking"
+
+ROOM_WINDOW_DAYS: Final = 7
+ROOM_TOLERANCE: Final = 1.0
+HEATING_UP_TRIGGER: Final = 0.3
+HEATING_UP_TOLERANCE: Final = 0.5
+HEATING_UP_MAX_MINUTES: Final = 360
+MIXER_RESOLUTION_MINUTES: Final = UPDATE_INTERVAL_MINUTES
+
 # Stromquellen-Kennzeichnung
 POWER_SOURCE_PRIMARY: Final = "primary"
 POWER_SOURCE_FALLBACK: Final = "fallback"

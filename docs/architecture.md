@@ -146,3 +146,34 @@ Entscheidungen:
   `REPORT_CHANGE_LIMIT`.
 - Es gibt keinen Pfad zu `hass.services.async_call`; `tests/test_read_only.py`
   prueft den Quelltext auf steuernde Muster und direkte `.storage`-Zugriffe.
+
+## 9. Umsetzung M4
+
+```
+analysis/rooms.py     RoomReading, deviation_stats, heating_up_times,
+                      rank_rooms, circuit_ranking
+analysis/circuits.py  CircuitSample, pump_idle, MixerSample, mixer_pulses
+tracking.py           RoomTracker, CircuitTracker, MixerTracker (7 Tage)
+coordinator.py        _track liest Zustaende je Lauf, Snapshot traegt
+                      Raum-/Kreiswerte und Ranglisten
+sensor.py             je Raum Abweichung + Aufheizzeit, je Kreis
+                      Leerlaufanteil + Mischer-Impulse, Raum-Rangliste
+```
+
+Entscheidungen:
+
+- Raum- und Kreisdaten entstehen als **Stichproben im Coordinator-Takt**
+  (fuenf Minuten), nicht aus der Recorder-Statistik: Climate-Attribute und
+  Binaersensoren haben keine Langzeitstatistik. Die Aufloesung wird an jedem
+  Sensor als Attribut ausgewiesen.
+- Das Fenster ist sieben Tage und lebt im Arbeitsspeicher. Nach einem Neustart
+  fuellt es sich neu; die Stichprobenzahl macht das sichtbar.
+- Raeume ohne Climate-Entity (z. B. das Schlafzimmer) bekommen keine Sensoren
+  und loesen keine Kennzahl aus. Raeume ohne Ventilposition (Livisi) werden
+  vollstaendig ausgewertet; `valve_available` ist dann `false`.
+- Der Aufheiztest reagiert auf Sollwert-Anhebungen ab 0,3 K und endet bei
+  `Soll - 0,5 K`; ein Abbruch nach sechs Stunden oder ein Sollwert-Rueckgang
+  verwirft den Versuch. So entstehen keine erfundenen Aufheizzeiten.
+- Je Raum und je Kreis entsteht ein eigenes Geraet unter dem Hauptgeraet.
+  Damit bleiben Entity-Namen lesbar, ohne dass die Integration Raumnamen
+  erfindet.

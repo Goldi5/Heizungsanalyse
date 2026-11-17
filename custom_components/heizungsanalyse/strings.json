@@ -151,6 +151,21 @@
       },
       "data_days": {
         "name": "Tage mit Daten"
+      },
+      "room_deviation": {
+        "name": "Abweichung zum Soll"
+      },
+      "room_heating_up": {
+        "name": "Aufheizzeit"
+      },
+      "pump_idle_share": {
+        "name": "Pumpen-Leerlaufanteil"
+      },
+      "mixer_pulses": {
+        "name": "Mischer-Impulse"
+      },
+      "room_ranking": {
+        "name": "Raum-Rangliste"
       }
     }
   },

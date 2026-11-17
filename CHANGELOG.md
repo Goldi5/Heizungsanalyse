@@ -1,3 +1,27 @@
+## 0.5.0b0 – 2026-11-17
+
+### Neu
+- **Raumkennzahlen** (`analysis/rooms.py`): Median und P90 der Abweichung
+  Ist minus Soll, Zeitanteile unter/ueber 1 K, Aufheizzeit nach
+  Sollwert-Anhebung per Flankenerkennung, Rangliste kalt zuerst.
+- **Kreiskennzahlen** (`analysis/circuits.py`): Pumpen-Leerlaufanteil
+  (Pumpenlaufzeit ohne Verdichter) und Mischer-Impulse je Tag.
+- **Stichprobenpuffer** (`tracking.py`): 7-Tage-Fenster je Raum und Kreis,
+  getrennt nach Raum; alte Werte werden verworfen.
+- **Sensoren je Raum** (nur mit Climate-Entity): Abweichung und Aufheizzeit,
+  eigenes Geraet je Raum; Ventilposition ist optional (Livisi-Raeume
+  funktionieren ohne).
+- **Sensoren je Kreis:** Pumpen-Leerlaufanteil und Mischer-Impulse, eigenes
+  Geraet je Kreis.
+- **Diagnose:** Raum-Rangliste als Sensor mit Raeumen und Mittel je Kreis.
+- **Tests:** reine Logik fuer Abweichung, Aufheizzeit, Leerlauf, Impulse und
+  Fensterpruning; Integrationstest mit Climate-, Pumpen- und Mischerzustaenden
+  inklusive Raum ohne Regelung und Raum ohne Messwerte.
+
+### Dokumentation
+- `docs/architecture.md` §9 und `docs/assumptions.md` §10 zu Stichproben,
+  Neustartverhalten und Livisi-Grenzen.
+
 ## 0.4.0b0 – 2026-11-17
 
 ### Neu

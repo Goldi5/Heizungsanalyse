@@ -144,3 +144,20 @@ abbildet; die Live-Zahl wird hier separat festgehalten.
   Aenderung am selben Tag) sind erst mit M4/M5 moeglich.
 - **Der Verlauf ist kein Audit-Log.** Er dokumentiert die vom Nutzer
   gepflegten Aenderungen, nicht jede Zustandsaenderung einer Entity.
+
+## 10. Grenzen aus M4
+
+- **Stichproben statt Zeitreihe.** Raum- und Kreiswerte beruhen auf dem
+  Fuenf-Minuten-Takt. Unter- und Ueberheizungsanteile, Aufheizzeiten und
+  Mischer-Impulse sind deshalb Naeherungen; schnellere Vorgaenge koennen
+  unerkannt bleiben.
+- **Fenster im Arbeitsspeicher.** Nach einem Neustart von Home Assistant sind
+  die Raum- und Kreiswerte fuer einige Laeufe `unknown`. Tageskennzahlen aus
+  M2/M3 bleiben davon unberuehrt.
+- **Keine Aufheizzeit ohne Sollwertsprung.** Raeume, in denen das Soll nie
+  angehoben wird (oder die dauerhaft aus sind), zeigen `unknown` statt einer
+  Zahl.
+- **Mischer-Impulse sind ein Untergrenze.** Das Stichprobenraster erkennt keine
+  Impulse, die zwischen zwei Laeufen beginnen und enden.
+- **Livisi ohne Ventilposition.** Raumkennzahlen stuetzen sich auf Soll/Ist;
+  eine Aussage ueber den hydraulischen Abgleich ist damit nicht moeglich.

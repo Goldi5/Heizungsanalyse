@@ -11,8 +11,8 @@ Waermepumpe, Heizkreise, Thermostate oder Pumpen.
 ## Status
 
 Frueher Entwicklungsstand. Vorhanden sind das Repo-Geruest (M0), die
-Einrichtung (M1), die ersten Kennzahlen (M2) und das Geraeteinventar mit
-Aenderungsverlauf und Diensten (M3).
+Einrichtung (M1), die ersten Kennzahlen (M2), das Geraeteinventar mit
+Aenderungsverlauf und Diensten (M3) sowie die Raum- und Kreisanalyse (M4).
 
 | Phase | Inhalt | Stand |
 |---|---|---|
@@ -20,7 +20,7 @@ Aenderungsverlauf und Diensten (M3).
 | M1 | Config-Flow, Entity-Mapping, Kreis- und Raum-Modell | erledigt |
 | M2 | Kennzahlen (COP, Starts, Laufzeit, Vorlauf) | erledigt |
 | M3 | Geraeteinventar, Aenderungsverlauf, Services | erledigt |
-| M4 | Raum- und Kreisanalyse | offen |
+| M4 | Raum- und Kreisanalyse | erledigt |
 | M5 | Findings-Engine | offen |
 | M6 | Doku, Dashboard-Beispiel, Release 0.1.0 | offen |
 | M7 | Zusammenspiel mit raumklima-2 | offen |

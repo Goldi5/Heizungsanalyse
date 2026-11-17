@@ -7,40 +7,61 @@ berechnet die Kennzahlen der Analyseschicht. Er steuert nichts.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import timedelta
+from datetime import datetime, timedelta
 import logging
 
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import STATE_OFF, STATE_UNAVAILABLE, STATE_UNKNOWN
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.util import dt as dt_util
 
+from .analysis.circuits import CircuitSample, CircuitStats, MixerSample, MixerStats
 from .analysis.cop import CopBin, CopResult, cop_curve, cop_window
 from .analysis.cycling import mean_runtime_per_cycle, starts_per_day
 from .analysis.heating_curve import CurveBin, DeviationResult, curve_bins, deviation
+from .analysis.rooms import RoomDeviation, RoomReading
 from .analysis.series import build_samples, counter_by_day, energy_by_day, mean_by_day
 from .analysis.types import DaySample, HourSample
 from .const import (
+    CIRCUIT_TYPES,
     CONF_BUFFER_ENTITY,
+    CONF_CIRCUIT,
+    CONF_CIRCUITS,
+    CONF_CLIMATE_ENTITY,
     CONF_COMPRESSOR_ENTITY,
     CONF_COMPRESSOR_RUNTIME_ENTITY,
     CONF_COMPRESSOR_STARTS_ENTITY,
     CONF_DHW_HEAT_ENTITY,
     CONF_FLOW_ENTITY,
     CONF_HEAT_ENTITY,
+    CONF_ID,
+    CONF_MIXER_CLOSE_ENTITY,
+    CONF_MIXER_OPEN_ENTITY,
     CONF_OUTDOOR_ENTITY,
     CONF_POWER_ENTITY,
     CONF_POWER_FALLBACK_ENTITY,
+    CONF_PUMP_ENTITY,
+    CONF_ROOMS,
     CONF_TARGET_FLOW_ENTITY,
+    CONF_VALVE_POSITION_ENTITY,
     COP_LONG_DAYS,
     COP_SHORT_DAYS,
     DEVIATION_DAYS,
     DOMAIN,
+    HEATING_UP_MAX_MINUTES,
+    HEATING_UP_TOLERANCE,
+    HEATING_UP_TRIGGER,
     HISTORY_DAYS,
+    MIXER_RESOLUTION_MINUTES,
     POWER_SOURCE_FALLBACK,
     POWER_SOURCE_PRIMARY,
+    ROOM_TOLERANCE,
+    ROOM_WINDOW_DAYS,
     UPDATE_INTERVAL_MINUTES,
 )
 from .data_access import async_read_daily, async_read_hourly
+from .tracking import CircuitTracker, MixerTracker, RoomTracker, rank_rooms_with_circuits
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -60,9 +81,21 @@ class AnalysisSnapshot:
     samples: list[DaySample]
     power_source: str | None
     days_with_data: int
+    rooms: dict[str, RoomDeviation]
+    heating_up: dict[str, float | None]
+    circuits: dict[str, CircuitStats]
+    mixer: dict[str, MixerStats]
+    rankings: dict[str, object]
 
 
 EMPTY_COP = CopResult(None, 0.0, 0.0, 0, None)
+
+
+def _as_float(value) -> float | None:
+    try:
+        return None if value is None else float(value)
+    except (TypeError, ValueError):
+        return None
 
 
 class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
@@ -76,6 +109,9 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
             update_interval=timedelta(minutes=UPDATE_INTERVAL_MINUTES),
         )
         self.entry = entry
+        self._rooms = RoomTracker(window_days=ROOM_WINDOW_DAYS)
+        self._circuit_tracker = CircuitTracker(window_days=ROOM_WINDOW_DAYS)
+        self._mixer_tracker = MixerTracker(window_days=ROOM_WINDOW_DAYS)
 
     async def _async_update_data(self) -> AnalysisSnapshot:
         try:
@@ -129,6 +165,11 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
 
         hours, compressor_filtered = await self._read_hours(flow_id, target_flow_id, compressor_id)
 
+        now = dt_util.utcnow()
+        self._track(now)
+        room_stats = self._rooms.stats(ROOM_TOLERANCE)
+        circuit_of = {room[CONF_ID]: room.get(CONF_CIRCUIT) for room in self._rooms_config() if CONF_ID in room}
+
         return AnalysisSnapshot(
             cop_short=cop_window(samples, days=COP_SHORT_DAYS, source=power_source),
             cop_long=cop_window(samples, days=COP_LONG_DAYS, source=power_source),
@@ -141,7 +182,99 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
             samples=samples,
             power_source=power_source,
             days_with_data=sum(1 for sample in samples if sample.heat_kwh is not None),
+            rooms=room_stats,
+            heating_up=self._rooms.heating_up(
+                trigger=HEATING_UP_TRIGGER,
+                tolerance=HEATING_UP_TOLERANCE,
+                max_minutes=HEATING_UP_MAX_MINUTES,
+            ),
+            circuits=self._circuit_tracker.stats(MIXER_RESOLUTION_MINUTES),
+            mixer=self._mixer_tracker.stats(),
+            rankings=rank_rooms_with_circuits(room_stats, circuit_of),
         )
+
+    def _rooms_config(self) -> list[dict]:
+        return list(self.entry.options.get(CONF_ROOMS) or [])
+
+    def _circuits_config(self) -> list[dict]:
+        return list(self.entry.options.get(CONF_CIRCUITS) or [])
+
+    def _track(self, now: datetime) -> None:
+        """Aktuelle Zustaende als Stichprobe sichern (nur lesend)."""
+        compressor_id = self.entry.data[CONF_COMPRESSOR_ENTITY]
+        compressor_state = self.hass.states.get(compressor_id)
+        compressor_known = compressor_state is not None and compressor_state.state not in (
+            STATE_UNAVAILABLE,
+            STATE_UNKNOWN,
+        )
+        compressor_on = compressor_known and compressor_state.state == "on"
+
+        readings: list[RoomReading] = []
+        for room in self._rooms_config():
+            reading = self._room_reading(room, now)
+            if reading is not None:
+                readings.append(reading)
+
+        samples: list[CircuitSample] = []
+        mixer: list[MixerSample] = []
+        for circuit in self._circuits_config():
+            if circuit.get("type") is not None and circuit["type"] not in CIRCUIT_TYPES:
+                continue
+            circuit_id = circuit.get(CONF_ID)
+            if not circuit_id:
+                continue
+            pump = self._on_off(circuit.get(CONF_PUMP_ENTITY))
+            if pump is not None and compressor_known:
+                samples.append(CircuitSample(at=now, circuit_id=circuit_id, pump_on=pump, compressor_on=compressor_on))
+            open_on = self._on_off(circuit.get(CONF_MIXER_OPEN_ENTITY))
+            close_on = self._on_off(circuit.get(CONF_MIXER_CLOSE_ENTITY))
+            if open_on is not None or close_on is not None:
+                mixer.append(
+                    MixerSample(
+                        at=now,
+                        circuit_id=circuit_id,
+                        open_on=bool(open_on),
+                        close_on=bool(close_on),
+                    )
+                )
+
+        self._rooms.add(readings, now)
+        self._circuit_tracker.add(samples, now)
+        self._mixer_tracker.add(mixer, now)
+
+    def _room_reading(self, room: dict, now) -> RoomReading | None:
+        climate_id = room.get(CONF_CLIMATE_ENTITY)
+        if not climate_id:
+            return None
+        state = self.hass.states.get(climate_id)
+        if state is None or state.state in (STATE_OFF, STATE_UNAVAILABLE, STATE_UNKNOWN):
+            return None
+        current = _as_float(state.attributes.get("current_temperature"))
+        target = _as_float(state.attributes.get("temperature"))
+        if current is None or target is None:
+            return None
+        valve = None
+        valve_id = room.get(CONF_VALVE_POSITION_ENTITY)
+        if valve_id:
+            valve_state = self.hass.states.get(valve_id)
+            if valve_state is not None:
+                valve = _as_float(valve_state.state)
+        return RoomReading(
+            at=now,
+            room_id=str(room[CONF_ID]),
+            current_c=current,
+            target_c=target,
+            circuit=room.get(CONF_CIRCUIT),
+            valve=valve,
+        )
+
+    def _on_off(self, entity_id: str | None) -> bool | None:
+        if not entity_id:
+            return None
+        state = self.hass.states.get(entity_id)
+        if state is None or state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+            return None
+        return state.state == "on"
 
     @staticmethod
     def _select_power(

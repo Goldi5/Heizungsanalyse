@@ -151,6 +151,21 @@
       },
       "data_days": {
         "name": "Days with data"
+      },
+      "room_deviation": {
+        "name": "Deviation from target"
+      },
+      "room_heating_up": {
+        "name": "Heating-up time"
+      },
+      "pump_idle_share": {
+        "name": "Pump idle share"
+      },
+      "mixer_pulses": {
+        "name": "Mixer pulses"
+      },
+      "room_ranking": {
+        "name": "Room ranking"
       }
     }
   },
