@@ -3,11 +3,132 @@
     "step": {
       "user": {
         "title": "Set up Heating Analysis",
-        "description": "The analysis only reads existing entities and statistics. Sources are mapped in the next step."
+        "description": "Map the required sources. The analysis only reads; it never controls anything. Power, heat and outdoor temperature must use a matching unit.",
+        "data": {
+          "power_entity": "Heat pump power (kWh, primary source)",
+          "heat_entity": "Heat pump heating energy (kWh)",
+          "outdoor_entity": "Outdoor temperature",
+          "compressor_entity": "Compressor status"
+        },
+        "data_description": {
+          "power_entity": "Metered mains power of the heat pump, preferably 1KOMMA5GRAD or a local meter.",
+          "heat_entity": "Generated heating energy without domestic hot water, if available.",
+          "outdoor_entity": "Outdoor temperature at the system location.",
+          "compressor_entity": "Sensor or binary sensor that reports compressor operation."
+        }
+      },
+      "reconfigure": {
+        "title": "Change required sources",
+        "description": "Required sources only. Optional sources, heating circuits and rooms are in the options dialog.",
+        "data": {
+          "power_entity": "Heat pump power (kWh, primary source)",
+          "heat_entity": "Heat pump heating energy (kWh)",
+          "outdoor_entity": "Outdoor temperature",
+          "compressor_entity": "Compressor status"
+        }
       }
     },
+    "error": {
+      "not_found": "The entity does not exist.",
+      "unavailable": "The entity is currently unavailable.",
+      "wrong_unit": "The unit does not match this source.",
+      "wrong_domain": "The entity type does not match this source."
+    },
     "abort": {
-      "already_configured": "Heating Analysis is already set up."
+      "already_configured": "Heating Analysis is already set up.",
+      "reconfigure_successful": "The required sources were updated."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Configure Heating Analysis",
+        "menu_options": {
+          "sources": "Optional sources",
+          "add_circuit": "Add heating circuit",
+          "remove_circuit": "Remove heating circuit",
+          "add_room": "Add room",
+          "remove_room": "Remove room",
+          "save": "Save"
+        }
+      },
+      "sources": {
+        "title": "Optional sources",
+        "description": "All optional. Empty fields stay unused; the affected metrics become 'unknown'.",
+        "data": {
+          "power_fallback_entity": "Heat pump power fallback",
+          "dhw_heat_entity": "Domestic hot water energy (kWh)",
+          "flow_entity": "Flow temperature (actual)",
+          "target_flow_entity": "Flow temperature (target)",
+          "return_entity": "Return temperature",
+          "buffer_entity": "Buffer temperature",
+          "defrost_entity": "Defrost status",
+          "aux_heater_entity": "Auxiliary heater status",
+          "compressor_starts_entity": "Compressor starts"
+        }
+      },
+      "add_circuit": {
+        "title": "Add heating circuit",
+        "data": {
+          "name": "Name",
+          "type": "Type",
+          "temperature_entity": "Circuit actual temperature",
+          "pump_entity": "Circuit pump",
+          "mixer_open_entity": "Mixer opening",
+          "mixer_close_entity": "Mixer closing"
+        },
+        "data_description": {
+          "type": "Buffer, radiators, underfloor heating or hot water. The assignment comes from the user, never from entity names."
+        }
+      },
+      "remove_circuit": {
+        "title": "Remove heating circuit",
+        "data": {
+          "circuit": "Heating circuit"
+        }
+      },
+      "add_room": {
+        "title": "Add room",
+        "data": {
+          "name": "Name",
+          "circuit": "Heating circuit",
+          "climate_entity": "Thermostat (climate)",
+          "valve_position_entity": "Valve position"
+        },
+        "data_description": {
+          "climate_entity": "Optional. Without a thermostat the room is tracked without control and triggers no comfort findings.",
+          "valve_position_entity": "Optional. Livisi thermostats do not report a valve position."
+        }
+      },
+      "remove_room": {
+        "title": "Remove room",
+        "data": {
+          "id": "Room"
+        }
+      }
+    },
+    "error": {
+      "not_found": "The entity does not exist.",
+      "unavailable": "The entity is currently unavailable.",
+      "wrong_unit": "The unit does not match this source.",
+      "wrong_domain": "The entity type does not match this source.",
+      "invalid_name": "Please enter a name.",
+      "duplicate_name": "This name already exists.",
+      "unknown_circuit": "The heating circuit does not exist.",
+      "circuit_in_use": "The heating circuit is still assigned to rooms. Remove those rooms first."
+    },
+    "abort": {
+      "no_circuits": "Add a heating circuit first."
+    }
+  },
+  "selector": {
+    "circuit_type": {
+      "options": {
+        "buffer": "Buffer tank",
+        "radiators": "Radiators",
+        "underfloor": "Underfloor heating",
+        "dhw": "Domestic hot water"
+      }
     }
   }
 }

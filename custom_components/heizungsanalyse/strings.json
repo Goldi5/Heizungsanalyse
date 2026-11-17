@@ -3,11 +3,132 @@
     "step": {
       "user": {
         "title": "Heizungsanalyse einrichten",
-        "description": "Die Analyse liest nur vorhandene Entities und Statistiken. Quellen werden im naechsten Schritt zugeordnet."
+        "description": "Ordne die Pflichtquellen zu. Die Analyse liest nur; sie steuert nichts. Strom, Waerme und Aussentemperatur muessen in passender Einheit vorliegen.",
+        "data": {
+          "power_entity": "WP-Strom (kWh, Primaerquelle)",
+          "heat_entity": "WP-Heizwaerme (kWh)",
+          "outdoor_entity": "Aussentemperatur",
+          "compressor_entity": "Verdichter-Status"
+        },
+        "data_description": {
+          "power_entity": "Gemessener Netzstrom der Waermepumpe, vorzugsweise 1KOMMA5GRAD oder ein lokaler Zaehler.",
+          "heat_entity": "Erzeugte Heizwaerme ohne Warmwasser, falls verfuegbar.",
+          "outdoor_entity": "Aussentemperatur am Standort der Anlage.",
+          "compressor_entity": "Sensor oder Binary-Sensor, der den Verdichterlauf anzeigt."
+        }
+      },
+      "reconfigure": {
+        "title": "Pflichtquellen aendern",
+        "description": "Nur die Pflichtquellen. Optionale Quellen, Heizkreise und Raeume stehen im Optionsdialog.",
+        "data": {
+          "power_entity": "WP-Strom (kWh, Primaerquelle)",
+          "heat_entity": "WP-Heizwaerme (kWh)",
+          "outdoor_entity": "Aussentemperatur",
+          "compressor_entity": "Verdichter-Status"
+        }
       }
     },
+    "error": {
+      "not_found": "Die Entity existiert nicht.",
+      "unavailable": "Die Entity ist derzeit nicht verfuegbar.",
+      "wrong_unit": "Die Einheit passt nicht zu dieser Quelle.",
+      "wrong_domain": "Der Entity-Typ passt nicht zu dieser Quelle."
+    },
     "abort": {
-      "already_configured": "Die Heizungsanalyse ist bereits eingerichtet."
+      "already_configured": "Die Heizungsanalyse ist bereits eingerichtet.",
+      "reconfigure_successful": "Die Pflichtquellen wurden aktualisiert."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Heizungsanalyse einstellen",
+        "menu_options": {
+          "sources": "Optionale Quellen",
+          "add_circuit": "Heizkreis hinzufuegen",
+          "remove_circuit": "Heizkreis entfernen",
+          "add_room": "Raum hinzufuegen",
+          "remove_room": "Raum entfernen",
+          "save": "Speichern"
+        }
+      },
+      "sources": {
+        "title": "Optionale Quellen",
+        "description": "Alles optional. Leere Felder bleiben ungenutzt; die betroffenen Kennzahlen werden dann 'unbekannt'.",
+        "data": {
+          "power_fallback_entity": "WP-Strom Ersatzquelle",
+          "dhw_heat_entity": "Warmwasserwaerme (kWh)",
+          "flow_entity": "Vorlauftemperatur (Ist)",
+          "target_flow_entity": "Vorlauftemperatur (Soll)",
+          "return_entity": "Ruecklauftemperatur",
+          "buffer_entity": "Puffertemperatur",
+          "defrost_entity": "Abtauung-Status",
+          "aux_heater_entity": "Heizstab/NHZ-Status",
+          "compressor_starts_entity": "Verdichterstarts"
+        }
+      },
+      "add_circuit": {
+        "title": "Heizkreis hinzufuegen",
+        "data": {
+          "name": "Name",
+          "type": "Typ",
+          "temperature_entity": "Ist-Temperatur des Kreises",
+          "pump_entity": "Kreispumpe",
+          "mixer_open_entity": "Mischer oeffnet",
+          "mixer_close_entity": "Mischer schliesst"
+        },
+        "data_description": {
+          "type": "Puffer, Heizkoerper, Fussbodenheizung oder Warmwasser. Die Zuordnung kommt vom Nutzer, nie aus Entity-Namen."
+        }
+      },
+      "remove_circuit": {
+        "title": "Heizkreis entfernen",
+        "data": {
+          "circuit": "Heizkreis"
+        }
+      },
+      "add_room": {
+        "title": "Raum hinzufuegen",
+        "data": {
+          "name": "Name",
+          "circuit": "Heizkreis",
+          "climate_entity": "Thermostat (climate)",
+          "valve_position_entity": "Ventilposition"
+        },
+        "data_description": {
+          "climate_entity": "Optional. Ohne Thermostat wird der Raum ohne Regelung gefuehrt und loest keine Komfort-Findings aus.",
+          "valve_position_entity": "Optional. Livisi-Thermostate liefern keine Ventilposition."
+        }
+      },
+      "remove_room": {
+        "title": "Raum entfernen",
+        "data": {
+          "id": "Raum"
+        }
+      }
+    },
+    "error": {
+      "not_found": "Die Entity existiert nicht.",
+      "unavailable": "Die Entity ist derzeit nicht verfuegbar.",
+      "wrong_unit": "Die Einheit passt nicht zu dieser Quelle.",
+      "wrong_domain": "Der Entity-Typ passt nicht zu dieser Quelle.",
+      "invalid_name": "Bitte einen Namen angeben.",
+      "duplicate_name": "Diesen Namen gibt es bereits.",
+      "unknown_circuit": "Der Heizkreis existiert nicht.",
+      "circuit_in_use": "Der Heizkreis ist noch Raeumen zugeordnet. Entferne zuerst diese Raeume."
+    },
+    "abort": {
+      "no_circuits": "Lege zuerst einen Heizkreis an."
+    }
+  },
+  "selector": {
+    "circuit_type": {
+      "options": {
+        "buffer": "Pufferspeicher",
+        "radiators": "Heizkoerper",
+        "underfloor": "Fussbodenheizung",
+        "dhw": "Warmwasser"
+      }
     }
   }
 }

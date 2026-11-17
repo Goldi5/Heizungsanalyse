@@ -69,11 +69,27 @@ custom_components/heizungsanalyse/
 5. Der Service `compare_periods` schneidet zwei Fenster um einen Eintrag im
    Aenderungsverlauf und ruft dieselben Analysefunktionen auf.
 
-## 5. Offene Architekturentscheidungen
+## 5. Entscheidungen aus M1
+
+- **Heizkreise und Raeume liegen als Listen in `entry.options`**, nicht als
+  Config-Subentries. Gruende: beliebig viele Eintraege, keine Notwendigkeit
+  fuer eine eigene Entry-Verwaltung je Kreis, gleiche Mechanik fuer beide
+  Sammlungen, und die Optionsdaten sind mit `MockConfigEntry` vollstaendig
+  testbar. Jeder Eintrag traegt eine stabile `id` (aus dem Namen abgeleitet,
+  ohne Umlaute), damit spaetere Roll-ups und der Aenderungsverlauf darauf
+  verweisen koennen.
+- **Pflichtquellen liegen in `entry.data`**, optionale Quellen in
+  `entry.options`. Das entspricht der Trennung von Verdrahtung und
+  Stellschrauben in raumklima-2. Aenderungen an den Pflichtquellen laufen ueber
+  `async_step_reconfigure`.
+- **Validierung im Formular, nicht im Betrieb.** Einheit, Geraeteklasse,
+  Domain und Verfuegbarkeit werden beim Speichern geprueft; Fehler erscheinen
+  am Feld (`wrong_unit`, `unavailable`, `wrong_domain`, `not_found`).
+- **`OptionsFlowWithReload`** wird verwendet: Aenderungen an den Optionen laden
+  den Eintrag neu, wie bei den Raum-Optionen in raumklima-2.
+
+## 6. Offene Architekturentscheidungen
 
 - Ob der Coordinator `DataUpdateCoordinator` nutzt oder ein eigener Listener
   (wie raumklima-2) sinnvoller ist, entscheidet sich in M2 anhand der
   Statistik-Abfragekosten.
-- Ob Heizkreise und Raeume als Config-Subentries oder als `Store`-Daten
-  modelliert werden. Plan B3 erlaubt beides; `Store` ist einfacher, Subentries
-  sind UI-freundlicher. Entscheidung in M1 nach Ruecksprache.

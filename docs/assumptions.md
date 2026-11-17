@@ -71,7 +71,6 @@ Deltas aus der Langzeitstatistik und kennzeichnet die Quelle.
    Standortangaben. Ersatznamen wie `room_a`, `circuit_top`.
 
 ## 5. Bekannte Widersprueche in den Daten
-
 - Zwei Pumpen-Entities widersprechen sich zeitweise (`heizkreis_1_pumpe` an,
   `pumpe_hk_1` aus). Beide bleiben getrennt gemappt; F07/F12 melden, statt zu
   raten.
@@ -80,3 +79,17 @@ Deltas aus der Langzeitstatistik und kennzeichnet die Quelle.
 - `heat_pumps_energy_consumption` (838,9 kWh) passt nicht zur Summe der
   Monatsstatistik. Erklaerung: Perioden- statt Lebenszeitzähler; endgueltig zu
   klaeren, wenn die Statistik-Historie vorliegt.
+
+## 6. Entscheidungen aus M1
+
+- **Heizkreise und Raeume liegen als Listen in `entry.options`** (nicht als
+  Config-Subentries). Begruendung in `docs/architecture.md`.
+- **Pflichtquellen liegen in `entry.data`**, optionale Quellen in
+  `entry.options`. Aenderungen an den Pflichtquellen laufen ueber
+  `async_step_reconfigure`.
+- **Bezeichner** werden beim Anlegen aus dem Namen abgeleitet (Umlaute
+  transliteriert, doppelte Namen werden abgelehnt). Ein nachtraegliches
+  Bearbeiten von Kreisen und Raeumen gibt es in M1 noch nicht; es kommt mit dem
+  Aenderungsverlauf in M3. Bis dahin gilt: entfernen und neu anlegen.
+- **Raeume ohne Thermostat** (Schlafzimmer, Livisi ohne Ventilposition) sind
+  ausdruecklich zulaessig und werden als "ohne Regelung" gefuehrt.
