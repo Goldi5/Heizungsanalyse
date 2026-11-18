@@ -1,16 +1,24 @@
 // Ansichten als reine HTML-Funktionen (ohne DOM) - die Karte verdrahtet nur Klicks.
 import { getLang, t } from "./i18n.js";
-import { helpText } from "./help.js";
 import { binChart, ring, scatterChart, sparkline, timeChart, withWidth } from "./charts.js";
+import { banner, button, card, empty, entityDatalists, entityField, head, progress, selectField, table, textField } from "./components.js";
+import {
+  comparisonFields,
+  currentValue,
+  fieldSpec,
+  localized,
+  objectEntries,
+  objectName,
+  objectSection,
+  schemaOf,
+  sectionFields,
+  sectionSelectionHint,
+  sectionTitle,
+  targetChoices,
+} from "./inventory.js";
 import { CHECK_NAMES, SCORE_LEVEL, binByOutdoor, dayLabel, esc, fmt, kpiTone, linearFit, rangeRows, signed, trend, weatherAdjusted } from "./logic.js";
 
 export const VIEWS = ["anlage", "effizienz", "raeume", "vergleich", "inventar", "protokoll", "einstellungen", "schema"];
-
-// Kopf einer Kachel mit „?“
-function head(title, key, ui, sub = "") {
-  const open = ui.help === key;
-  return `<div class="h">${esc(title)}${sub ? ` <span class="sub">${sub}</span>` : ""}<button class="q ${open ? "on" : ""}" data-help="${key}" aria-label="?">?</button></div>${open ? `<div class="help">${esc(helpText(key))}</div>` : ""}`;
-}
 
 // Diagramm in einem Messkasten: die Karte trägt die echte Breite in ui.widths ein
 function box(ui, id, fn) {
@@ -76,8 +84,8 @@ export function viewAnlage(d, ui) {
     <div class="score">${ring(d.score.value, lvl.tone)}
       <div><div class="lvl">${esc(t(lvl.label))}</div>
       <div class="muted">${esc(t("{w} Warnung · {i} Hinweise", { w: d.score.warnings, i: d.score.infos }))}<br>${esc(t("Datenbasis {d} Tage", { d: k.days_with_data }))}${d.score.total ? `<br>${esc(t("{a} von {n} Prüfungen aktiv", { a: d.score.active, n: d.score.total }))}` : ""}</div>
-      ${k.power_source === "fallback" ? `<div style="margin-top:8px">${pill("warn", t("Quelle {s}", { s: t("Ersatzquelle") }))}</div>` : ""}</div></div>
-    ${(d.score.checks || []).some((c) => !c.active) ? `<div class="fs" style="margin-top:10px">${esc(t("Ohne Bewertung:"))}</div><div class="ev">${(d.score.checks || []).filter((c) => !c.active).map((c) => `<span title="${esc(c.reason === "no_source" ? t("kein Sensor zugeordnet") : t("noch keine Daten"))}">${esc(t(CHECK_NAMES[c.key] || c.key))} · ${esc(c.reason === "no_source" ? t("kein Sensor") : t("keine Daten"))}</span>`).join("")}</div>` : ""}</div>`;
+      ${k.power_source === "fallback" ? `<div class="mt8">${pill("warn", t("Quelle {s}", { s: t("Ersatzquelle") }))}</div>` : ""}</div></div>
+    ${(d.score.checks || []).some((c) => !c.active) ? `<div class="fs mt10">${esc(t("Ohne Bewertung:"))}</div><div class="ev">${(d.score.checks || []).filter((c) => !c.active).map((c) => `<span title="${esc(c.reason === "no_source" ? t("kein Sensor zugeordnet") : t("noch keine Daten"))}">${esc(t(CHECK_NAMES[c.key] || c.key))} · ${esc(c.reason === "no_source" ? t("kein Sensor") : t("keine Daten"))}</span>`).join("")}</div>` : ""}</div>`;
 
   const cop = k.cop_short.value;
   const copPill = (() => {
@@ -99,7 +107,7 @@ export function viewAnlage(d, ui) {
     `<div class="c">${head(title, key, ui)}<div class="big">${value}${unit ? `<small>${unit}</small>` : ""}</div>${spark}${p}</div>`;
 
   const kpis = `<div class="kpis">
-    ${kpi("cop", t("COP 7 Tage"), fmt(cop, 1), cop != null && k.cop_long.value != null ? esc(t("30 T: {v}", { v: fmt(k.cop_long.value, 1) })) : "", sparkline(last30.map((r) => r.cop), "var(--hz-ok)"), copPill + (k.cop_total_short && k.cop_total_short.value != null ? `<div class="muted" style="margin-top:6px">${esc(t("inkl. Warmwasser {v}", { v: fmt(k.cop_total_short.value, 1) }))}</div>` : ""))}
+    ${kpi("cop", t("COP 7 Tage"), fmt(cop, 1), cop != null && k.cop_long.value != null ? esc(t("30 T: {v}", { v: fmt(k.cop_long.value, 1) })) : "", sparkline(last30.map((r) => r.cop), "var(--hz-ok)"), copPill + (k.cop_total_short && k.cop_total_short.value != null ? `<div class="muted mt6">${esc(t("inkl. Warmwasser {v}", { v: fmt(k.cop_total_short.value, 1) }))}</div>` : ""))}
     ${kpi("starts", t("Starts / Tag"), fmt(k.starts_per_day, 0), th.starts_per_day ? esc(t("Schwelle {v}", { v: fmt(th.starts_per_day, 0) })) : "", sparkline(last30.map((r) => r.starts), "var(--hz-warn)", { kind: "bar", ref: th.starts_per_day }), k.starts_per_day == null ? pill("mut", t("keine Daten")) : pill(startsTone, startsTone === "bad" ? t("über der Schwelle") : t("im grünen Bereich")))}
     ${kpi("runtime", t("Laufzeit / Zyklus"), fmt(k.runtime_per_cycle, 0), t("min"), sparkline(last30.map((r) => r.cycle_min), "var(--hz-cool)"), k.runtime_per_cycle == null ? pill("mut", t("keine Daten")) : pill(runTone, runTone === "bad" ? t("unter der Schwelle") : t("im grünen Bereich")))}
     ${kpi("flow", t("Vorlauf Ist − Soll"), signed(flow), "K", sparkline(last30.map((r) => (r.flow != null && r.target_flow != null ? r.flow - r.target_flow : null)), "var(--hz-bad)", { ref: 0 }), flow == null ? pill("mut", t("keine Daten")) : pill(flowTone, flow > 1 ? t("Vorlauf zu warm → Kurve prüfen") : flow < -1 ? t("Vorlauf zu kalt") : t("passt")))}
@@ -138,14 +146,14 @@ function liveNow(d, ui) {
     `<div class="lv"><div class="muted">${esc(t(label))}</div><div class="big ${tone}">${value}<small>${esc(unit)}</small></div></div>`;
   const state = lv.running === true ? pill("ok", t("Verdichter läuft")) : lv.running === false ? pill("mut", t("Verdichter aus")) : "";
   const sp = h.spread || {};
-  return `<div class="c">${head(t("Jetzt"), "live", ui)}<div class="row" style="margin-top:6px">${state}</div>
+  return `<div class="c">${head(t("Jetzt"), "live", ui)}<div class="row mt6">${state}</div>
     <div class="lvgrid">
       ${tile("Wärmeleistung", fmt(lv.heat_kw, 1), "kW")}
       ${tile("Strom", fmt(lv.power_kw, 2), "kW")}
       ${tile("COP jetzt", fmt(lv.cop, 1), "")}
       ${tile("Spreizung", fmt(lv.spread, 1), "K")}
     </div>
-    ${sp.median != null ? `<div class="fd" style="margin-top:8px">${esc(t("Spreizung im Lauf (7 Tage): Median {m} K, {n} Stunden", { m: fmt(sp.median, 1), n: sp.hours }))}</div>` : ""}</div>`;
+    ${sp.median != null ? `<div class="fd mt8">${esc(t("Spreizung im Lauf (7 Tage): Median {m} K, {n} Stunden", { m: fmt(sp.median, 1), n: sp.hours }))}</div>` : ""}</div>`;
 }
 
 function copCurveCard(d, ui, fit) {
@@ -192,7 +200,7 @@ function missingCard(d) {
   const items = d.missing.map((m) => names[m]).filter(Boolean);
   if (!items.length) return "";
   return `<div class="c"><div class="h">${esc(t("Was fehlt?"))}</div><div class="fs">${esc(t("Diese Auswertungen brauchen noch einen Sensor:"))}</div>
-    <div class="ev">${items.map((x) => `<span>${esc(t(x))}</span>`).join("")}</div><div class="fd" style="margin-top:10px">${esc(t("Ein Sensor lässt sich unter Einstellungen → Geräte & Dienste → Heizungsanalyse → Konfigurieren ergänzen."))}</div></div>`;
+    <div class="ev">${items.map((x) => `<span>${esc(t(x))}</span>`).join("")}</div><div class="fd mt10">${esc(t("Ein Sensor lässt sich unter Einstellungen → Geräte & Dienste → Heizungsanalyse → Konfigurieren ergänzen."))}</div></div>`;
 }
 
 // ---------------------------------------------------------------- Effizienz
@@ -230,7 +238,7 @@ export function viewEffizienz(d, ui) {
   const heat = rows.reduce((s, r) => s + (r.heat || 0), 0);
   const dhw = rows.reduce((s, r) => s + (r.dhw || 0), 0);
   const dhwCard = rows.some((r) => r.dhw != null)
-    ? `<div class="c">${head(t("Warmwasseranteil"), "dhw", ui)}<div class="big">${fmt(heat ? (dhw / heat) * 100 : null, 0)}<small>%</small></div><div class="meter"><i style="width:${heat ? Math.min(100, (dhw / heat) * 100) : 0}%;background:var(--hz-vio)"></i></div><div class="muted" style="margin-top:8px">${fmt(dhw, 0)} / ${fmt(heat, 0)} kWh</div></div>`
+    ? `<div class="c">${head(t("Warmwasseranteil"), "dhw", ui)}<div class="big">${fmt(heat ? (dhw / heat) * 100 : null, 0)}<small>%</small></div><div class="meter"><i style="width:${heat ? Math.min(100, (dhw / heat) * 100) : 0}%;background:var(--hz-vio)"></i></div><div class="muted mt8">${fmt(dhw, 0)} / ${fmt(heat, 0)} kWh</div></div>`
     : "";
 
   const hy = (d.kpis && d.kpis.hydraulics) || {};
@@ -284,7 +292,7 @@ export function viewRaeume(d, ui, live = {}) {
         .join("")
     : `<div class="empty">${esc(t("noch keine Stichproben"))}</div>`;
   const roomsCard = `<div class="c">${head(t("Räume"), "rooms", ui, esc(t("Abweichung zum Soll")))}
-    <div class="legend" style="justify-content:space-between;margin:6px 0 2px"><span>← ${esc(t("zu kalt"))}</span><span>${esc(t("zu warm"))} →</span></div>${roomRows}</div>`;
+    <div class="legend between"><span>← ${esc(t("zu kalt"))}</span><span>${esc(t("zu warm"))} →</span></div>${roomRows}</div>`;
 
   const th = d.thresholds || {};
   const circuits = (d.circuits || [])
@@ -317,13 +325,17 @@ export function viewVergleich(d, ui) {
     const good = betterUp ? diff > 0 : diff < 0;
     return ` <span class="pill tone-${Math.abs(diff) < 1e-9 ? "mut" : good ? "ok" : "warn"}">${signed(diff, digits)}</span>`;
   };
+  const fieldName = (object, field) => {
+    const hit = comparisonFields(d, object).find((item) => item.key === field);
+    return hit ? hit.label : field;
+  };
   const list = changes.length
     ? changes
         .map((c) => {
           const b = c.before;
           const a = c.after;
           const adj = weatherAdjusted(b, a, fit);
-          const what = `${objectLabel(c.object)}${c.field ? ` · ${c.field}` : ""}`;
+          const what = `${objectName(d, c.object)}${c.field ? ` · ${fieldName(c.object, c.field)}` : ""}`;
           const val = c.old != null || c.new != null ? `: ${c.old ?? "–"} → ${c.new ?? "–"}` : "";
           const cmp = a && a.days >= 3 && b
             ? `<div class="cmp">
@@ -337,18 +349,26 @@ export function viewVergleich(d, ui) {
           return `<div class="chg"><span class="d"></span><div><div class="t">${esc(dayLabel(c.day))} ${esc(what)}${esc(val)}</div>${c.note ? `<div class="fd">${esc(c.note)}</div>` : ""}${cmp}</div></div>`;
         })
         .join("")
-    : `<div class="empty">${esc(t("Noch keine Änderung eingetragen. Trag z. B. „Heizkurve 0,6 → 0,5“ ein – nach ein paar Tagen siehst du hier, was es gebracht hat."))}</div>`;
+    : empty(t("Noch keine Änderung eingetragen. Trag z. B. „Heizkurve 0,6 → 0,5“ ein – nach ein paar Tagen siehst du hier, was es gebracht hat."));
+
+  const targets = targetChoices(d);
+  const object = targets.some((item) => item.value === ui.chgObject) ? ui.chgObject : "heizkurve";
+  const options = comparisonFields(d, object);
+  const field = options.some((item) => item.key === ui.chgField) ? ui.chgField : options[0].key;
+  const old = currentValue(d, object, field);
+  const labels = options.map((item) => ({ value: item.key, label: `${item.label}${item.unit ? ` (${item.unit})` : ""}` }));
   const form = ui.form
     ? `<form class="log" data-form="log">
-        <label>${esc(t("Was"))}<input name="object" required placeholder="hydraulics"></label>
-        <label>${esc(t("Einstellung"))}<input name="field" required placeholder="heizkurve"></label>
-        <label>${esc(t("Alt"))}<input name="old_value" placeholder="0,6"></label>
-        <label>${esc(t("Neu"))}<input name="new_value" placeholder="0,5"></label>
-        <label style="grid-column:1/-1">${esc(t("Notiz"))}<input name="note"></label>
-        <div class="row"><button class="btn primary" type="submit">${esc(t("Speichern"))}</button><button class="btn ghost" type="button" data-act="form-close">${esc(t("Abbrechen"))}</button></div>
+        ${selectField({ name: "object", label: t("Was"), value: object, options: targets, attrs: 'data-chg="object"' })}
+        ${selectField({ name: "field", label: t("Einstellung"), value: field, options: labels, attrs: 'data-chg="field"' })}
+        ${textField({ name: "old_value", label: t("Alt"), value: old, placeholder: "0,6" })}
+        ${textField({ name: "new_value", label: t("Neu"), placeholder: "0,5" })}
+        <div class="span2">${textField({ name: "note", label: t("Notiz") })}</div>
+        <div class="row span2">${button(t("Speichern"), { type: "submit", variant: "primary" })}${button(t("Abbrechen"), { act: "form-close" })}</div>
       </form>`
-    : `<div class="row" style="margin-top:12px"><button class="btn" data-act="form-open">+ ${esc(t("Änderung eintragen"))}</button></div>`;
-  return `<div class="grid g2"><div class="c">${head(t("Änderungen und ihre Wirkung"), "changes", ui)}${list}${form}</div>${viewEffizienzCopOnly(d, ui)}</div>`;
+    : `<div class="row start">${button(`+ ${t("Änderung eintragen")}`, { act: "form-open" })}</div>`;
+  return `<div class="intro">${esc(t("{n} eingetragene Änderungen – Wirkung ab drei Tagen danach.", { n: changes.length }))}</div>
+    <div class="grid g2"><div class="c">${head(t("Änderungen und ihre Wirkung"), "changes", ui)}${list}${form}</div>${viewEffizienzCopOnly(d, ui)}</div>`;
 }
 
 function viewEffizienzCopOnly(d, ui) {
@@ -361,48 +381,167 @@ function viewEffizienzCopOnly(d, ui) {
 }
 
 // ---------------------------------------------------------------- Inventar
-export function viewInventar(d, ui) {
-  const inv = d.inventory || {};
-  const section = (key, title) => {
-    const data = inv[key] || {};
-    const entries = key === "hydraulics" ? (Object.keys(data).length ? [["", data]] : []) : Object.entries(data);
-    if (!entries.length) return `<div class="c"><div class="h">${esc(t(title))}</div><div class="empty">${esc(t("Noch nichts eingetragen."))}</div></div>`;
-    const cols = [...new Set(entries.flatMap(([, v]) => Object.keys(v || {})))];
-    return `<div class="c"><div class="h">${esc(t(title))}</div><table><tr>${key === "hydraulics" ? "" : "<th></th>"}${cols.map((c) => `<th>${esc(c)}</th>`).join("")}</tr>
-      ${entries.map(([id, v]) => `<tr>${key === "hydraulics" ? "" : `<td><b>${esc(id)}</b></td>`}${cols.map((c) => `<td>${esc(v?.[c] ?? "")}</td>`).join("")}</tr>`).join("")}</table></div>`;
-  };
-  const labels = {
-    power_entity: "Strom", heat_entity: "Wärme", outdoor_entity: "Außentemperatur", compressor_entity: "Verdichter",
-    power_fallback_entity: "Strom (Ersatz)", dhw_heat_entity: "Warmwasser", flow_entity: "Vorlauf", target_flow_entity: "Soll-Vorlauf",
-    return_entity: "WP-Rücklauf", buffer_entity: "Puffer", defrost_entity: "Abtauen", aux_heater_entity: "Heizstab",
-    compressor_starts_entity: "Starts", compressor_runtime_entity: "Laufzeit",
-    compressor_runtime_extra_entity: "Laufzeit (2. Zähler)", hp_flow_entity: "WP-Vorlauf", volume_flow_entity: "Volumenstrom",
-    power_now_entity: "Leistung jetzt", dhw_power_entity: "Warmwasser-Strom",
-  };
-  const src = Object.entries(d.sources || {})
-    .map(([k, ok]) => `<div class="src"><span>${esc(labels[k] ? t(labels[k]) : k)}</span>${pill(ok ? "ok" : "mut", ok ? t("verbunden") : t("fehlt"))}</div>`)
-    .join("");
-  const editor = ui.invForm ? `<form class="log invform" data-form="inventory">
-      <label>${esc(t("Bereich"))}
-        <select name="section">
-          <option value="pumps">${esc(t("Pumpen"))}</option>
-          <option value="thermostats">${esc(t("Thermostate"))}</option>
-          <option value="hydraulics">${esc(t("Hydraulik"))}</option>
-          <option value="radiators">${esc(t("Heizkörper"))}</option>
-        </select>
-      </label>
-      <label>${esc(t("Objekt"))}<input name="object" placeholder="pumps.hk2"></label>
-      <label style="grid-column:1/-1">${esc(t("Werte (JSON)"))}<input name="values" placeholder='{"model":"Alpha2","setting":"Stufe 2"}'></label>
-      <label>${esc(t("Notiz"))}<input name="note"></label>
-      <div class="row"><button class="btn primary" type="submit">${esc(t("Speichern"))}</button><button class="btn ghost" type="button" data-act="inv-close">${esc(t("Abbrechen"))}</button></div>
-    </form>` : `<div class="row"><button class="btn" data-act="inv-open">+ ${esc(t("Eintrag hinzufügen"))}</button></div>`;
+const INV_ERRORS = {
+  required: "Pflichtfeld",
+  not_found: "Entity nicht gefunden",
+  unit: "Einheit passt nicht",
+  number: "Bitte eine Zahl eintragen",
+  range: "Wert außerhalb des Bereichs",
+  option: "Bitte aus der Liste wählen",
+  reference: "Verweis nicht gefunden",
+  unknown: "Feld ist unbekannt",
+  length: "Text ist zu lang",
+  section: "Bereich ist unbekannt",
+  _: "Wert prüfen",
+};
 
-  return `<div class="grid g2">
-    <div class="grid">${section("pumps", "Pumpen")}${section("thermostats", "Thermostate")}${section("hydraulics", "Hydraulik")}${section("radiators", "Heizkörper")}
-      <div class="c">${head(t("Inventar"), "inventory", ui)}${editor}
-        <div class="row" style="margin-top:10px"><button class="btn" data-act="report">${esc(t("Bericht herunterladen"))}</button></div>
-      </div></div>
-    <div class="c">${head(t("Datenquellen"), "sources", ui)}${src}</div></div>`;
+function invErrorText(code) {
+  return t(INV_ERRORS[code] || INV_ERRORS._);
+}
+
+function invInputs(d, ui, section, state) {
+  const fields = sectionFields(d, section);
+  const errors = state.errors || {};
+  const editing = Boolean(state.object);
+  return fields
+    .map((spec) => {
+      const value = state.values && state.values[spec.key] != null ? state.values[spec.key] : "";
+      const name = `f_${spec.key}`;
+      const error = errors[spec.key] ? invErrorText(errors[spec.key]) : "";
+      const label = localized(spec.label) || spec.key;
+      if (spec.type === "select" || spec.type === "room" || spec.type === "circuit") {
+        const options = spec.options || [];
+        return `<div class="span2">${selectField({ name, label, value, options, error })}</div>`;
+      }
+      const attrs =
+        spec.type === "number"
+          ? `${spec.min != null ? ` min="${spec.min}"` : ""}${spec.max != null ? ` max="${spec.max}"` : ""}${spec.step != null ? ` step="${spec.step}"` : ""}`
+          : "";
+      return `<div class="span2">${textField({ name, label, value, type: spec.type === "number" ? "number" : "text", unit: spec.unit || "", error, attrs })}</div>`;
+    })
+    .join("") + (editing ? "" : "");
+}
+
+function invSelectionField(d, ui, section, state) {
+  const hint = sectionSelectionHint(section);
+  if (!hint) return "";
+  const source = section === "pumps" ? d.circuits || [] : d.rooms || [];
+  const options = source.map((item) => ({ value: item.id, label: { de: item.name || item.id, en: item.name || item.id } }));
+  const error = state.errors && state.errors.selection ? invErrorText(state.errors.selection) : "";
+  return `<div class="span2">${selectField({
+    name: "selection",
+    label: localized(hint),
+    value: state.selection || "",
+    options: [{ value: "", label: { de: "– bitte wählen –", en: "– please choose –" } }, ...options],
+    error,
+    attrs: 'data-inv-selection="1"',
+  })}</div>`;
+}
+
+function invForm(d, ui) {
+  const state = ui.invForm;
+  if (!state) return "";
+  const section = state.section;
+  const editing = Boolean(state.object);
+  const title = sectionTitle(d, section);
+  return `<form class="log invform" data-form="inventory">
+      <div class="formhead span2"><b>${esc(editing ? t("{s} bearbeiten", { s: title }) : t("{s} ergänzen", { s: title }))}</b></div>
+      <input type="hidden" name="section" value="${esc(section)}">
+      ${editing ? `<input type="hidden" name="object" value="${esc(state.object)}">` : invSelectionField(d, ui, section, state)}
+      ${invInputs(d, ui, section, state)}
+      <div class="span2">${textField({ name: "note", label: t("Grund (optional)"), value: state.note || "", placeholder: t("z. B. Voreinstellung geändert") })}</div>
+      ${state.message ? `<div class="ferr span2" role="alert">${esc(state.message)}</div>` : ""}
+      <div class="row span2">${button(t("Speichern"), { type: "submit", variant: "primary" })}${button(t("Abbrechen"), { act: "inv-close" })}</div>
+    </form>`;
+}
+
+function invTable(d, ui, section) {
+  const entries = objectEntries(d, section);
+  const fields = sectionFields(d, section).filter((item) => item.key !== "notes");
+  const used = fields.filter((spec) => entries.some((entry) => entry.record[spec.key] != null && entry.record[spec.key] !== ""));
+  const first = section === "pumps" ? t("Heizkreis") : section === "hydraulics" ? t("Objekt") : t("Raum");
+  const cols = [first, ...used.map((spec) => localized(spec.label) || spec.key), ""];
+  const rows = entries.map((entry) => {
+    const name = section === "hydraulics" ? localized((schemaOf(d).hydraulics || {}).title) : objectName(d, entry.object);
+    const notes = entry.record.notes ? `<div class="fd">${esc(entry.record.notes)}</div>` : "";
+    return [
+      `<b>${esc(name)}</b>${notes}`,
+      ...used.map((spec) => esc(entry.record[spec.key] ?? "")),
+      `<span class="rowact">${button(t("Bearbeiten"), { act: "inv-edit", attrs: `data-object="${esc(entry.object)}" data-section="${esc(section)}"` })}${button(t("Löschen"), { act: "inv-del", variant: "ghost danger", attrs: `data-object="${esc(entry.object)}" data-section="${esc(section)}"` })}</span>`,
+    ];
+  });
+  return table({ cols, rows, emptyText: t("Noch nichts eingetragen."), cls: "invtable" });
+}
+
+export function viewInventar(d, ui) {
+  const inventory = d.inventory || {};
+  const completeness = d.inventory_completeness || { percent: 0, sections: {} };
+  const percent = completeness.percent || 0;
+  const count = ["pumps", "thermostats", "hydraulics", "radiators"].reduce(
+    (sum, section) => sum + objectEntries(d, section).length,
+    0,
+  );
+  const intro = `<div class="intro"><span>${esc(t("Inventar zu {p} % vollständig · {n} Einträge", { p: percent, n: count }))}</span>${progress(percent)}</div>`;
+
+  const sections = ["pumps", "thermostats", "hydraulics", "radiators"]
+    .map((section) => {
+      const body = `${invTable(d, ui, section)}<div class="row start">${button(`+ ${t("Eintrag hinzufügen")}`, { act: "inv-add", attrs: `data-section="${esc(section)}"` })}</div>`;
+      const info = (completeness.sections || {})[section] || {};
+      return card(sectionTitle(d, section), "inventory", ui, body, info.percent != null ? `${info.percent} %` : "");
+    })
+    .join("");
+
+  const prefill = (d.rooms || []).length
+    ? `<div class="row start">${button(t("Aus Räumen übernehmen"), { act: "inv-prefill" })}<span class="muted">${esc(t("Legt Thermostat und Heizkörper je Raum an, ohne Werte zu erfinden."))}</span></div>`
+    : "";
+
+  const csv = `<details class="impexp"><summary>${esc(t("CSV Import und Export"))}</summary>
+      <p class="muted">${esc(t("Format: object,field,value – eine Zeile je Wert."))}</p>
+      <div class="row start">${button(t("CSV herunterladen"), { act: "inv-export" })}</div>
+      <textarea name="inv-csv" data-inv-csv rows="5" placeholder="pumps.hk1,manufacturer,Hersteller"></textarea>
+      <div class="row start">${button(t("CSV übernehmen"), { act: "inv-import" })}<span class="muted">${esc(t("Bestehende Werte werden ergänzt."))}</span></div>
+    </details>`;
+
+  const saved = ui.invSaved
+    ? `${banner("ok", t("Gespeichert. Vergleiche die Wirkung nach frühestens 14 Tagen."))}<div class="row start">${button(t("Jetzt zum Vergleich"), { act: "goto-vergleich" })}</div>`
+    : "";
+
+  return `${intro}${saved}
+    <div class="grid g2">
+      <div class="grid">${sections}</div>
+      <div class="grid">
+        ${card(t("Inventar"), "inventory", ui, `${prefill}${invForm(d, ui)}${csv}
+          <div class="row start">${button(t("Bericht herunterladen"), { act: "report" })}</div>`)}
+        ${card(t("Datenquellen"), "sources", ui, sourceList(d))}
+      </div>
+    </div>`;
+}
+
+function sourceList(d) {
+  const labels = {
+    power_entity: "Strom",
+    heat_entity: "Wärme",
+    outdoor_entity: "Außentemperatur",
+    compressor_entity: "Verdichter",
+    power_fallback_entity: "Strom (Ersatz)",
+    dhw_heat_entity: "Warmwasser",
+    flow_entity: "Vorlauf",
+    target_flow_entity: "Soll-Vorlauf",
+    return_entity: "WP-Rücklauf",
+    buffer_entity: "Puffer",
+    defrost_entity: "Abtauen",
+    aux_heater_entity: "Heizstab",
+    compressor_starts_entity: "Starts",
+    compressor_runtime_entity: "Laufzeit",
+    compressor_runtime_extra_entity: "Laufzeit (2. Zähler)",
+    hp_flow_entity: "WP-Vorlauf",
+    volume_flow_entity: "Volumenstrom",
+    power_now_entity: "Leistung jetzt",
+    dhw_power_entity: "Warmwasser-Strom",
+  };
+  return Object.entries(d.sources || {})
+    .map(([key, ok]) => `<div class="src"><span>${esc(labels[key] ? t(labels[key]) : key)}</span>${pill(ok ? "ok" : "mut", ok ? t("verbunden") : t("fehlt"))}</div>`)
+    .join("");
 }
 
 // ---------------------------------------------------------------- Protokoll
@@ -502,12 +641,12 @@ function runtimeCard(d, ui) {
   ];
   return `<div class="c">${head(t("Systemstatus"), "system", ui)}${mismatch ? `<div class="fs">${pill("warn", t("Version weicht ab"))}</div>` : ""}
     <table class="kv">${rows.map(([a, b]) => `<tr><th>${a}</th><td>${b}</td></tr>`).join("")}</table>
-    <div class="row" style="margin-top:10px">
+    <div class="row mt10">
       <button class="btn" data-act="log-download">${esc(t("Diagnose herunterladen"))}</button>
       <button class="btn ghost" data-act="log-copy">${esc(t("Protokoll kopieren"))}</button>
       <button class="btn primary" data-act="log-refresh">${esc(t("Jetzt neu berechnen"))}</button>
     </div>
-    ${rt.last_error ? `<div class="fd" style="margin-top:8px">${esc(t("Letzter Fehler"))}: ${esc(rt.last_error)}</div>` : ""}
+    ${rt.last_error ? `<div class="fd mt8">${esc(t("Letzter Fehler"))}: ${esc(rt.last_error)}</div>` : ""}
   </div>`;
 }
 
@@ -584,18 +723,108 @@ export function viewProtokoll(d, ui) {
     ${!diag ? `<div class="c empty">${esc(t("Diagnose nicht verfügbar – Protokoll wird trotzdem angezeigt."))}</div>` : ""}`;
 }
 
+const CFG_ERRORS = {
+  required: "Pflichtfeld",
+  not_found: "Entity nicht gefunden",
+  unit: "Einheit passt nicht",
+  number: "Bitte eine Zahl eintragen",
+  range: "Wert außerhalb des Bereichs",
+  option: "Bitte aus der Liste wählen",
+  reference: "Verweis nicht gefunden",
+  duplicate: "Bezeichner ist doppelt",
+  format: "Aufbau ist ungültig",
+  _: "Wert prüfen",
+};
+
+function cfgErrorText(code) {
+  return t(CFG_ERRORS[code] || CFG_ERRORS._);
+}
+
+function cfgSources(d, ui, data, options, schema, errors) {
+  const render = (spec) => {
+    const value = spec.scope === "data" ? data[spec.key] : options[spec.key];
+    return `<div class="srcrow">${entityField({
+      name: `src_${spec.key}`,
+      label: localized(spec.label),
+      value,
+      domains: spec.domain || ["sensor"],
+      listId: `hz-ent-${(spec.domain || ["sensor"])[0]}`,
+      error: errors[spec.key] ? cfgErrorText(errors[spec.key]) : "",
+      attrs: `data-cfg="${spec.scope}" data-key="${esc(spec.key)}"`,
+    })}</div>`;
+  };
+  const required = (schema.sources || []).filter((spec) => spec.required);
+  const optional = (schema.sources || []).filter((spec) => !spec.required);
+  return `
+    <div class="cfggroup"><div class="h">${esc(t("Pflicht"))}</div>${required.map(render).join("") || empty(t("keine"))}</div>
+    <div class="cfggroup"><div class="h">${esc(t("Optional"))}</div>${optional.map(render).join("") || empty(t("keine"))}</div>`;
+}
+
+function cfgCircuits(d, ui, options, schema, errors) {
+  const types = (schema.circuit_types || []).map((type) => ({ value: type, label: type }));
+  const list = options.circuits || [];
+  const item = (circuit, index) => `<div class="arrcard">
+      <div class="arrhead"><b>${esc(circuit.name || circuit.id || t("Neuer Heizkreis"))}</b>${button(t("Entfernen"), { act: "cfg-circ-del", variant: "ghost danger", attrs: `data-idx="${index}"` })}</div>
+      <div class="grid g2">
+        ${textField({ name: `c${index}_name`, label: t("Name"), value: circuit.name, error: errors[`circuits.${index}.name`] ? cfgErrorText(errors[`circuits.${index}.name`]) : "", attrs: `data-arr="circuits" data-idx="${index}" data-key="name"` })}
+        ${selectField({ name: `c${index}_type`, label: t("Typ"), value: circuit.type, options: types, error: errors[`circuits.${index}.type`] ? cfgErrorText(errors[`circuits.${index}.type`]) : "", attrs: `data-arr="circuits" data-idx="${index}" data-key="type"` })}
+        ${entityField({ name: `c${index}_temp`, label: t("Vorlauftemperatur"), value: circuit.temperature_entity, domains: ["sensor"], listId: "hz-ent-sensor", error: errors[`circuits.${index}.temperature_entity`] ? cfgErrorText(errors[`circuits.${index}.temperature_entity`]) : "", attrs: `data-arr="circuits" data-idx="${index}" data-key="temperature_entity"` })}
+        ${entityField({ name: `c${index}_pump`, label: t("Pumpe"), value: circuit.pump_entity, domains: ["switch", "binary_sensor", "sensor"], listId: "hz-ent-switch", error: errors[`circuits.${index}.pump_entity`] ? cfgErrorText(errors[`circuits.${index}.pump_entity`]) : "", attrs: `data-arr="circuits" data-idx="${index}" data-key="pump_entity"` })}
+        ${entityField({ name: `c${index}_mo`, label: t("Mischer auf"), value: circuit.mixer_open_entity, domains: ["switch", "binary_sensor"], listId: "hz-ent-switch", attrs: `data-arr="circuits" data-idx="${index}" data-key="mixer_open_entity"` })}
+        ${entityField({ name: `c${index}_mc`, label: t("Mischer zu"), value: circuit.mixer_close_entity, domains: ["switch", "binary_sensor"], listId: "hz-ent-switch", attrs: `data-arr="circuits" data-idx="${index}" data-key="mixer_close_entity"` })}
+      </div>
+    </div>`;
+  return `${list.map(item).join("") || empty(t("Noch kein Heizkreis."))}
+    <div class="row start">${button(`+ ${t("Heizkreis hinzufügen")}`, { act: "cfg-circ-add" })}</div>`;
+}
+
+function cfgRooms(d, ui, options, schema, errors) {
+  const types = (schema.room_types || []).map((type) => ({ value: type, label: type }));
+  const circuitOptions = (options.circuits || []).map((circuit) => ({ value: circuit.id, label: { de: circuit.name || circuit.id, en: circuit.name || circuit.id } }));
+  const list = options.rooms || [];
+  const item = (room, index) => `<div class="arrcard">
+      <div class="arrhead"><b>${esc(room.name || room.id || t("Neuer Raum"))}</b>${button(t("Entfernen"), { act: "cfg-room-del", variant: "ghost danger", attrs: `data-idx="${index}"` })}</div>
+      <div class="grid g2">
+        ${textField({ name: `r${index}_name`, label: t("Name"), value: room.name, error: errors[`rooms.${index}.name`] ? cfgErrorText(errors[`rooms.${index}.name`]) : "", attrs: `data-arr="rooms" data-idx="${index}" data-key="name"` })}
+        ${selectField({ name: `r${index}_type`, label: t("Raumtyp"), value: room.room_type, options: [{ value: "", label: { de: "– keine Angabe –", en: "– not specified –" } }, ...types], error: errors[`rooms.${index}.room_type`] ? cfgErrorText(errors[`rooms.${index}.room_type`]) : "", attrs: `data-arr="rooms" data-idx="${index}" data-key="room_type"` })}
+        ${selectField({ name: `r${index}_circuit`, label: t("Heizkreis"), value: room.circuit, options: [{ value: "", label: { de: "– bitte wählen –", en: "– please choose –" } }, ...circuitOptions], error: errors[`rooms.${index}.circuit`] ? cfgErrorText(errors[`rooms.${index}.circuit`]) : "", attrs: `data-arr="rooms" data-idx="${index}" data-key="circuit"` })}
+        ${entityField({ name: `r${index}_climate`, label: t("Klima-Entity"), value: room.climate_entity, domains: ["climate"], listId: "hz-ent-climate", attrs: `data-arr="rooms" data-idx="${index}" data-key="climate_entity"` })}
+        ${entityField({ name: `r${index}_valve`, label: t("Ventilposition"), value: room.valve_position_entity, domains: ["sensor", "number"], listId: "hz-ent-sensor", attrs: `data-arr="rooms" data-idx="${index}" data-key="valve_position_entity"` })}
+      </div>
+    </div>`;
+  return `${list.map(item).join("") || empty(t("Noch kein Raum."))}
+    <div class="row start">${button(`+ ${t("Raum hinzufügen")}`, { act: "cfg-room-add" })}</div>`;
+}
+
+function cfgThresholds(d, ui, options, schema, errors) {
+  const specs = schema.thresholds || [];
+  const thresholds = options.thresholds || {};
+  const rows = specs.map((spec) => {
+    const key = `thresholds.${spec.key}`;
+    return textField({
+      name: `thr_${spec.key}`,
+      label: localized(spec.label),
+      value: thresholds[spec.key] ?? spec.default,
+      type: "number",
+      unit: spec.unit || "",
+      error: errors[key] ? cfgErrorText(errors[key]) : "",
+      attrs: `data-thr="${esc(spec.key)}" min="${spec.min}" max="${spec.max}" step="${spec.step}"`,
+    });
+  });
+  return `<div class="grid g3">${rows.join("")}</div>
+    <div class="row start">${button(t("Auf Standard zurücksetzen"), { act: "cfg-thr-reset" })}</div>`;
+}
+
 export function viewEinstellungen(d, ui) {
   const cfg = (d && d.config) || {};
   const data = cfg.data || {};
   const options = cfg.options || {};
-  const mandatory = ["power_entity", "heat_entity", "outdoor_entity", "compressor_entity"];
-  const optional = Object.keys(options).filter((k) => k !== "circuits" && k !== "rooms" && k !== "thresholds");
-  const srcRow = (key, value, group) => `<div class="srcrow"><label>${esc(key)}</label><input data-cfg="${group}" data-key="${esc(key)}" type="text" value="${esc(value || "")}" placeholder="entity.id"></div>`;
-  const mand = mandatory.map((k) => srcRow(k, data[k], "data")).join("");
-  const opt = optional.map((k) => srcRow(k, options[k], "options")).join("");
-  const circ = JSON.stringify(cfg.circuits || [], null, 2);
-  const rooms = JSON.stringify(cfg.rooms || [], null, 2);
-  const thr = JSON.stringify(cfg.thresholds || {}, null, 2);
+  const schema = (d && d.settings_schema) || { sources: [], thresholds: [], circuit_types: [], room_types: [] };
+  const errors = (ui && ui.cfgErrors) || {};
+  const coverage = (d && d.settings_coverage) || {};
+  const errorCount = Object.keys(errors).length;
+  const intro = `<div class="intro"><span>${esc(t("Pflichtquellen: {a} von {b} verbunden", { a: coverage.required_filled ?? 0, b: coverage.required ?? 0 }))}</span>${cfg.coverage ? "" : ""}</div>`;
+  const errBanner = errorCount ? banner("bad", t("{n} Felder brauchen Aufmerksamkeit.", { n: errorCount })) : "";
 
   const sg = (d && d.suggestion) || {};
   const bins = sg.bins || [];
@@ -604,45 +833,30 @@ export function viewEinstellungen(d, ui) {
     const rows = bins.map((b) => `<tr><td>${esc(fmt(b.outdoor_lower, 0))}–${esc(fmt(b.outdoor_upper, 0))} °C</td><td>${esc((b.median_deviation_k > 0 ? "+" : "") + fmt(b.median_deviation_k, 1))} K</td><td>${esc(fmt(b.samples, 0))}</td></tr>`).join("");
     const offset = (sg.suggested_offset_k > 0 ? "+" : "") + fmt(sg.suggested_offset_k, 1);
     const conf = sg.confidence === "high" ? t("hoch") : sg.confidence === "medium" ? t("mittel") : t("niedrig");
-    curveCard = `<div class="muted" style="margin-bottom:8px">${esc(sg.reason || "")}</div>
-      <table class="cfgtbl"><tr><th>${esc(t("Außen"))}</th><th>${esc(t("Median-Abweichung"))}</th><th>${esc(t("Stunden"))}</th></tr>${rows}</table>
-      <div class="row" style="margin-top:10px">
-        <div class="gl"><div class="lbl">${esc(t("Vorschlag Offset"))}</div><div class="num">${esc(offset)} K</div></div>
-        <div class="gl"><div class="lbl">${esc(t("Geschätzter COP-Gewinn"))}</div><div class="num">${esc(fmt(sg.estimated_cop_gain_pct, 1))} %</div></div>
-        <div class="gl"><div class="lbl">${esc(t("Konfidenz"))}</div><div class="num">${esc(conf)}</div></div>
+    curveCard = `<div class="muted">${esc(sg.reason || "")}</div>
+      <div class="tablewrap"><table class="rtable"><thead><tr><th>${esc(t("Außen"))}</th><th>${esc(t("Median-Abweichung"))}</th><th>${esc(t("Stunden"))}</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div class="detailgrid">
+        <div class="detail"><span class="dl">${esc(t("Vorschlag Offset"))}</span><span class="dv">${esc(offset)} K</span></div>
+        <div class="detail"><span class="dl">${esc(t("Geschätzter COP-Gewinn"))}</span><span class="dv">${esc(fmt(sg.estimated_cop_gain_pct, 1))} %</span></div>
+        <div class="detail"><span class="dl">${esc(t("Konfidenz"))}</span><span class="dv">${esc(conf)}</span></div>
       </div>`;
   } else {
-    curveCard = `<div class="muted">${esc(t("Noch keine Daten für einen Vorschlag."))}</div>`;
+    curveCard = empty(t("Noch keine Daten für einen Vorschlag."));
   }
 
-  return `<div class="grid">
-    <div class="c">${head(t("Quellen"), "cfg_sources", ui)}
-      <div class="cfggroup"><div class="h">${esc(t("Pflicht"))}</div>${mand}</div>
-      <div class="cfggroup"><div class="h">${esc(t("Optional"))}</div>${opt || `<div class="muted">${esc(t("keine"))}</div>`}</div>
-    </div>
-    <div class="c">${head(t("Heizkreise"), "cfg_circuits", ui)}
-      <textarea class="cfgjson" data-cfgjson="circuits">${esc(circ)}</textarea>
-    </div>
-    <div class="c">${head(t("Raeume"), "cfg_rooms", ui)}
-      <textarea class="cfgjson" data-cfgjson="rooms">${esc(rooms)}</textarea>
-    </div>
-    <div class="c">${head(t("Schwellen"), "cfg_thresholds", ui)}
-      <textarea class="cfgjson" data-cfgjson="thresholds">${esc(thr)}</textarea>
-    </div>
-    <div class="c">${head(t("Heizkurve"), "cfg_curve", ui)}
-      ${curveCard}
-      <div class="cfggroup" style="margin-top:12px">
-        <div class="h">${esc(t("Manuelle Anpassung"))}</div>
-        <div class="srcrow"><label>${esc(t("Offset (K)"))}</label><input data-cfg="options" data-key="heating_curve_offset" type="number" step="0.1" value="${esc(String((cfg.options && cfg.options.heating_curve_offset) || 0))}"></div>
-        <div class="srcrow"><label>${esc(t("Steigung"))}</label><input data-cfg="options" data-key="heating_curve_slope" type="number" step="0.01" value="${esc(String((cfg.options && cfg.options.heating_curve_slope) || 1))}"></div>
-      </div>
-    </div>
-    <div class="c"><div class="row">
-      <button class="btn primary" data-act="cfg-save">${esc(t("Speichern"))}</button>
-      <span class="muted">${esc(t("Speichern laedt die Integration neu."))}</span>
-    </div>
-    ${ui.cfgMsg ? `<div class="fd" style="margin-top:8px">${esc(ui.cfgMsg)}</div>` : ""}
-    </div>
+  return `${entityDatalists(ui)}${intro}${errBanner}<div class="grid">
+    ${card(t("Quellen"), "cfg_sources", ui, cfgSources(d, ui, data, options, schema, errors))}
+    ${card(t("Heizkreise"), "cfg_circuits", ui, cfgCircuits(d, ui, options, schema, errors))}
+    ${card(t("Räume"), "cfg_rooms", ui, cfgRooms(d, ui, options, schema, errors))}
+    ${card(t("Schwellen und Grenzwerte"), "cfg_thresholds", ui, cfgThresholds(d, ui, options, schema, errors))}
+    ${card(t("Heizkurve"), "cfg_curve", ui, `${curveCard}
+      <div class="cfggroup"><div class="h">${esc(t("Manuelle Anpassung"))}</div>
+        <div class="grid g2">
+          ${textField({ name: "heating_curve_offset", label: t("Offset"), value: options.heating_curve_offset ?? 0, type: "number", unit: "K", attrs: 'data-cfg="options" data-key="heating_curve_offset" step="0.1"' })}
+          ${textField({ name: "heating_curve_slope", label: t("Steigung"), value: options.heating_curve_slope ?? 1, type: "number", attrs: 'data-cfg="options" data-key="heating_curve_slope" step="0.01"' })}
+        </div>
+      </div>`)}
+    <section class="c"><div class="row start">${button(t("Speichern"), { act: "cfg-save", variant: "primary" })}<span class="muted">${esc(t("Speichern lädt die Integration neu."))}</span></div>${ui.cfgMsg ? `<div class="fd" role="status">${esc(ui.cfgMsg)}</div>` : ""}</section>
   </div>`;
 }
 
@@ -677,7 +891,7 @@ export function viewSchema(d, ui, live) {
   const flowTxt = flow != null ? (flow > 0 ? "+" : "") + flow.toFixed(1) + " K" : "–";
   return `<div class="schema">
     <div class="srow">
-      <div class="sbox swp"><div class="stitle">${esc(t("Waermepumpe"))}</div><div class="sval">COP ${esc(cop)}</div><div class="smut">Vorlauf ${esc(flowTxt)}</div></div>
+      <div class="sbox swp"><div class="stitle">${esc(t("Wärmepumpe"))}</div><div class="sval">COP ${esc(cop)}</div><div class="smut">Vorlauf ${esc(flowTxt)}</div></div>
     </div>
     <div class="sarrow">↓</div>
     <div class="srow">

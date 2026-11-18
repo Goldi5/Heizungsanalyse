@@ -1,7 +1,7 @@
-/* Heizungsanalyse 0.7.0b2 - gebaut aus frontend/src (npm run build). Nicht von Hand bearbeiten. */
+/* Heizungsanalyse 0.7.0 - gebaut aus frontend/src (npm run build). Nicht von Hand bearbeiten. */
 (() => {
   // src/version.js
-  var HA_VERSION = "0.7.0b2";
+  var HA_VERSION = "0.7.0";
 
   // src/i18n.js
   var EN = {
@@ -236,11 +236,9 @@
     "Pflicht": "Mandatory",
     "Optional": "Optional",
     "keine": "none",
-    "Raeume": "Rooms",
     "Schwellen": "Thresholds",
-    "Speichern laedt die Integration neu.": "Saving reloads the integration.",
     "JSON-Fehler: {e}": "JSON error: {e}",
-    "Waermepumpe": "Heat pump",
+    "Wärmepumpe": "Heat pump",
     "Puffer-Soll Vorlauf": "Buffer target flow",
     "keine Räume": "no rooms",
     "Keine Heizkreise.": "No heating circuits.",
@@ -264,7 +262,70 @@
     "Heizkörper": "Radiators",
     "Objekt": "Object",
     "Objekt fehlt": "Object missing",
-    "Werte (JSON)": "Values (JSON)"
+    "Werte (JSON)": "Values (JSON)",
+    "{n} eingetragene Änderungen – Wirkung ab drei Tagen danach.": "{n} changes recorded – effect after three days.",
+    "{s} bearbeiten": "Edit {s}",
+    "{s} ergänzen": "Add {s}",
+    "Grund (optional)": "Reason (optional)",
+    "z. B. Voreinstellung geändert": "e.g. preset changed",
+    "Heizkreis": "Heating circuit",
+    "Raum": "Room",
+    "Bearbeiten": "Edit",
+    "Löschen": "Delete",
+    "Inventar zu {p} % vollständig · {n} Einträge": "Inventory {p}% complete · {n} entries",
+    "Aus Räumen übernehmen": "Fill from rooms",
+    "Legt Thermostat und Heizkörper je Raum an, ohne Werte zu erfinden.": "Creates one thermostat and radiator per room without inventing values.",
+    "CSV Import und Export": "CSV import and export",
+    "Format: object,field,value – eine Zeile je Wert.": "Format: object,field,value – one line per value.",
+    "CSV herunterladen": "Download CSV",
+    "CSV übernehmen": "Apply CSV",
+    "Bestehende Werte werden ergänzt.": "Existing values are completed.",
+    "Gespeichert. Vergleiche die Wirkung nach frühestens 14 Tagen.": "Saved. Compare the effect after at least 14 days.",
+    "Jetzt zum Vergleich": "Go to comparison",
+    "Neuer Heizkreis": "New heating circuit",
+    "Entfernen": "Remove",
+    "Name": "Name",
+    "Typ": "Type",
+    "Vorlauftemperatur": "Flow temperature",
+    "Mischer auf": "Mixer open",
+    "Mischer zu": "Mixer close",
+    "Noch kein Heizkreis.": "No heating circuit yet.",
+    "Heizkreis hinzufügen": "Add heating circuit",
+    "Neuer Raum": "New room",
+    "Raumtyp": "Room type",
+    "Klima-Entity": "Climate entity",
+    "Ventilposition": "Valve position",
+    "Noch kein Raum.": "No room yet.",
+    "Raum hinzufügen": "Add room",
+    "Auf Standard zurücksetzen": "Reset to defaults",
+    "Pflichtquellen: {a} von {b} verbunden": "Required sources: {a} of {b} connected",
+    "{n} Felder brauchen Aufmerksamkeit.": "{n} fields need attention.",
+    "Schwellen und Grenzwerte": "Thresholds and limits",
+    "Offset": "Offset",
+    "Speichern lädt die Integration neu.": "Saving reloads the integration.",
+    "{n} Felder prüfen.": "Check {n} fields.",
+    "Objekt wirklich löschen?": "Delete this item?",
+    "Gelöscht": "Deleted",
+    "Bitte die markierten Felder prüfen.": "Please check the marked fields.",
+    "Aus Räumen übernommen": "Filled from rooms",
+    "{n} Einträge aus Räumen angelegt": "{n} entries created from rooms",
+    "CSV heruntergeladen": "CSV downloaded",
+    "Bitte CSV einfügen.": "Please paste CSV first.",
+    "{n} übernommen, {e} Zeilen übersprungen": "{n} imported, {e} lines skipped",
+    "{n} übernommen": "{n} imported",
+    "Pflichtfeld": "Required field",
+    "Entity nicht gefunden": "Entity not found",
+    "Einheit passt nicht": "Unit does not match",
+    "Bitte eine Zahl eintragen": "Please enter a number",
+    "Wert außerhalb des Bereichs": "Value out of range",
+    "Bitte aus der Liste wählen": "Please choose from the list",
+    "Verweis nicht gefunden": "Reference not found",
+    "Feld ist unbekannt": "Unknown field",
+    "Text ist zu lang": "Text is too long",
+    "Bereich ist unbekannt": "Unknown section",
+    "Wert prüfen": "Check value",
+    "Bezeichner ist doppelt": "Identifier is duplicated",
+    "Aufbau ist ungültig": "Structure is invalid"
   };
   var lang = "de";
   function setLang(hass) {
@@ -601,6 +662,60 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
 @media (max-width: 760px) { .nav { overflow-x:auto; flex-wrap:nowrap; padding-bottom:4px; } .navpill { white-space:nowrap; } }
 
 .flash { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--hz-ink); color:var(--hz-card); padding:9px 16px; border-radius:999px; font-size:.85rem; font-weight:600; z-index:9; }
+.mt6 { margin-top:6px; } .mt8 { margin-top:8px; } .mt10 { margin-top:10px; } .mt12 { margin-top:12px; }
+.legend.between { justify-content:space-between; margin:6px 0 2px; }
+/* --- 0.7.0: gemeinsame Formular- und Tab-Bausteine ------------------------- */
+.intro { display:flex; align-items:center; gap:12px; flex-wrap:wrap; color:var(--hz-mut); font-size:.84rem; }
+.intro .progress { flex:1; min-width:160px; }
+.progress { height:8px; border-radius:999px; background:var(--hz-soft); overflow:hidden; }
+.progress span { display:block; height:100%; border-radius:999px; background:var(--hz-ok); transition:width .3s ease; }
+.banner { border-radius:var(--hz-radius-sm); padding:10px 14px; font-size:.85rem; font-weight:600; border:1px solid var(--hz-line); }
+.banner.tone-ok { background:color-mix(in srgb, var(--hz-ok) 10%, var(--hz-card)); border-color:color-mix(in srgb, var(--hz-ok) 35%, var(--hz-line)); }
+.banner.tone-bad { background:color-mix(in srgb, var(--hz-bad) 10%, var(--hz-card)); border-color:color-mix(in srgb, var(--hz-bad) 35%, var(--hz-line)); }
+.row.start { justify-content:flex-start; margin-top:10px; }
+.span2 { grid-column:1 / -1; }
+.field { display:grid; gap:4px; min-width:0; }
+.field > label { font-size:.75rem; color:var(--hz-mut); font-weight:600; }
+.field .unit { font-weight:500; opacity:.8; }
+.field .req { color:var(--hz-bad); }
+.field input, .field select, .field textarea, textarea[data-inv-csv] {
+  font:inherit; font-size:.9rem; padding:9px 11px; min-height:40px; border-radius:10px;
+  border:1px solid var(--hz-line); background:var(--hz-card); color:var(--hz-ink); width:100%;
+}
+.field input:focus, .field select:focus, .field textarea:focus, textarea[data-inv-csv]:focus {
+  outline:2px solid color-mix(in srgb, var(--hz-heat) 45%, transparent); outline-offset:1px;
+}
+.field.invalid input, .field.invalid select { border-color:var(--hz-bad); }
+.ferr { color:color-mix(in srgb, var(--hz-bad) 85%, var(--hz-ink)); font-size:.76rem; font-weight:600; }
+.formhead { font-size:.9rem; margin-bottom:2px; }
+.arrcard { border:1px solid var(--hz-line); border-radius:var(--hz-radius-sm); padding:12px 14px; margin-top:10px; background:color-mix(in srgb, var(--hz-soft) 40%, var(--hz-card)); }
+.arrhead { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; }
+.detailgrid { display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:10px; margin-top:10px; }
+.detail { background:var(--hz-soft); border-radius:10px; padding:8px 10px; display:grid; gap:2px; }
+.detail .dl { font-size:.72rem; color:var(--hz-mut); font-weight:700; }
+.detail .dv { font-size:.95rem; font-weight:700; font-variant-numeric:tabular-nums; }
+.impexp { margin-top:14px; border-top:1px solid var(--hz-line); padding-top:10px; }
+.impexp summary { cursor:pointer; font-size:.8rem; font-weight:700; color:var(--hz-mut); }
+.impexp textarea { margin:8px 0; font-family:ui-monospace, monospace; font-size:.78rem; min-height:96px; resize:vertical; }
+.rowact { display:inline-flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+.btn.danger { color:color-mix(in srgb, var(--hz-bad) 85%, var(--hz-ink)); }
+.btn, .navpill { min-height:36px; }
+.tablewrap { overflow-x:auto; }
+.rtable { min-width:0; }
+.rtable th, .rtable td { white-space:nowrap; }
+.formfocus { min-height:0; }
+@media (max-width: 520px) {
+  .btn, .navpill, .q { min-height:44px; }
+  .q { width:32px; height:32px; min-height:32px; }
+  .rtable thead { display:none; }
+  .rtable, .rtable tbody, .rtable tr, .rtable td { display:block; width:100%; }
+  .rtable tr { border:1px solid var(--hz-line); border-radius:12px; padding:8px 10px; margin-bottom:8px; }
+  .rtable td { border:0; padding:4px 0; white-space:normal; display:flex; justify-content:space-between; gap:12px; }
+  .rtable td::before { content:attr(data-label); color:var(--hz-mut); font-size:.72rem; font-weight:700; }
+  .rtable td:last-child { justify-content:flex-end; }
+  .srcrow { grid-template-columns:1fr; }
+}
+
 `;
 
   // src/data.js
@@ -622,139 +737,98 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     cache = null;
   }
 
-  // src/help.js
-  var HELP = {
-    live: {
-      de: "Momentanwerte der Wärmepumpe: Wärmeleistung = Volumenstrom × Spreizung × 4,19 kJ/(kg·K), Strom aus der Leistungsmessung, COP jetzt = Wärme ÷ Strom. Nur sinnvoll, solange der Verdichter läuft; kurz nach dem Start schwanken die Werte stark.",
-      en: "Live heat pump values: heat output = volume flow × spread × 4.19 kJ/(kg·K), power from the power reading, COP now = heat ÷ power. Only meaningful while the compressor runs; right after start-up the values fluctuate."
-    },
-    spread: {
-      de: "Spreizung = WP-Vorlauf minus WP-Rücklauf, nur in Stunden, in denen der Verdichter lief. Üblich sind 3–8 K. Kleiner heißt: viel Volumenstrom, Pumpe arbeitet mehr als nötig und die Wärmepumpe taktet leichter. Größer heißt: zu wenig Volumenstrom, die Wärmepumpe muss heißer fahren.",
-      en: "Spread = heat pump flow minus heat pump return, only in hours when the compressor ran. 3–8 K is typical. Smaller means a lot of volume flow, the pump works harder than needed and the heat pump cycles more easily. Larger means too little flow, the heat pump has to run hotter."
-    },
-    overshoot: {
-      de: "Wie weit der Vorlauf der Wärmepumpe über dem Puffer-Soll liegt, während sie lädt. Ein paar Kelvin sind nötig, damit der Puffer überhaupt warm wird. Liegt der Wert dauerhaft deutlich höher, lädt die Anlage heißer als nötig – das kostet COP.",
-      en: "How far the heat pump flow exceeds the buffer target while charging. A few kelvin are needed for the buffer to warm up at all. If the value stays clearly higher, the system charges hotter than needed – which costs COP."
-    },
-    score: {
-      de: "Ein einfacher Gesamtwert: 100 Punkte, minus 15 je Warnung und minus 5 je Hinweis. Er sagt nur, wie viele Regeln anschlagen – nicht, wie effizient die Anlage absolut ist. In den ersten Tagen steht „Lernt noch“. Laufen COP oder Vorlauf-Prüfung nicht oder weniger als 70 % der Prüfungen, steht „Eingeschränkt“: Was nicht geprüft wird, kann auch nicht gut sein. Darunter steht, welche Prüfung fehlt und warum.",
-      en: "A simple overall value: 100 points, minus 15 per warning and minus 5 per note. It only reflects how many rules fire – not how efficient the system is in absolute terms. The first days show “still learning”. If the COP or flow check is not running, or fewer than 70 % of checks, it shows “limited”: what is not checked cannot be called good. Below it lists which check is missing and why."
-    },
-    cop: {
-      de: "COP = erzeugte Wärme ÷ verbrauchter Strom. 4,5 heißt: aus 1 kWh Strom wurden 4,5 kWh Wärme. Gezeigt wird der Wert der letzten 7 Tage, daneben 30 Tage. Bei Kälte sinkt der COP – das ist normal.",
-      en: "COP = heat produced ÷ electricity used. 4.5 means 1 kWh of power became 4.5 kWh of heat. Shown is the last 7 days, next to it 30 days. COP drops in cold weather – that is normal."
-    },
-    starts: {
-      de: "Wie oft der Verdichter am Tag anspringt (Mittel über 7 Tage). Viele kurze Starts („Takten“) kosten Effizienz und Lebensdauer. Die rote Linie ist deine eingestellte Schwelle.",
-      en: "How often the compressor starts per day (7-day mean). Many short starts (“cycling”) cost efficiency and lifetime. The red line is your threshold."
-    },
-    runtime: {
-      de: "Mittlere Laufzeit je Verdichterstart. Länger ist besser: unter etwa 20 Minuten läuft die Wärmepumpe meist im ineffizienten Anlaufbereich.",
-      en: "Mean run time per compressor start. Longer is better: below about 20 minutes the heat pump mostly runs in its inefficient start-up phase."
-    },
-    flow: {
-      de: "Median aus Ist-Vorlauf minus Soll-Vorlauf, nur während der Verdichter läuft. Positiv heißt: wärmer als nötig – die Heizkurve ist vermutlich zu hoch oder ein Mischer regelt schlecht. Jedes Kelvin weniger Vorlauf bringt grob 2–3 % COP.",
-      en: "Median of actual minus target flow temperature, only while the compressor runs. Positive means warmer than needed – the heating curve is probably too high or a mixer controls poorly. Each kelvin less flow gains roughly 2–3 % COP."
-    },
-    findings: {
-      de: "Jeder Hinweis stammt aus einer festen Regel (F01–F13) und nennt den Beleg: Zeitraum, Messwerte, Schwelle. Warnungen zuerst. Die Integration greift nie selbst ein – sie sagt nur, wo sich Hinsehen lohnt.",
-      en: "Each finding comes from a fixed rule (F01–F13) and states its evidence: period, values, threshold. Warnings first. The integration never intervenes – it only tells you where to look."
-    },
-    copcurve: {
-      de: "Jeder Punkt ist ein Tag: Tages-COP über der mittleren Außentemperatur. Die grüne Linie ist der Trend deiner eigenen Anlage. Liegt der heutige Punkt deutlich darunter, lief etwas schlechter als sonst bei diesem Wetter.",
-      en: "Each dot is a day: daily COP against mean outdoor temperature. The green line is your own system's trend. If today's dot is clearly below it, something ran worse than usual for this weather."
-    },
-    energy: {
-      de: "Tägliche Heizwärme und Stromverbrauch der Wärmepumpe, dazu Warmwasser, falls ein Zähler zugeordnet ist. Die Lücke zwischen Wärme und Strom ist die „kostenlose“ Umweltwärme.",
-      en: "Daily heat and heat-pump power, plus hot water if a meter is mapped. The gap between heat and power is the “free” ambient heat."
-    },
-    copline: {
-      de: "Tages-COP (grün) und Außentemperatur (blau, rechte Achse). Senkrechte Striche markieren eingetragene Änderungen – so siehst du, ob danach etwas besser wurde.",
-      en: "Daily COP (green) and outdoor temperature (blue, right axis). Vertical lines mark logged changes – so you can see whether something improved afterwards."
-    },
-    curve: {
-      de: "Tagesmittel von Ist- und Soll-Vorlauf über der Außentemperatur. Liegt Ist dauerhaft über Soll, heizt die Anlage wärmer als die Kurve verlangt. Eine flachere Kurve (niedriger) spart am meisten.",
-      en: "Daily mean of actual and target flow vs outdoor temperature. If actual stays above target, the system heats warmer than the curve demands. A flatter (lower) curve saves the most."
-    },
-    cycling: {
-      de: "Mittlere Verdichterstarts pro Tag, sortiert nach Außentemperatur. Typisch: In der Übergangszeit (5–15 °C) taktet eine Wärmepumpe am meisten, weil wenig Wärme gebraucht wird. Rot = über deiner Schwelle.",
-      en: "Mean compressor starts per day, grouped by outdoor temperature. Typical: in shoulder season (5–15 °C) a heat pump cycles most because little heat is needed. Red = above your threshold."
-    },
-    cycle: {
-      de: "Mittlere Minuten je Verdichterstart pro Tag. Steigt die Kurve, laufen die Zyklen länger – gut.",
-      en: "Mean minutes per compressor start per day. A rising line means longer cycles – good."
-    },
-    defrost: {
-      de: "Stunden pro Tag mit Abtauung bzw. Heizstab. Abtauen ist bei 0–7 °C und feuchter Luft normal. Ein Heizstab, der regelmäßig läuft, kostet viel Strom – Einsatzgrenzen prüfen.",
-      en: "Hours per day with defrost or aux heater. Defrost is normal at 0–7 °C and humid air. An aux heater that runs regularly costs a lot of power – check its limits."
-    },
-    rooms: {
-      de: "Je Raum der Median aus Ist minus Soll über 7 Tage (Stichproben alle 5 Minuten). Der Balken zeigt die Richtung: links zu kalt, rechts zu warm. Darunter die Anteile der Zeit außerhalb der Toleranz und die typische Aufheizzeit nach einer Sollwert-Anhebung.",
-      en: "Per room the median of actual minus target over 7 days (sampled every 5 minutes). The bar shows the direction: left too cold, right too warm. Below: share of time outside tolerance and the typical heat-up time after a setpoint increase."
-    },
-    circuits: {
-      de: "Je Heizkreis: Anteil der Pumpenlaufzeit, in der der Verdichter aus war (Pumpe läuft „umsonst“), und wie oft der Mischer pro Tag stellt. Nur sichtbar, wenn Pumpe bzw. Mischer zugeordnet sind.",
-      en: "Per circuit: share of pump run time while the compressor was off (pump runs “for nothing”) and how often the mixer moves per day. Only shown if pump or mixer is mapped."
-    },
-    changes: {
-      de: "Trag jede Einstellungsänderung ein (Heizkurve, Pumpenstufe, Abgleich …). Verglichen werden die 7 Tage davor mit den 7 Tagen danach. „Wetterbereinigt“ zieht ab, was allein die andere Außentemperatur am COP ändern würde – laut deiner eigenen Kennlinie.",
-      en: "Log every settings change (heating curve, pump stage, balancing …). The 7 days before are compared with the 7 days after. “Weather-adjusted” subtracts what the different outdoor temperature alone would change in COP – according to your own curve."
-    },
-    inventory: {
-      de: "Stammdaten deiner Anlage: Pumpen, Thermostate, Hydraulik. Pflege sie über den Dienst „Heizungsanalyse: Inventar aktualisieren“ – jede Änderung landet automatisch im Verlauf.",
-      en: "Master data of your system: pumps, thermostats, hydraulics. Maintain it via the service “Heating analysis: update inventory” – every change lands in the history automatically."
-    },
-    system: {
-      de: "Der Systemstatus zeigt, welche Version die Karte und welche das Backend hat, wann der letzte Lauf war und ob ein Fehler auftrat. Die Karte meldet eigene Fehler selbst mit – dann steht hier die gekürzte Meldung statt einer stillen Fehlfunktion.",
-      en: "System status shows which version the card and the backend have, when the last run happened and whether an error occurred. The card reports its own errors itself – then the shortened message appears here instead of a silent failure."
-    },
-    sources_check: {
-      de: "Für jede zugeordnete Quelle: Zustand, Einheit, Anzahl Statistikzeilen und letzter Wert. Grün heißt auswertbar. „Keine Statistik“ bedeutet: Sensor ohne Langzeitdaten – dann rechnet die Integration nicht. „Unpassend“ nennt die Abweichung; der Tipp darunter sagt, was zu tun ist.",
-      en: "For every mapped source: state, unit, number of statistics rows and last value. Green means usable. “No statistics” means a sensor without long-term data – the integration will not calculate. “Mismatched” names the deviation; the hint below says what to do."
-    },
-    log: {
-      de: "Das Protokoll hält Start, Auswertung, Quellen, Hinweise, Konfiguration, Inventar, Dashboard und Kartenfehler fest. Höchstens 2000 Einträge oder 30 Tage. Einträge lassen sich nach Kategorie, Stufe und Text filtern, nach Tag gruppiert aufklappen und als JSON exportieren.",
-      en: "The log keeps start, analysis, sources, findings, configuration, inventory, dashboard and card errors. At most 2000 entries or 30 days. Entries can be filtered by category, level and text, grouped by day, expanded and exported as JSON."
-    },
-    cfg_sources: {
-      de: "Pflicht- und optionale Quellen. Änderungen werden nach dem Speichern übernommen; die Integration lädt neu. Leere Felder bleiben ungenutzt.",
-      en: "Mandatory and optional sources. Changes apply after saving; the integration reloads. Empty fields stay unused."
-    },
-    cfg_circuits: {
-      de: "Heizkreise als JSON. Jeder Eintrag braucht id und name; type ist buffer, radiators, underfloor oder dhw.",
-      en: "Heating circuits as JSON. Each entry needs id and name; type is buffer, radiators, underfloor or dhw."
-    },
-    cfg_rooms: {
-      de: "Räume als JSON. climate_entity optional; ohne Thermostat kein Komfort-Finding.",
-      en: "Rooms as JSON. climate_entity optional; without a thermostat no comfort finding."
-    },
-    cfg_curve: {
-      de: "Vorschlag aus der Vorlauf-Abweichung der letzten 7 Tage. Offset senkt/anhebt die ganze Kurve, Steigung ändert die Temperaturabhängigkeit. Werte werden erst nach Speichern übernommen.",
-      en: "Suggestion from the flow deviation of the last 7 days. Offset shifts the whole curve, slope changes the temperature dependence. Values apply only after saving."
-    },
-    cfg_thresholds: {
-      de: "Schwellen der Findings. Startwerte sind Platzhalter.",
-      en: "Finding thresholds. Starting values are placeholders."
-    },
-    schema: {
-      de: "Schematische Darstellung von Wärmepumpe, Puffer und Heizkreisen mit Live-Werten. Dient der Orientierung; keine Steuerung.",
-      en: "Schematic of heat pump, buffer and circuits with live values. For orientation only; no control."
-    },
-    sources: {
-      de: "Welche Sensoren zugeordnet sind. Fehlende optionale Sensoren schalten Auswertungen nicht frei – ergänzen lässt sich das unter Konfigurieren.",
-      en: "Which sensors are mapped. Missing optional sensors leave analyses locked – add them under Configure."
-    },
-    dhw: {
-      de: "Anteil der Warmwasser-Wärme an der gesamten Wärme. Warmwasser braucht höhere Temperaturen und senkt deshalb den COP – ein hoher Anteil erklärt einen niedrigeren Gesamt-COP.",
-      en: "Share of hot-water heat in total heat. Hot water needs higher temperatures and therefore lowers COP – a high share explains a lower overall COP."
-    }
+  // src/inventory.js
+  var SECTIONS = ["pumps", "thermostats", "hydraulics", "radiators"];
+  var SECTION_LABEL = {
+    pumps: { de: "Pumpen", en: "Pumps" },
+    thermostats: { de: "Thermostate", en: "Thermostats" },
+    hydraulics: { de: "Hydraulik", en: "Hydraulics" },
+    radiators: { de: "Heizkörper", en: "Radiators" }
   };
-  function helpText(key) {
-    const h = HELP[key];
-    if (!h) return "";
-    return getLang() === "de" ? h.de : h.en;
+  var HEIZKURVE_FIELDS = ["heizkurve", "steigung", "offset"];
+  function schemaOf(d) {
+    return d && d.inventory_schema && d.inventory_schema.sections || {};
   }
-  var HELP_KEYS = Object.keys(HELP);
+  function sectionFields(d, section) {
+    const entry = schemaOf(d)[section];
+    return entry && entry.fields || [];
+  }
+  function localized(value) {
+    if (!value) return "";
+    if (typeof value === "string") return value;
+    const lang2 = getLang() === "en" ? "en" : "de";
+    return value[lang2] || value.de || value.en || "";
+  }
+  function slug(value) {
+    return String(value || "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  }
+  function objectKey(section, selection) {
+    return section === "hydraulics" ? "hydraulics" : `${section}.${slug(selection)}`;
+  }
+  function findName(list, id) {
+    const hit = (list || []).find((item) => String(item.id) === String(id));
+    return hit ? hit.name || hit.id : id;
+  }
+  function objectName(d, object) {
+    const [section, key] = String(object || "").split(".");
+    const base = localized((schemaOf(d)[section] || {}).title) || section;
+    if (!key) return base;
+    if (section === "pumps") return `${base} ${findName(d.circuits, key)}`;
+    if (section === "thermostats" || section === "radiators") return `${base} ${findName(d.rooms, key)}`;
+    return `${base} ${key}`;
+  }
+  function objectSection(object) {
+    return String(object || "").split(".")[0];
+  }
+  function objectEntries(d, section) {
+    const inventory = d && d.inventory || {};
+    const data = inventory[section] || {};
+    if (section === "hydraulics") return Object.keys(data).length ? [{ key: "", object: "hydraulics", record: data }] : [];
+    return Object.keys(data).map((key) => ({ key, object: `${section}.${key}`, record: data[key] || {} }));
+  }
+  function targetChoices(d) {
+    const out = [{ value: "heizkurve", label: localized({ de: "Heizkurve", en: "Heating curve" }) }];
+    for (const section of SECTIONS) {
+      for (const entry of objectEntries(d, section)) {
+        out.push({ value: entry.object, label: objectName(d, entry.object) });
+      }
+    }
+    return out;
+  }
+  function comparisonFields(d, object) {
+    if (!object || object === "heizkurve") {
+      return [
+        { key: "heizkurve", label: localized({ de: "Heizkurve", en: "Heating curve" }) },
+        { key: "steigung", label: localized({ de: "Steigung", en: "Slope" }) },
+        { key: "offset", label: localized({ de: "Offset", en: "Offset" }) }
+      ];
+    }
+    const section = objectSection(object);
+    const fields = sectionFields(d, section).filter((item) => item.key !== "notes").map((item) => ({ key: item.key, label: localized(item.label), unit: item.unit || "" }));
+    return fields.length ? fields : HEIZKURVE_FIELDS.map((key) => ({ key, label: key }));
+  }
+  function currentValue(d, object, field) {
+    if (!object || object === "heizkurve") {
+      const options = d && d.config && d.config.options || {};
+      if (field === "steigung") return options.heating_curve_slope ?? "";
+      if (field === "offset") return options.heating_curve_offset ?? "";
+      return "";
+    }
+    const section = objectSection(object);
+    const key = object.includes(".") ? object.split(".").slice(1).join(".") : "";
+    const data = (d && d.inventory || {})[section] || {};
+    const record = section === "hydraulics" ? data : data[key] || {};
+    const value = record[field];
+    return value == null ? "" : value;
+  }
+  function sectionTitle(d, section) {
+    return localized((schemaOf(d)[section] || {}).title) || localized(SECTION_LABEL[section]) || section;
+  }
+  function sectionSelectionHint(section) {
+    if (section === "pumps") return { de: "Heizkreis", en: "Heating circuit" };
+    if (section === "thermostats" || section === "radiators") return { de: "Raum", en: "Room" };
+    return null;
+  }
 
   // src/charts.js
   var W = 640;
@@ -950,12 +1024,206 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     return `<svg viewBox="0 0 220 ${h}" class="spark" preserveAspectRatio="none">${body}</svg>`;
   }
 
-  // src/views.js
-  var VIEWS = ["anlage", "effizienz", "raeume", "vergleich", "inventar", "protokoll", "einstellungen", "schema"];
+  // src/help.js
+  var HELP = {
+    live: {
+      de: "Momentanwerte der Wärmepumpe: Wärmeleistung = Volumenstrom × Spreizung × 4,19 kJ/(kg·K), Strom aus der Leistungsmessung, COP jetzt = Wärme ÷ Strom. Nur sinnvoll, solange der Verdichter läuft; kurz nach dem Start schwanken die Werte stark.",
+      en: "Live heat pump values: heat output = volume flow × spread × 4.19 kJ/(kg·K), power from the power reading, COP now = heat ÷ power. Only meaningful while the compressor runs; right after start-up the values fluctuate."
+    },
+    spread: {
+      de: "Spreizung = WP-Vorlauf minus WP-Rücklauf, nur in Stunden, in denen der Verdichter lief. Üblich sind 3–8 K. Kleiner heißt: viel Volumenstrom, Pumpe arbeitet mehr als nötig und die Wärmepumpe taktet leichter. Größer heißt: zu wenig Volumenstrom, die Wärmepumpe muss heißer fahren.",
+      en: "Spread = heat pump flow minus heat pump return, only in hours when the compressor ran. 3–8 K is typical. Smaller means a lot of volume flow, the pump works harder than needed and the heat pump cycles more easily. Larger means too little flow, the heat pump has to run hotter."
+    },
+    overshoot: {
+      de: "Wie weit der Vorlauf der Wärmepumpe über dem Puffer-Soll liegt, während sie lädt. Ein paar Kelvin sind nötig, damit der Puffer überhaupt warm wird. Liegt der Wert dauerhaft deutlich höher, lädt die Anlage heißer als nötig – das kostet COP.",
+      en: "How far the heat pump flow exceeds the buffer target while charging. A few kelvin are needed for the buffer to warm up at all. If the value stays clearly higher, the system charges hotter than needed – which costs COP."
+    },
+    score: {
+      de: "Ein einfacher Gesamtwert: 100 Punkte, minus 15 je Warnung und minus 5 je Hinweis. Er sagt nur, wie viele Regeln anschlagen – nicht, wie effizient die Anlage absolut ist. In den ersten Tagen steht „Lernt noch“. Laufen COP oder Vorlauf-Prüfung nicht oder weniger als 70 % der Prüfungen, steht „Eingeschränkt“: Was nicht geprüft wird, kann auch nicht gut sein. Darunter steht, welche Prüfung fehlt und warum.",
+      en: "A simple overall value: 100 points, minus 15 per warning and minus 5 per note. It only reflects how many rules fire – not how efficient the system is in absolute terms. The first days show “still learning”. If the COP or flow check is not running, or fewer than 70 % of checks, it shows “limited”: what is not checked cannot be called good. Below it lists which check is missing and why."
+    },
+    cop: {
+      de: "COP = erzeugte Wärme ÷ verbrauchter Strom. 4,5 heißt: aus 1 kWh Strom wurden 4,5 kWh Wärme. Gezeigt wird der Wert der letzten 7 Tage, daneben 30 Tage. Bei Kälte sinkt der COP – das ist normal.",
+      en: "COP = heat produced ÷ electricity used. 4.5 means 1 kWh of power became 4.5 kWh of heat. Shown is the last 7 days, next to it 30 days. COP drops in cold weather – that is normal."
+    },
+    starts: {
+      de: "Wie oft der Verdichter am Tag anspringt (Mittel über 7 Tage). Viele kurze Starts („Takten“) kosten Effizienz und Lebensdauer. Die rote Linie ist deine eingestellte Schwelle.",
+      en: "How often the compressor starts per day (7-day mean). Many short starts (“cycling”) cost efficiency and lifetime. The red line is your threshold."
+    },
+    runtime: {
+      de: "Mittlere Laufzeit je Verdichterstart. Länger ist besser: unter etwa 20 Minuten läuft die Wärmepumpe meist im ineffizienten Anlaufbereich.",
+      en: "Mean run time per compressor start. Longer is better: below about 20 minutes the heat pump mostly runs in its inefficient start-up phase."
+    },
+    flow: {
+      de: "Median aus Ist-Vorlauf minus Soll-Vorlauf, nur während der Verdichter läuft. Positiv heißt: wärmer als nötig – die Heizkurve ist vermutlich zu hoch oder ein Mischer regelt schlecht. Jedes Kelvin weniger Vorlauf bringt grob 2–3 % COP.",
+      en: "Median of actual minus target flow temperature, only while the compressor runs. Positive means warmer than needed – the heating curve is probably too high or a mixer controls poorly. Each kelvin less flow gains roughly 2–3 % COP."
+    },
+    findings: {
+      de: "Jeder Hinweis stammt aus einer festen Regel (F01–F13) und nennt den Beleg: Zeitraum, Messwerte, Schwelle. Warnungen zuerst. Die Integration greift nie selbst ein – sie sagt nur, wo sich Hinsehen lohnt.",
+      en: "Each finding comes from a fixed rule (F01–F13) and states its evidence: period, values, threshold. Warnings first. The integration never intervenes – it only tells you where to look."
+    },
+    copcurve: {
+      de: "Jeder Punkt ist ein Tag: Tages-COP über der mittleren Außentemperatur. Die grüne Linie ist der Trend deiner eigenen Anlage. Liegt der heutige Punkt deutlich darunter, lief etwas schlechter als sonst bei diesem Wetter.",
+      en: "Each dot is a day: daily COP against mean outdoor temperature. The green line is your own system's trend. If today's dot is clearly below it, something ran worse than usual for this weather."
+    },
+    energy: {
+      de: "Tägliche Heizwärme und Stromverbrauch der Wärmepumpe, dazu Warmwasser, falls ein Zähler zugeordnet ist. Die Lücke zwischen Wärme und Strom ist die „kostenlose“ Umweltwärme.",
+      en: "Daily heat and heat-pump power, plus hot water if a meter is mapped. The gap between heat and power is the “free” ambient heat."
+    },
+    copline: {
+      de: "Tages-COP (grün) und Außentemperatur (blau, rechte Achse). Senkrechte Striche markieren eingetragene Änderungen – so siehst du, ob danach etwas besser wurde.",
+      en: "Daily COP (green) and outdoor temperature (blue, right axis). Vertical lines mark logged changes – so you can see whether something improved afterwards."
+    },
+    curve: {
+      de: "Tagesmittel von Ist- und Soll-Vorlauf über der Außentemperatur. Liegt Ist dauerhaft über Soll, heizt die Anlage wärmer als die Kurve verlangt. Eine flachere Kurve (niedriger) spart am meisten.",
+      en: "Daily mean of actual and target flow vs outdoor temperature. If actual stays above target, the system heats warmer than the curve demands. A flatter (lower) curve saves the most."
+    },
+    cycling: {
+      de: "Mittlere Verdichterstarts pro Tag, sortiert nach Außentemperatur. Typisch: In der Übergangszeit (5–15 °C) taktet eine Wärmepumpe am meisten, weil wenig Wärme gebraucht wird. Rot = über deiner Schwelle.",
+      en: "Mean compressor starts per day, grouped by outdoor temperature. Typical: in shoulder season (5–15 °C) a heat pump cycles most because little heat is needed. Red = above your threshold."
+    },
+    cycle: {
+      de: "Mittlere Minuten je Verdichterstart pro Tag. Steigt die Kurve, laufen die Zyklen länger – gut.",
+      en: "Mean minutes per compressor start per day. A rising line means longer cycles – good."
+    },
+    defrost: {
+      de: "Stunden pro Tag mit Abtauung bzw. Heizstab. Abtauen ist bei 0–7 °C und feuchter Luft normal. Ein Heizstab, der regelmäßig läuft, kostet viel Strom – Einsatzgrenzen prüfen.",
+      en: "Hours per day with defrost or aux heater. Defrost is normal at 0–7 °C and humid air. An aux heater that runs regularly costs a lot of power – check its limits."
+    },
+    rooms: {
+      de: "Je Raum der Median aus Ist minus Soll über 7 Tage (Stichproben alle 5 Minuten). Der Balken zeigt die Richtung: links zu kalt, rechts zu warm. Darunter die Anteile der Zeit außerhalb der Toleranz und die typische Aufheizzeit nach einer Sollwert-Anhebung.",
+      en: "Per room the median of actual minus target over 7 days (sampled every 5 minutes). The bar shows the direction: left too cold, right too warm. Below: share of time outside tolerance and the typical heat-up time after a setpoint increase."
+    },
+    circuits: {
+      de: "Je Heizkreis: Anteil der Pumpenlaufzeit, in der der Verdichter aus war (Pumpe läuft „umsonst“), und wie oft der Mischer pro Tag stellt. Nur sichtbar, wenn Pumpe bzw. Mischer zugeordnet sind.",
+      en: "Per circuit: share of pump run time while the compressor was off (pump runs “for nothing”) and how often the mixer moves per day. Only shown if pump or mixer is mapped."
+    },
+    changes: {
+      de: "Trag jede Einstellungsänderung ein (Heizkurve, Pumpenstufe, Abgleich …). Verglichen werden die 7 Tage davor mit den 7 Tagen danach. „Wetterbereinigt“ zieht ab, was allein die andere Außentemperatur am COP ändern würde – laut deiner eigenen Kennlinie.",
+      en: "Log every settings change (heating curve, pump stage, balancing …). The 7 days before are compared with the 7 days after. “Weather-adjusted” subtracts what the different outdoor temperature alone would change in COP – according to your own curve."
+    },
+    inventory: {
+      de: "Stammdaten deiner Anlage: Pumpen, Thermostate, Hydraulik und Heizkörper. Die Felder kommen aus dem Schema – Schlüssel werden aus Kreis oder Raum abgeleitet, nie getippt. Jede Änderung landet automatisch im Verlauf. CSV dient nur dem Austausch vieler Werte.",
+      en: "Master data of your system: pumps, thermostats, hydraulics and radiators. Fields come from the schema – keys are derived from circuit or room, never typed. Every change lands in the history automatically. CSV is only for exchanging many values."
+    },
+    system: {
+      de: "Der Systemstatus zeigt, welche Version die Karte und welche das Backend hat, wann der letzte Lauf war und ob ein Fehler auftrat. Die Karte meldet eigene Fehler selbst mit – dann steht hier die gekürzte Meldung statt einer stillen Fehlfunktion.",
+      en: "System status shows which version the card and the backend have, when the last run happened and whether an error occurred. The card reports its own errors itself – then the shortened message appears here instead of a silent failure."
+    },
+    sources_check: {
+      de: "Für jede zugeordnete Quelle: Zustand, Einheit, Anzahl Statistikzeilen und letzter Wert. Grün heißt auswertbar. „Keine Statistik“ bedeutet: Sensor ohne Langzeitdaten – dann rechnet die Integration nicht. „Unpassend“ nennt die Abweichung; der Tipp darunter sagt, was zu tun ist.",
+      en: "For every mapped source: state, unit, number of statistics rows and last value. Green means usable. “No statistics” means a sensor without long-term data – the integration will not calculate. “Mismatched” names the deviation; the hint below says what to do."
+    },
+    log: {
+      de: "Das Protokoll hält Start, Auswertung, Quellen, Hinweise, Konfiguration, Inventar, Dashboard und Kartenfehler fest. Höchstens 2000 Einträge oder 30 Tage. Einträge lassen sich nach Kategorie, Stufe und Text filtern, nach Tag gruppiert aufklappen und als JSON exportieren.",
+      en: "The log keeps start, analysis, sources, findings, configuration, inventory, dashboard and card errors. At most 2000 entries or 30 days. Entries can be filtered by category, level and text, grouped by day, expanded and exported as JSON."
+    },
+    cfg_sources: {
+      de: "Pflicht- und optionale Quellen. Änderungen werden nach dem Speichern übernommen; die Integration lädt neu. Leere Felder bleiben ungenutzt.",
+      en: "Mandatory and optional sources. Changes apply after saving; the integration reloads. Empty fields stay unused."
+    },
+    cfg_circuits: {
+      de: "Heizkreise mit Name, Typ und den zugeordneten Entities. Der Bezeichner wird automatisch vergeben, damit er stabil bleibt.",
+      en: "Heating circuits with name, type and mapped entities. The identifier is assigned automatically so it stays stable."
+    },
+    cfg_rooms: {
+      de: "Räume mit Heizkreis und optionalem Thermostat. Ohne Klima-Entity gibt es kein Komfort-Finding, die Raumauswertung bleibt aber möglich.",
+      en: "Rooms with heating circuit and optional thermostat. Without a climate entity there is no comfort finding, but room evaluation still works."
+    },
+    cfg_curve: {
+      de: "Vorschlag aus der Vorlauf-Abweichung der letzten 7 Tage. Offset senkt/anhebt die ganze Kurve, Steigung ändert die Temperaturabhängigkeit. Werte werden erst nach Speichern übernommen.",
+      en: "Suggestion from the flow deviation of the last 7 days. Offset shifts the whole curve, slope changes the temperature dependence. Values apply only after saving."
+    },
+    cfg_thresholds: {
+      de: "Schwellen der Findings mit Einheit und Grenzen. „Auf Standard zurücksetzen“ stellt die Platzhalter wieder her.",
+      en: "Finding thresholds with unit and limits. “Reset to defaults” restores the placeholder values."
+    },
+    schema: {
+      de: "Schematische Darstellung von Wärmepumpe, Puffer und Heizkreisen mit Live-Werten. Dient der Orientierung; keine Steuerung.",
+      en: "Schematic of heat pump, buffer and circuits with live values. For orientation only; no control."
+    },
+    sources: {
+      de: "Welche Sensoren zugeordnet sind. Fehlende optionale Sensoren schalten Auswertungen nicht frei – ergänzen lässt sich das unter Konfigurieren.",
+      en: "Which sensors are mapped. Missing optional sensors leave analyses locked – add them under Configure."
+    },
+    dhw: {
+      de: "Anteil der Warmwasser-Wärme an der gesamten Wärme. Warmwasser braucht höhere Temperaturen und senkt deshalb den COP – ein hoher Anteil erklärt einen niedrigeren Gesamt-COP.",
+      en: "Share of hot-water heat in total heat. Hot water needs higher temperatures and therefore lowers COP – a high share explains a lower overall COP."
+    }
+  };
+  function helpText(key) {
+    const h = HELP[key];
+    if (!h) return "";
+    return getLang() === "de" ? h.de : h.en;
+  }
+  var HELP_KEYS = Object.keys(HELP);
+
+  // src/components.js
   function head(title, key, ui, sub = "") {
     const open = ui.help === key;
     return `<div class="h">${esc(title)}${sub ? ` <span class="sub">${sub}</span>` : ""}<button class="q ${open ? "on" : ""}" data-help="${key}" aria-label="?">?</button></div>${open ? `<div class="help">${esc(helpText(key))}</div>` : ""}`;
   }
+  function card(title, key, ui, body, sub = "", cls = "") {
+    return `<section class="c ${cls}">${head(title, key, ui, sub)}${body}</section>`;
+  }
+  function empty(text) {
+    return `<div class="empty">${esc(text)}</div>`;
+  }
+  function banner(tone, text) {
+    return `<div class="banner tone-${tone}">${esc(text)}</div>`;
+  }
+  function button(label, { act, variant = "", attrs = "", type = "button" } = {}) {
+    const cls = ["btn", variant].filter(Boolean).join(" ");
+    return `<button class="${cls}" type="${type}"${act ? ` data-act="${act}"` : ""}${attrs ? ` ${attrs}` : ""}>${esc(label)}</button>`;
+  }
+  function fieldLabel(name, label, unit = "", required = false) {
+    return `<label for="${esc(name)}">${esc(label)}${unit ? ` <span class="unit">${esc(unit)}</span>` : ""}${required ? ` <span class="req" aria-hidden="true">*</span>` : ""}</label>`;
+  }
+  function textField({ name, label, value = "", type = "text", unit = "", placeholder = "", error = "", attrs = "" }) {
+    return `<div class="field${error ? " invalid" : ""}">${fieldLabel(name, label, unit)}
+    <input id="${esc(name)}" name="${esc(name)}" type="${esc(type)}" value="${esc(value ?? "")}" placeholder="${esc(placeholder)}"${attrs ? ` ${attrs}` : ""} aria-invalid="${error ? "true" : "false"}">
+    ${error ? `<div class="ferr" role="alert">${esc(error)}</div>` : ""}</div>`;
+  }
+  function selectField({ name, label, value = "", options = [], error = "", attrs = "" }) {
+    const opts = options.map((option) => {
+      const val = typeof option === "object" ? option.value : option;
+      const text = typeof option === "object" ? localized(option.label) || option.value : option;
+      return `<option value="${esc(val)}"${String(val) === String(value ?? "") ? " selected" : ""}>${esc(text)}</option>`;
+    }).join("");
+    return `<div class="field${error ? " invalid" : ""}">${fieldLabel(name, label)}
+    <select id="${esc(name)}" name="${esc(name)}"${attrs ? ` ${attrs}` : ""} aria-invalid="${error ? "true" : "false"}">${opts}</select>
+    ${error ? `<div class="ferr" role="alert">${esc(error)}</div>` : ""}</div>`;
+  }
+  function entityField({ name, label, value = "", domains = ["sensor"], error = "", listId = "", attrs = "" }) {
+    const list = listId || `hz-ent-${domains.join("-")}`;
+    return `<div class="field${error ? " invalid" : ""}">${fieldLabel(name, label)}
+    <input id="${esc(name)}" name="${esc(name)}" type="text" value="${esc(value ?? "")}" placeholder="entity.id" list="${esc(list)}" spellcheck="false" autocomplete="off" aria-invalid="${error ? "true" : "false"}"${attrs ? ` ${attrs}` : ""}>
+    ${error ? `<div class="ferr" role="alert">${esc(error)}</div>` : ""}</div>`;
+  }
+  function entityDatalists(ui) {
+    const states = ui && ui.hass && ui.hass.states || {};
+    const domains = [...new Set(Object.keys(states).map((id) => id.split(".")[0]))];
+    return domains.map((domain) => {
+      const ids = Object.keys(states).filter((id) => id.startsWith(`${domain}.`)).sort().slice(0, 800);
+      return `<datalist id="hz-ent-${esc(domain)}">${ids.map((id) => `<option value="${esc(id)}"></option>`).join("")}</datalist>`;
+    }).join("");
+  }
+  function table({ cols, rows, emptyText = "", cls = "" }) {
+    if (!rows.length) return empty(emptyText);
+    const head2 = cols.map((col) => `<th${col.cls ? ` class="${col.cls}"` : ""}>${esc(typeof col === "string" ? col : col.label)}</th>`).join("");
+    const body = rows.map((row) => {
+      const cells = row.map((cell, index) => `<td data-label="${esc(typeof cols[index] === "string" ? cols[index] : cols[index].label)}">${cell}</td>`).join("");
+      return `<tr>${cells}</tr>`;
+    }).join("");
+    return `<div class="tablewrap${cls ? ` ${cls}` : ""}"><table class="rtable"><thead><tr>${head2}</tr></thead><tbody>${body}</tbody></table></div>`;
+  }
+  function progress(percent) {
+    const value = Math.max(0, Math.min(100, Number(percent) || 0));
+    return `<div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${value}"><span style="width:${value}%"></span></div>`;
+  }
+
+  // src/views.js
+  var VIEWS = ["anlage", "effizienz", "raeume", "vergleich", "inventar", "protokoll", "einstellungen", "schema"];
   function box(ui, id, fn) {
     const w = ui.widths && ui.widths[id] || 640;
     return `<div class="cbox" data-cid="${id}">${withWidth(w, fn)}</div>`;
@@ -1006,8 +1274,8 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     <div class="score">${ring(d.score.value, lvl.tone)}
       <div><div class="lvl">${esc(t(lvl.label))}</div>
       <div class="muted">${esc(t("{w} Warnung · {i} Hinweise", { w: d.score.warnings, i: d.score.infos }))}<br>${esc(t("Datenbasis {d} Tage", { d: k.days_with_data }))}${d.score.total ? `<br>${esc(t("{a} von {n} Prüfungen aktiv", { a: d.score.active, n: d.score.total }))}` : ""}</div>
-      ${k.power_source === "fallback" ? `<div style="margin-top:8px">${pill("warn", t("Quelle {s}", { s: t("Ersatzquelle") }))}</div>` : ""}</div></div>
-    ${(d.score.checks || []).some((c) => !c.active) ? `<div class="fs" style="margin-top:10px">${esc(t("Ohne Bewertung:"))}</div><div class="ev">${(d.score.checks || []).filter((c) => !c.active).map((c) => `<span title="${esc(c.reason === "no_source" ? t("kein Sensor zugeordnet") : t("noch keine Daten"))}">${esc(t(CHECK_NAMES[c.key] || c.key))} · ${esc(c.reason === "no_source" ? t("kein Sensor") : t("keine Daten"))}</span>`).join("")}</div>` : ""}</div>`;
+      ${k.power_source === "fallback" ? `<div class="mt8">${pill("warn", t("Quelle {s}", { s: t("Ersatzquelle") }))}</div>` : ""}</div></div>
+    ${(d.score.checks || []).some((c) => !c.active) ? `<div class="fs mt10">${esc(t("Ohne Bewertung:"))}</div><div class="ev">${(d.score.checks || []).filter((c) => !c.active).map((c) => `<span title="${esc(c.reason === "no_source" ? t("kein Sensor zugeordnet") : t("noch keine Daten"))}">${esc(t(CHECK_NAMES[c.key] || c.key))} · ${esc(c.reason === "no_source" ? t("kein Sensor") : t("keine Daten"))}</span>`).join("")}</div>` : ""}</div>`;
     const cop = k.cop_short.value;
     const copPill = (() => {
       if (cop == null) return pill("mut", t("keine Daten"));
@@ -1025,7 +1293,7 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     const flowTone = flow == null ? "mut" : Math.abs(flow) <= 1 ? "ok" : Math.abs(flow) < (th.flow_deviation_k ?? 5) ? "warn" : "bad";
     const kpi = (key, title, value, unit, spark, p) => `<div class="c">${head(title, key, ui)}<div class="big">${value}${unit ? `<small>${unit}</small>` : ""}</div>${spark}${p}</div>`;
     const kpis = `<div class="kpis">
-    ${kpi("cop", t("COP 7 Tage"), fmt(cop, 1), cop != null && k.cop_long.value != null ? esc(t("30 T: {v}", { v: fmt(k.cop_long.value, 1) })) : "", sparkline(last30.map((r) => r.cop), "var(--hz-ok)"), copPill + (k.cop_total_short && k.cop_total_short.value != null ? `<div class="muted" style="margin-top:6px">${esc(t("inkl. Warmwasser {v}", { v: fmt(k.cop_total_short.value, 1) }))}</div>` : ""))}
+    ${kpi("cop", t("COP 7 Tage"), fmt(cop, 1), cop != null && k.cop_long.value != null ? esc(t("30 T: {v}", { v: fmt(k.cop_long.value, 1) })) : "", sparkline(last30.map((r) => r.cop), "var(--hz-ok)"), copPill + (k.cop_total_short && k.cop_total_short.value != null ? `<div class="muted mt6">${esc(t("inkl. Warmwasser {v}", { v: fmt(k.cop_total_short.value, 1) }))}</div>` : ""))}
     ${kpi("starts", t("Starts / Tag"), fmt(k.starts_per_day, 0), th.starts_per_day ? esc(t("Schwelle {v}", { v: fmt(th.starts_per_day, 0) })) : "", sparkline(last30.map((r) => r.starts), "var(--hz-warn)", { kind: "bar", ref: th.starts_per_day }), k.starts_per_day == null ? pill("mut", t("keine Daten")) : pill(startsTone, startsTone === "bad" ? t("über der Schwelle") : t("im grünen Bereich")))}
     ${kpi("runtime", t("Laufzeit / Zyklus"), fmt(k.runtime_per_cycle, 0), t("min"), sparkline(last30.map((r) => r.cycle_min), "var(--hz-cool)"), k.runtime_per_cycle == null ? pill("mut", t("keine Daten")) : pill(runTone, runTone === "bad" ? t("unter der Schwelle") : t("im grünen Bereich")))}
     ${kpi("flow", t("Vorlauf Ist − Soll"), signed(flow), "K", sparkline(last30.map((r) => r.flow != null && r.target_flow != null ? r.flow - r.target_flow : null), "var(--hz-bad)", { ref: 0 }), flow == null ? pill("mut", t("keine Daten")) : pill(flowTone, flow > 1 ? t("Vorlauf zu warm → Kurve prüfen") : flow < -1 ? t("Vorlauf zu kalt") : t("passt")))}
@@ -1054,14 +1322,14 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     const tile = (label, value, unit, tone = "") => `<div class="lv"><div class="muted">${esc(t(label))}</div><div class="big ${tone}">${value}<small>${esc(unit)}</small></div></div>`;
     const state = lv.running === true ? pill("ok", t("Verdichter läuft")) : lv.running === false ? pill("mut", t("Verdichter aus")) : "";
     const sp = h.spread || {};
-    return `<div class="c">${head(t("Jetzt"), "live", ui)}<div class="row" style="margin-top:6px">${state}</div>
+    return `<div class="c">${head(t("Jetzt"), "live", ui)}<div class="row mt6">${state}</div>
     <div class="lvgrid">
       ${tile("Wärmeleistung", fmt(lv.heat_kw, 1), "kW")}
       ${tile("Strom", fmt(lv.power_kw, 2), "kW")}
       ${tile("COP jetzt", fmt(lv.cop, 1), "")}
       ${tile("Spreizung", fmt(lv.spread, 1), "K")}
     </div>
-    ${sp.median != null ? `<div class="fd" style="margin-top:8px">${esc(t("Spreizung im Lauf (7 Tage): Median {m} K, {n} Stunden", { m: fmt(sp.median, 1), n: sp.hours }))}</div>` : ""}</div>`;
+    ${sp.median != null ? `<div class="fd mt8">${esc(t("Spreizung im Lauf (7 Tage): Median {m} K, {n} Stunden", { m: fmt(sp.median, 1), n: sp.hours }))}</div>` : ""}</div>`;
   }
   function copCurveCard(d, ui, fit) {
     const rows = d.series.filter((r) => r.cop != null && r.outdoor != null && r.cop < 12);
@@ -1103,7 +1371,7 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     const items = d.missing.map((m) => names[m]).filter(Boolean);
     if (!items.length) return "";
     return `<div class="c"><div class="h">${esc(t("Was fehlt?"))}</div><div class="fs">${esc(t("Diese Auswertungen brauchen noch einen Sensor:"))}</div>
-    <div class="ev">${items.map((x) => `<span>${esc(t(x))}</span>`).join("")}</div><div class="fd" style="margin-top:10px">${esc(t("Ein Sensor lässt sich unter Einstellungen → Geräte & Dienste → Heizungsanalyse → Konfigurieren ergänzen."))}</div></div>`;
+    <div class="ev">${items.map((x) => `<span>${esc(t(x))}</span>`).join("")}</div><div class="fd mt10">${esc(t("Ein Sensor lässt sich unter Einstellungen → Geräte & Dienste → Heizungsanalyse → Konfigurieren ergänzen."))}</div></div>`;
   }
   function viewEffizienz(d, ui) {
     const days = ui.range ?? 90;
@@ -1136,7 +1404,7 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     <div class="legend"><span><i style="background:var(--hz-cool)"></i>${esc(t("Abtauen"))}</span><span><i style="background:var(--hz-bad)"></i>${esc(t("Heizstab"))}</span></div></div>`;
     const heat = rows.reduce((s, r) => s + (r.heat || 0), 0);
     const dhw = rows.reduce((s, r) => s + (r.dhw || 0), 0);
-    const dhwCard = rows.some((r) => r.dhw != null) ? `<div class="c">${head(t("Warmwasseranteil"), "dhw", ui)}<div class="big">${fmt(heat ? dhw / heat * 100 : null, 0)}<small>%</small></div><div class="meter"><i style="width:${heat ? Math.min(100, dhw / heat * 100) : 0}%;background:var(--hz-vio)"></i></div><div class="muted" style="margin-top:8px">${fmt(dhw, 0)} / ${fmt(heat, 0)} kWh</div></div>` : "";
+    const dhwCard = rows.some((r) => r.dhw != null) ? `<div class="c">${head(t("Warmwasseranteil"), "dhw", ui)}<div class="big">${fmt(heat ? dhw / heat * 100 : null, 0)}<small>%</small></div><div class="meter"><i style="width:${heat ? Math.min(100, dhw / heat * 100) : 0}%;background:var(--hz-vio)"></i></div><div class="muted mt8">${fmt(dhw, 0)} / ${fmt(heat, 0)} kWh</div></div>` : "";
     const hy = d.kpis && d.kpis.hydraulics || {};
     const dailyRows = (map, key) => Object.entries(map || {}).map(([day, v]) => ({ day, [key]: v }));
     const spreadRows = dailyRows(hy.spread_daily, "spread");
@@ -1177,7 +1445,7 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
             <b>${m == null ? "–" : signed(m)} K</b>${extras ? `<div class="extra">${extras}</div>` : ""}</div>`;
     }).join("") : `<div class="empty">${esc(t("noch keine Stichproben"))}</div>`;
     const roomsCard = `<div class="c">${head(t("Räume"), "rooms", ui, esc(t("Abweichung zum Soll")))}
-    <div class="legend" style="justify-content:space-between;margin:6px 0 2px"><span>← ${esc(t("zu kalt"))}</span><span>${esc(t("zu warm"))} →</span></div>${roomRows}</div>`;
+    <div class="legend between"><span>← ${esc(t("zu kalt"))}</span><span>${esc(t("zu warm"))} →</span></div>${roomRows}</div>`;
     const th = d.thresholds || {};
     const circuits = (d.circuits || []).map((c) => {
       const idle = c.pump?.idle_share;
@@ -1190,12 +1458,6 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     }).join("");
     return `<div class="grid g2">${roomsCard}${circuits ? `<div class="c">${head(t("Heizkreise"), "circuits", ui)}${circuits}</div>` : ""}</div>`;
   }
-  var SECTIONS = { pumps: "Pumpe", thermostats: "Thermostat", hydraulics: "Hydraulik" };
-  function objectLabel(obj) {
-    const [section, key] = String(obj || "").split(".");
-    const name = SECTIONS[section] ? t(SECTIONS[section]) : section;
-    return key ? `${name} ${key}` : name;
-  }
   function viewVergleich(d, ui) {
     const fit = copFit(d);
     const changes = d.changes || [];
@@ -1205,11 +1467,15 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
       const good = betterUp ? diff > 0 : diff < 0;
       return ` <span class="pill tone-${Math.abs(diff) < 1e-9 ? "mut" : good ? "ok" : "warn"}">${signed(diff, digits)}</span>`;
     };
+    const fieldName = (object2, field2) => {
+      const hit = comparisonFields(d, object2).find((item) => item.key === field2);
+      return hit ? hit.label : field2;
+    };
     const list = changes.length ? changes.map((c) => {
       const b = c.before;
       const a = c.after;
       const adj = weatherAdjusted(b, a, fit);
-      const what = `${objectLabel(c.object)}${c.field ? ` · ${c.field}` : ""}`;
+      const what = `${objectName(d, c.object)}${c.field ? ` · ${fieldName(c.object, c.field)}` : ""}`;
       const val = c.old != null || c.new != null ? `: ${c.old ?? "–"} → ${c.new ?? "–"}` : "";
       const cmp = a && a.days >= 3 && b ? `<div class="cmp">
                 <div>COP<b>${fmt(b.cop, 2)} → ${fmt(a.cop, 2)}${delta(b.cop, a.cop, 2)}</b></div>
@@ -1219,16 +1485,23 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
                 <div>${esc(t("Ø außen"))}<b>${fmt(b.outdoor, 1)} → ${fmt(a.outdoor, 1)} °C</b></div>
               </div>` : `<div class="fd">${esc(t("noch zu wenig Tage danach"))}</div>`;
       return `<div class="chg"><span class="d"></span><div><div class="t">${esc(dayLabel(c.day))} ${esc(what)}${esc(val)}</div>${c.note ? `<div class="fd">${esc(c.note)}</div>` : ""}${cmp}</div></div>`;
-    }).join("") : `<div class="empty">${esc(t("Noch keine Änderung eingetragen. Trag z. B. „Heizkurve 0,6 → 0,5“ ein – nach ein paar Tagen siehst du hier, was es gebracht hat."))}</div>`;
+    }).join("") : empty(t("Noch keine Änderung eingetragen. Trag z. B. „Heizkurve 0,6 → 0,5“ ein – nach ein paar Tagen siehst du hier, was es gebracht hat."));
+    const targets = targetChoices(d);
+    const object = targets.some((item) => item.value === ui.chgObject) ? ui.chgObject : "heizkurve";
+    const options = comparisonFields(d, object);
+    const field = options.some((item) => item.key === ui.chgField) ? ui.chgField : options[0].key;
+    const old = currentValue(d, object, field);
+    const labels = options.map((item) => ({ value: item.key, label: `${item.label}${item.unit ? ` (${item.unit})` : ""}` }));
     const form = ui.form ? `<form class="log" data-form="log">
-        <label>${esc(t("Was"))}<input name="object" required placeholder="hydraulics"></label>
-        <label>${esc(t("Einstellung"))}<input name="field" required placeholder="heizkurve"></label>
-        <label>${esc(t("Alt"))}<input name="old_value" placeholder="0,6"></label>
-        <label>${esc(t("Neu"))}<input name="new_value" placeholder="0,5"></label>
-        <label style="grid-column:1/-1">${esc(t("Notiz"))}<input name="note"></label>
-        <div class="row"><button class="btn primary" type="submit">${esc(t("Speichern"))}</button><button class="btn ghost" type="button" data-act="form-close">${esc(t("Abbrechen"))}</button></div>
-      </form>` : `<div class="row" style="margin-top:12px"><button class="btn" data-act="form-open">+ ${esc(t("Änderung eintragen"))}</button></div>`;
-    return `<div class="grid g2"><div class="c">${head(t("Änderungen und ihre Wirkung"), "changes", ui)}${list}${form}</div>${viewEffizienzCopOnly(d, ui)}</div>`;
+        ${selectField({ name: "object", label: t("Was"), value: object, options: targets, attrs: 'data-chg="object"' })}
+        ${selectField({ name: "field", label: t("Einstellung"), value: field, options: labels, attrs: 'data-chg="field"' })}
+        ${textField({ name: "old_value", label: t("Alt"), value: old, placeholder: "0,6" })}
+        ${textField({ name: "new_value", label: t("Neu"), placeholder: "0,5" })}
+        <div class="span2">${textField({ name: "note", label: t("Notiz") })}</div>
+        <div class="row span2">${button(t("Speichern"), { type: "submit", variant: "primary" })}${button(t("Abbrechen"), { act: "form-close" })}</div>
+      </form>` : `<div class="row start">${button(`+ ${t("Änderung eintragen")}`, { act: "form-open" })}</div>`;
+    return `<div class="intro">${esc(t("{n} eingetragene Änderungen – Wirkung ab drei Tagen danach.", { n: changes.length }))}</div>
+    <div class="grid g2"><div class="c">${head(t("Änderungen und ihre Wirkung"), "changes", ui)}${list}${form}</div>${viewEffizienzCopOnly(d, ui)}</div>`;
   }
   function viewEffizienzCopOnly(d, ui) {
     const rows = rangeRows(d.series, 90);
@@ -1238,16 +1511,120 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
       { key: "outdoor", kind: "line", color: "var(--hz-cool)", axis: "r", width: 1.6, dash: "4 3" }
     ], { unitL: "COP", unitR: "°C", markers })) || `<div class="empty">${esc(t("keine Daten"))}</div>`}</div>`;
   }
+  var INV_ERRORS = {
+    required: "Pflichtfeld",
+    not_found: "Entity nicht gefunden",
+    unit: "Einheit passt nicht",
+    number: "Bitte eine Zahl eintragen",
+    range: "Wert außerhalb des Bereichs",
+    option: "Bitte aus der Liste wählen",
+    reference: "Verweis nicht gefunden",
+    unknown: "Feld ist unbekannt",
+    length: "Text ist zu lang",
+    section: "Bereich ist unbekannt",
+    _: "Wert prüfen"
+  };
+  function invErrorText(code) {
+    return t(INV_ERRORS[code] || INV_ERRORS._);
+  }
+  function invInputs(d, ui, section, state) {
+    const fields = sectionFields(d, section);
+    const errors = state.errors || {};
+    const editing = Boolean(state.object);
+    return fields.map((spec) => {
+      const value = state.values && state.values[spec.key] != null ? state.values[spec.key] : "";
+      const name = `f_${spec.key}`;
+      const error = errors[spec.key] ? invErrorText(errors[spec.key]) : "";
+      const label = localized(spec.label) || spec.key;
+      if (spec.type === "select" || spec.type === "room" || spec.type === "circuit") {
+        const options = spec.options || [];
+        return `<div class="span2">${selectField({ name, label, value, options, error })}</div>`;
+      }
+      const attrs = spec.type === "number" ? `${spec.min != null ? ` min="${spec.min}"` : ""}${spec.max != null ? ` max="${spec.max}"` : ""}${spec.step != null ? ` step="${spec.step}"` : ""}` : "";
+      return `<div class="span2">${textField({ name, label, value, type: spec.type === "number" ? "number" : "text", unit: spec.unit || "", error, attrs })}</div>`;
+    }).join("") + (editing ? "" : "");
+  }
+  function invSelectionField(d, ui, section, state) {
+    const hint = sectionSelectionHint(section);
+    if (!hint) return "";
+    const source = section === "pumps" ? d.circuits || [] : d.rooms || [];
+    const options = source.map((item) => ({ value: item.id, label: { de: item.name || item.id, en: item.name || item.id } }));
+    const error = state.errors && state.errors.selection ? invErrorText(state.errors.selection) : "";
+    return `<div class="span2">${selectField({
+      name: "selection",
+      label: localized(hint),
+      value: state.selection || "",
+      options: [{ value: "", label: { de: "– bitte wählen –", en: "– please choose –" } }, ...options],
+      error,
+      attrs: 'data-inv-selection="1"'
+    })}</div>`;
+  }
+  function invForm(d, ui) {
+    const state = ui.invForm;
+    if (!state) return "";
+    const section = state.section;
+    const editing = Boolean(state.object);
+    const title = sectionTitle(d, section);
+    return `<form class="log invform" data-form="inventory">
+      <div class="formhead span2"><b>${esc(editing ? t("{s} bearbeiten", { s: title }) : t("{s} ergänzen", { s: title }))}</b></div>
+      <input type="hidden" name="section" value="${esc(section)}">
+      ${editing ? `<input type="hidden" name="object" value="${esc(state.object)}">` : invSelectionField(d, ui, section, state)}
+      ${invInputs(d, ui, section, state)}
+      <div class="span2">${textField({ name: "note", label: t("Grund (optional)"), value: state.note || "", placeholder: t("z. B. Voreinstellung geändert") })}</div>
+      ${state.message ? `<div class="ferr span2" role="alert">${esc(state.message)}</div>` : ""}
+      <div class="row span2">${button(t("Speichern"), { type: "submit", variant: "primary" })}${button(t("Abbrechen"), { act: "inv-close" })}</div>
+    </form>`;
+  }
+  function invTable(d, ui, section) {
+    const entries = objectEntries(d, section);
+    const fields = sectionFields(d, section).filter((item) => item.key !== "notes");
+    const used = fields.filter((spec) => entries.some((entry) => entry.record[spec.key] != null && entry.record[spec.key] !== ""));
+    const first = section === "pumps" ? t("Heizkreis") : section === "hydraulics" ? t("Objekt") : t("Raum");
+    const cols = [first, ...used.map((spec) => localized(spec.label) || spec.key), ""];
+    const rows = entries.map((entry) => {
+      const name = section === "hydraulics" ? localized((schemaOf(d).hydraulics || {}).title) : objectName(d, entry.object);
+      const notes = entry.record.notes ? `<div class="fd">${esc(entry.record.notes)}</div>` : "";
+      return [
+        `<b>${esc(name)}</b>${notes}`,
+        ...used.map((spec) => esc(entry.record[spec.key] ?? "")),
+        `<span class="rowact">${button(t("Bearbeiten"), { act: "inv-edit", attrs: `data-object="${esc(entry.object)}" data-section="${esc(section)}"` })}${button(t("Löschen"), { act: "inv-del", variant: "ghost danger", attrs: `data-object="${esc(entry.object)}" data-section="${esc(section)}"` })}</span>`
+      ];
+    });
+    return table({ cols, rows, emptyText: t("Noch nichts eingetragen."), cls: "invtable" });
+  }
   function viewInventar(d, ui) {
-    const inv = d.inventory || {};
-    const section = (key, title) => {
-      const data = inv[key] || {};
-      const entries = key === "hydraulics" ? Object.keys(data).length ? [["", data]] : [] : Object.entries(data);
-      if (!entries.length) return `<div class="c"><div class="h">${esc(t(title))}</div><div class="empty">${esc(t("Noch nichts eingetragen."))}</div></div>`;
-      const cols = [...new Set(entries.flatMap(([, v]) => Object.keys(v || {})))];
-      return `<div class="c"><div class="h">${esc(t(title))}</div><table><tr>${key === "hydraulics" ? "" : "<th></th>"}${cols.map((c) => `<th>${esc(c)}</th>`).join("")}</tr>
-      ${entries.map(([id, v]) => `<tr>${key === "hydraulics" ? "" : `<td><b>${esc(id)}</b></td>`}${cols.map((c) => `<td>${esc(v?.[c] ?? "")}</td>`).join("")}</tr>`).join("")}</table></div>`;
-    };
+    const inventory = d.inventory || {};
+    const completeness = d.inventory_completeness || { percent: 0, sections: {} };
+    const percent = completeness.percent || 0;
+    const count = ["pumps", "thermostats", "hydraulics", "radiators"].reduce(
+      (sum, section) => sum + objectEntries(d, section).length,
+      0
+    );
+    const intro = `<div class="intro"><span>${esc(t("Inventar zu {p} % vollständig · {n} Einträge", { p: percent, n: count }))}</span>${progress(percent)}</div>`;
+    const sections = ["pumps", "thermostats", "hydraulics", "radiators"].map((section) => {
+      const body = `${invTable(d, ui, section)}<div class="row start">${button(`+ ${t("Eintrag hinzufügen")}`, { act: "inv-add", attrs: `data-section="${esc(section)}"` })}</div>`;
+      const info = (completeness.sections || {})[section] || {};
+      return card(sectionTitle(d, section), "inventory", ui, body, info.percent != null ? `${info.percent} %` : "");
+    }).join("");
+    const prefill = (d.rooms || []).length ? `<div class="row start">${button(t("Aus Räumen übernehmen"), { act: "inv-prefill" })}<span class="muted">${esc(t("Legt Thermostat und Heizkörper je Raum an, ohne Werte zu erfinden."))}</span></div>` : "";
+    const csv = `<details class="impexp"><summary>${esc(t("CSV Import und Export"))}</summary>
+      <p class="muted">${esc(t("Format: object,field,value – eine Zeile je Wert."))}</p>
+      <div class="row start">${button(t("CSV herunterladen"), { act: "inv-export" })}</div>
+      <textarea name="inv-csv" data-inv-csv rows="5" placeholder="pumps.hk1,manufacturer,Hersteller"></textarea>
+      <div class="row start">${button(t("CSV übernehmen"), { act: "inv-import" })}<span class="muted">${esc(t("Bestehende Werte werden ergänzt."))}</span></div>
+    </details>`;
+    const saved = ui.invSaved ? `${banner("ok", t("Gespeichert. Vergleiche die Wirkung nach frühestens 14 Tagen."))}<div class="row start">${button(t("Jetzt zum Vergleich"), { act: "goto-vergleich" })}</div>` : "";
+    return `${intro}${saved}
+    <div class="grid g2">
+      <div class="grid">${sections}</div>
+      <div class="grid">
+        ${card(t("Inventar"), "inventory", ui, `${prefill}${invForm(d, ui)}${csv}
+          <div class="row start">${button(t("Bericht herunterladen"), { act: "report" })}</div>`)}
+        ${card(t("Datenquellen"), "sources", ui, sourceList(d))}
+      </div>
+    </div>`;
+  }
+  function sourceList(d) {
     const labels = {
       power_entity: "Strom",
       heat_entity: "Wärme",
@@ -1269,27 +1646,7 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
       power_now_entity: "Leistung jetzt",
       dhw_power_entity: "Warmwasser-Strom"
     };
-    const src = Object.entries(d.sources || {}).map(([k, ok]) => `<div class="src"><span>${esc(labels[k] ? t(labels[k]) : k)}</span>${pill(ok ? "ok" : "mut", ok ? t("verbunden") : t("fehlt"))}</div>`).join("");
-    const editor = ui.invForm ? `<form class="log invform" data-form="inventory">
-      <label>${esc(t("Bereich"))}
-        <select name="section">
-          <option value="pumps">${esc(t("Pumpen"))}</option>
-          <option value="thermostats">${esc(t("Thermostate"))}</option>
-          <option value="hydraulics">${esc(t("Hydraulik"))}</option>
-          <option value="radiators">${esc(t("Heizkörper"))}</option>
-        </select>
-      </label>
-      <label>${esc(t("Objekt"))}<input name="object" placeholder="pumps.hk2"></label>
-      <label style="grid-column:1/-1">${esc(t("Werte (JSON)"))}<input name="values" placeholder='{"model":"Alpha2","setting":"Stufe 2"}'></label>
-      <label>${esc(t("Notiz"))}<input name="note"></label>
-      <div class="row"><button class="btn primary" type="submit">${esc(t("Speichern"))}</button><button class="btn ghost" type="button" data-act="inv-close">${esc(t("Abbrechen"))}</button></div>
-    </form>` : `<div class="row"><button class="btn" data-act="inv-open">+ ${esc(t("Eintrag hinzufügen"))}</button></div>`;
-    return `<div class="grid g2">
-    <div class="grid">${section("pumps", "Pumpen")}${section("thermostats", "Thermostate")}${section("hydraulics", "Hydraulik")}${section("radiators", "Heizkörper")}
-      <div class="c">${head(t("Inventar"), "inventory", ui)}${editor}
-        <div class="row" style="margin-top:10px"><button class="btn" data-act="report">${esc(t("Bericht herunterladen"))}</button></div>
-      </div></div>
-    <div class="c">${head(t("Datenquellen"), "sources", ui)}${src}</div></div>`;
+    return Object.entries(d.sources || {}).map(([key, ok]) => `<div class="src"><span>${esc(labels[key] ? t(labels[key]) : key)}</span>${pill(ok ? "ok" : "mut", ok ? t("verbunden") : t("fehlt"))}</div>`).join("");
   }
   var LEVELS_LOG = [
     ["error", "Fehler"],
@@ -1367,14 +1724,14 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
   function runtimeCard(d, ui) {
     const rt = d.diag && d.diag.runtime || {};
     const versions = d.diag && d.diag.versions || {};
-    const card = versions.card || {};
-    const mismatch = card.matches === false;
+    const card2 = versions.card || {};
+    const mismatch = card2.matches === false;
     const storage = d.diag && d.diag.storage || {};
     const k = d.diag && d.diag.summary && d.diag.summary.kpis || {};
     const next = rt.next_run ? timeOf(rt.next_run) : "–";
     const rows = [
       [t("Backend"), esc(String(versions.integration || "–"))],
-      [t("Karte"), esc(String(card.version || "–"))],
+      [t("Karte"), esc(String(card2.version || "–"))],
       [t("Letzter Lauf"), `${esc(String(rt.run_index ?? 0))}. ${esc(t("Lauf"))} · ${esc(fmt(rt.last_duration_ms, 0))} ${esc(t("ms"))}`],
       [t("Nächster Lauf"), esc(next)],
       [t("Letzter Fehler"), rt.last_error ? pill("bad", rt.last_error) : pill("ok", t("keiner"))],
@@ -1383,12 +1740,12 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     ];
     return `<div class="c">${head(t("Systemstatus"), "system", ui)}${mismatch ? `<div class="fs">${pill("warn", t("Version weicht ab"))}</div>` : ""}
     <table class="kv">${rows.map(([a, b]) => `<tr><th>${a}</th><td>${b}</td></tr>`).join("")}</table>
-    <div class="row" style="margin-top:10px">
+    <div class="row mt10">
       <button class="btn" data-act="log-download">${esc(t("Diagnose herunterladen"))}</button>
       <button class="btn ghost" data-act="log-copy">${esc(t("Protokoll kopieren"))}</button>
       <button class="btn primary" data-act="log-refresh">${esc(t("Jetzt neu berechnen"))}</button>
     </div>
-    ${rt.last_error ? `<div class="fd" style="margin-top:8px">${esc(t("Letzter Fehler"))}: ${esc(rt.last_error)}</div>` : ""}
+    ${rt.last_error ? `<div class="fd mt8">${esc(t("Letzter Fehler"))}: ${esc(rt.last_error)}</div>` : ""}
   </div>`;
   }
   function sourcesCard(d, ui) {
@@ -1454,18 +1811,102 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     <div class="grid">${logList(d, ui)}</div>
     ${!diag ? `<div class="c empty">${esc(t("Diagnose nicht verfügbar – Protokoll wird trotzdem angezeigt."))}</div>` : ""}`;
   }
+  var CFG_ERRORS = {
+    required: "Pflichtfeld",
+    not_found: "Entity nicht gefunden",
+    unit: "Einheit passt nicht",
+    number: "Bitte eine Zahl eintragen",
+    range: "Wert außerhalb des Bereichs",
+    option: "Bitte aus der Liste wählen",
+    reference: "Verweis nicht gefunden",
+    duplicate: "Bezeichner ist doppelt",
+    format: "Aufbau ist ungültig",
+    _: "Wert prüfen"
+  };
+  function cfgErrorText(code) {
+    return t(CFG_ERRORS[code] || CFG_ERRORS._);
+  }
+  function cfgSources(d, ui, data, options, schema, errors) {
+    const render = (spec) => {
+      const value = spec.scope === "data" ? data[spec.key] : options[spec.key];
+      return `<div class="srcrow">${entityField({
+        name: `src_${spec.key}`,
+        label: localized(spec.label),
+        value,
+        domains: spec.domain || ["sensor"],
+        listId: `hz-ent-${(spec.domain || ["sensor"])[0]}`,
+        error: errors[spec.key] ? cfgErrorText(errors[spec.key]) : "",
+        attrs: `data-cfg="${spec.scope}" data-key="${esc(spec.key)}"`
+      })}</div>`;
+    };
+    const required = (schema.sources || []).filter((spec) => spec.required);
+    const optional = (schema.sources || []).filter((spec) => !spec.required);
+    return `
+    <div class="cfggroup"><div class="h">${esc(t("Pflicht"))}</div>${required.map(render).join("") || empty(t("keine"))}</div>
+    <div class="cfggroup"><div class="h">${esc(t("Optional"))}</div>${optional.map(render).join("") || empty(t("keine"))}</div>`;
+  }
+  function cfgCircuits(d, ui, options, schema, errors) {
+    const types = (schema.circuit_types || []).map((type) => ({ value: type, label: type }));
+    const list = options.circuits || [];
+    const item = (circuit, index) => `<div class="arrcard">
+      <div class="arrhead"><b>${esc(circuit.name || circuit.id || t("Neuer Heizkreis"))}</b>${button(t("Entfernen"), { act: "cfg-circ-del", variant: "ghost danger", attrs: `data-idx="${index}"` })}</div>
+      <div class="grid g2">
+        ${textField({ name: `c${index}_name`, label: t("Name"), value: circuit.name, error: errors[`circuits.${index}.name`] ? cfgErrorText(errors[`circuits.${index}.name`]) : "", attrs: `data-arr="circuits" data-idx="${index}" data-key="name"` })}
+        ${selectField({ name: `c${index}_type`, label: t("Typ"), value: circuit.type, options: types, error: errors[`circuits.${index}.type`] ? cfgErrorText(errors[`circuits.${index}.type`]) : "", attrs: `data-arr="circuits" data-idx="${index}" data-key="type"` })}
+        ${entityField({ name: `c${index}_temp`, label: t("Vorlauftemperatur"), value: circuit.temperature_entity, domains: ["sensor"], listId: "hz-ent-sensor", error: errors[`circuits.${index}.temperature_entity`] ? cfgErrorText(errors[`circuits.${index}.temperature_entity`]) : "", attrs: `data-arr="circuits" data-idx="${index}" data-key="temperature_entity"` })}
+        ${entityField({ name: `c${index}_pump`, label: t("Pumpe"), value: circuit.pump_entity, domains: ["switch", "binary_sensor", "sensor"], listId: "hz-ent-switch", error: errors[`circuits.${index}.pump_entity`] ? cfgErrorText(errors[`circuits.${index}.pump_entity`]) : "", attrs: `data-arr="circuits" data-idx="${index}" data-key="pump_entity"` })}
+        ${entityField({ name: `c${index}_mo`, label: t("Mischer auf"), value: circuit.mixer_open_entity, domains: ["switch", "binary_sensor"], listId: "hz-ent-switch", attrs: `data-arr="circuits" data-idx="${index}" data-key="mixer_open_entity"` })}
+        ${entityField({ name: `c${index}_mc`, label: t("Mischer zu"), value: circuit.mixer_close_entity, domains: ["switch", "binary_sensor"], listId: "hz-ent-switch", attrs: `data-arr="circuits" data-idx="${index}" data-key="mixer_close_entity"` })}
+      </div>
+    </div>`;
+    return `${list.map(item).join("") || empty(t("Noch kein Heizkreis."))}
+    <div class="row start">${button(`+ ${t("Heizkreis hinzufügen")}`, { act: "cfg-circ-add" })}</div>`;
+  }
+  function cfgRooms(d, ui, options, schema, errors) {
+    const types = (schema.room_types || []).map((type) => ({ value: type, label: type }));
+    const circuitOptions = (options.circuits || []).map((circuit) => ({ value: circuit.id, label: { de: circuit.name || circuit.id, en: circuit.name || circuit.id } }));
+    const list = options.rooms || [];
+    const item = (room, index) => `<div class="arrcard">
+      <div class="arrhead"><b>${esc(room.name || room.id || t("Neuer Raum"))}</b>${button(t("Entfernen"), { act: "cfg-room-del", variant: "ghost danger", attrs: `data-idx="${index}"` })}</div>
+      <div class="grid g2">
+        ${textField({ name: `r${index}_name`, label: t("Name"), value: room.name, error: errors[`rooms.${index}.name`] ? cfgErrorText(errors[`rooms.${index}.name`]) : "", attrs: `data-arr="rooms" data-idx="${index}" data-key="name"` })}
+        ${selectField({ name: `r${index}_type`, label: t("Raumtyp"), value: room.room_type, options: [{ value: "", label: { de: "– keine Angabe –", en: "– not specified –" } }, ...types], error: errors[`rooms.${index}.room_type`] ? cfgErrorText(errors[`rooms.${index}.room_type`]) : "", attrs: `data-arr="rooms" data-idx="${index}" data-key="room_type"` })}
+        ${selectField({ name: `r${index}_circuit`, label: t("Heizkreis"), value: room.circuit, options: [{ value: "", label: { de: "– bitte wählen –", en: "– please choose –" } }, ...circuitOptions], error: errors[`rooms.${index}.circuit`] ? cfgErrorText(errors[`rooms.${index}.circuit`]) : "", attrs: `data-arr="rooms" data-idx="${index}" data-key="circuit"` })}
+        ${entityField({ name: `r${index}_climate`, label: t("Klima-Entity"), value: room.climate_entity, domains: ["climate"], listId: "hz-ent-climate", attrs: `data-arr="rooms" data-idx="${index}" data-key="climate_entity"` })}
+        ${entityField({ name: `r${index}_valve`, label: t("Ventilposition"), value: room.valve_position_entity, domains: ["sensor", "number"], listId: "hz-ent-sensor", attrs: `data-arr="rooms" data-idx="${index}" data-key="valve_position_entity"` })}
+      </div>
+    </div>`;
+    return `${list.map(item).join("") || empty(t("Noch kein Raum."))}
+    <div class="row start">${button(`+ ${t("Raum hinzufügen")}`, { act: "cfg-room-add" })}</div>`;
+  }
+  function cfgThresholds(d, ui, options, schema, errors) {
+    const specs = schema.thresholds || [];
+    const thresholds = options.thresholds || {};
+    const rows = specs.map((spec) => {
+      const key = `thresholds.${spec.key}`;
+      return textField({
+        name: `thr_${spec.key}`,
+        label: localized(spec.label),
+        value: thresholds[spec.key] ?? spec.default,
+        type: "number",
+        unit: spec.unit || "",
+        error: errors[key] ? cfgErrorText(errors[key]) : "",
+        attrs: `data-thr="${esc(spec.key)}" min="${spec.min}" max="${spec.max}" step="${spec.step}"`
+      });
+    });
+    return `<div class="grid g3">${rows.join("")}</div>
+    <div class="row start">${button(t("Auf Standard zurücksetzen"), { act: "cfg-thr-reset" })}</div>`;
+  }
   function viewEinstellungen(d, ui) {
     const cfg = d && d.config || {};
     const data = cfg.data || {};
     const options = cfg.options || {};
-    const mandatory = ["power_entity", "heat_entity", "outdoor_entity", "compressor_entity"];
-    const optional = Object.keys(options).filter((k) => k !== "circuits" && k !== "rooms" && k !== "thresholds");
-    const srcRow = (key, value, group) => `<div class="srcrow"><label>${esc(key)}</label><input data-cfg="${group}" data-key="${esc(key)}" type="text" value="${esc(value || "")}" placeholder="entity.id"></div>`;
-    const mand = mandatory.map((k) => srcRow(k, data[k], "data")).join("");
-    const opt = optional.map((k) => srcRow(k, options[k], "options")).join("");
-    const circ = JSON.stringify(cfg.circuits || [], null, 2);
-    const rooms = JSON.stringify(cfg.rooms || [], null, 2);
-    const thr = JSON.stringify(cfg.thresholds || {}, null, 2);
+    const schema = d && d.settings_schema || { sources: [], thresholds: [], circuit_types: [], room_types: [] };
+    const errors = ui && ui.cfgErrors || {};
+    const coverage = d && d.settings_coverage || {};
+    const errorCount = Object.keys(errors).length;
+    const intro = `<div class="intro"><span>${esc(t("Pflichtquellen: {a} von {b} verbunden", { a: coverage.required_filled ?? 0, b: coverage.required ?? 0 }))}</span>${cfg.coverage ? "" : ""}</div>`;
+    const errBanner = errorCount ? banner("bad", t("{n} Felder brauchen Aufmerksamkeit.", { n: errorCount })) : "";
     const sg = d && d.suggestion || {};
     const bins = sg.bins || [];
     let curveCard = "";
@@ -1473,44 +1914,29 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
       const rows = bins.map((b) => `<tr><td>${esc(fmt(b.outdoor_lower, 0))}–${esc(fmt(b.outdoor_upper, 0))} °C</td><td>${esc((b.median_deviation_k > 0 ? "+" : "") + fmt(b.median_deviation_k, 1))} K</td><td>${esc(fmt(b.samples, 0))}</td></tr>`).join("");
       const offset = (sg.suggested_offset_k > 0 ? "+" : "") + fmt(sg.suggested_offset_k, 1);
       const conf = sg.confidence === "high" ? t("hoch") : sg.confidence === "medium" ? t("mittel") : t("niedrig");
-      curveCard = `<div class="muted" style="margin-bottom:8px">${esc(sg.reason || "")}</div>
-      <table class="cfgtbl"><tr><th>${esc(t("Außen"))}</th><th>${esc(t("Median-Abweichung"))}</th><th>${esc(t("Stunden"))}</th></tr>${rows}</table>
-      <div class="row" style="margin-top:10px">
-        <div class="gl"><div class="lbl">${esc(t("Vorschlag Offset"))}</div><div class="num">${esc(offset)} K</div></div>
-        <div class="gl"><div class="lbl">${esc(t("Geschätzter COP-Gewinn"))}</div><div class="num">${esc(fmt(sg.estimated_cop_gain_pct, 1))} %</div></div>
-        <div class="gl"><div class="lbl">${esc(t("Konfidenz"))}</div><div class="num">${esc(conf)}</div></div>
+      curveCard = `<div class="muted">${esc(sg.reason || "")}</div>
+      <div class="tablewrap"><table class="rtable"><thead><tr><th>${esc(t("Außen"))}</th><th>${esc(t("Median-Abweichung"))}</th><th>${esc(t("Stunden"))}</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div class="detailgrid">
+        <div class="detail"><span class="dl">${esc(t("Vorschlag Offset"))}</span><span class="dv">${esc(offset)} K</span></div>
+        <div class="detail"><span class="dl">${esc(t("Geschätzter COP-Gewinn"))}</span><span class="dv">${esc(fmt(sg.estimated_cop_gain_pct, 1))} %</span></div>
+        <div class="detail"><span class="dl">${esc(t("Konfidenz"))}</span><span class="dv">${esc(conf)}</span></div>
       </div>`;
     } else {
-      curveCard = `<div class="muted">${esc(t("Noch keine Daten für einen Vorschlag."))}</div>`;
+      curveCard = empty(t("Noch keine Daten für einen Vorschlag."));
     }
-    return `<div class="grid">
-    <div class="c">${head(t("Quellen"), "cfg_sources", ui)}
-      <div class="cfggroup"><div class="h">${esc(t("Pflicht"))}</div>${mand}</div>
-      <div class="cfggroup"><div class="h">${esc(t("Optional"))}</div>${opt || `<div class="muted">${esc(t("keine"))}</div>`}</div>
-    </div>
-    <div class="c">${head(t("Heizkreise"), "cfg_circuits", ui)}
-      <textarea class="cfgjson" data-cfgjson="circuits">${esc(circ)}</textarea>
-    </div>
-    <div class="c">${head(t("Raeume"), "cfg_rooms", ui)}
-      <textarea class="cfgjson" data-cfgjson="rooms">${esc(rooms)}</textarea>
-    </div>
-    <div class="c">${head(t("Schwellen"), "cfg_thresholds", ui)}
-      <textarea class="cfgjson" data-cfgjson="thresholds">${esc(thr)}</textarea>
-    </div>
-    <div class="c">${head(t("Heizkurve"), "cfg_curve", ui)}
-      ${curveCard}
-      <div class="cfggroup" style="margin-top:12px">
-        <div class="h">${esc(t("Manuelle Anpassung"))}</div>
-        <div class="srcrow"><label>${esc(t("Offset (K)"))}</label><input data-cfg="options" data-key="heating_curve_offset" type="number" step="0.1" value="${esc(String(cfg.options && cfg.options.heating_curve_offset || 0))}"></div>
-        <div class="srcrow"><label>${esc(t("Steigung"))}</label><input data-cfg="options" data-key="heating_curve_slope" type="number" step="0.01" value="${esc(String(cfg.options && cfg.options.heating_curve_slope || 1))}"></div>
-      </div>
-    </div>
-    <div class="c"><div class="row">
-      <button class="btn primary" data-act="cfg-save">${esc(t("Speichern"))}</button>
-      <span class="muted">${esc(t("Speichern laedt die Integration neu."))}</span>
-    </div>
-    ${ui.cfgMsg ? `<div class="fd" style="margin-top:8px">${esc(ui.cfgMsg)}</div>` : ""}
-    </div>
+    return `${entityDatalists(ui)}${intro}${errBanner}<div class="grid">
+    ${card(t("Quellen"), "cfg_sources", ui, cfgSources(d, ui, data, options, schema, errors))}
+    ${card(t("Heizkreise"), "cfg_circuits", ui, cfgCircuits(d, ui, options, schema, errors))}
+    ${card(t("Räume"), "cfg_rooms", ui, cfgRooms(d, ui, options, schema, errors))}
+    ${card(t("Schwellen und Grenzwerte"), "cfg_thresholds", ui, cfgThresholds(d, ui, options, schema, errors))}
+    ${card(t("Heizkurve"), "cfg_curve", ui, `${curveCard}
+      <div class="cfggroup"><div class="h">${esc(t("Manuelle Anpassung"))}</div>
+        <div class="grid g2">
+          ${textField({ name: "heating_curve_offset", label: t("Offset"), value: options.heating_curve_offset ?? 0, type: "number", unit: "K", attrs: 'data-cfg="options" data-key="heating_curve_offset" step="0.1"' })}
+          ${textField({ name: "heating_curve_slope", label: t("Steigung"), value: options.heating_curve_slope ?? 1, type: "number", attrs: 'data-cfg="options" data-key="heating_curve_slope" step="0.01"' })}
+        </div>
+      </div>`)}
+    <section class="c"><div class="row start">${button(t("Speichern"), { act: "cfg-save", variant: "primary" })}<span class="muted">${esc(t("Speichern lädt die Integration neu."))}</span></div>${ui.cfgMsg ? `<div class="fd" role="status">${esc(ui.cfgMsg)}</div>` : ""}</section>
   </div>`;
   }
   function viewSchema(d, ui, live) {
@@ -1544,7 +1970,7 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     const flowTxt = flow != null ? (flow > 0 ? "+" : "") + flow.toFixed(1) + " K" : "–";
     return `<div class="schema">
     <div class="srow">
-      <div class="sbox swp"><div class="stitle">${esc(t("Waermepumpe"))}</div><div class="sval">COP ${esc(cop)}</div><div class="smut">Vorlauf ${esc(flowTxt)}</div></div>
+      <div class="sbox swp"><div class="stitle">${esc(t("Wärmepumpe"))}</div><div class="sval">COP ${esc(cop)}</div><div class="smut">Vorlauf ${esc(flowTxt)}</div></div>
     </div>
     <div class="sarrow">↓</div>
     <div class="srow">
@@ -1581,7 +2007,24 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     setConfig(config) {
       this._config = { view: "anlage", ...config || {} };
       if (!VIEWS.includes(this._config.view)) this._config.view = "anlage";
-      this._ui = { help: null, range: 90, form: false, widths: {}, logCat: "", logLevel: "", logQ: "", logHours: 168, logOpen: null, cfgMsg: null, invForm: false };
+      this._ui = {
+        help: null,
+        range: 90,
+        form: false,
+        widths: {},
+        logCat: "",
+        logLevel: "",
+        logQ: "",
+        logHours: 168,
+        logOpen: null,
+        cfgMsg: null,
+        cfgErrors: {},
+        invForm: null,
+        invSaved: false,
+        chgObject: "heizkurve",
+        chgField: "",
+        hass: null
+      };
       this._log = [];
       this._cfgData = null;
       this._cfgSuggestion = null;
@@ -1593,6 +2036,7 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
         this.shadowRoot.addEventListener("click", (e) => this._click(e));
         this.shadowRoot.addEventListener("submit", (e) => this._submit(e));
         this.shadowRoot.addEventListener("input", (e) => this._input(e));
+        this.shadowRoot.addEventListener("change", (e) => this._change(e));
       }
     }
     set hass(hass) {
@@ -1715,7 +2159,12 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     async _loadConfig() {
       if (!this._hass) return;
       try {
-        this._cfgData = await this._hass.callWS({ type: "heizungsanalyse/config" });
+        const res = await this._hass.callWS({ type: "heizungsanalyse/config" });
+        res.options = res.options || {};
+        res.options.circuits = res.circuits || res.options.circuits || [];
+        res.options.rooms = res.rooms || res.options.rooms || [];
+        res.options.thresholds = res.thresholds || res.options.thresholds || {};
+        this._cfgData = res;
         this._cfgError = null;
       } catch (e) {
         this._cfgError = e && (e.message || e.code) ? e.message || e.code : String(e);
@@ -1724,37 +2173,49 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
       }
       this._render();
     }
+    _collectConfig() {
+      const cfg = this._cfgData;
+      if (!cfg || !this.shadowRoot) return;
+      const root = this.shadowRoot;
+      root.querySelectorAll("[data-cfg]").forEach((el) => {
+        const target = el.dataset.cfg === "data" ? cfg.data : cfg.options;
+        const value = el.value.trim();
+        if (value !== "") target[el.dataset.key] = value;
+        else delete target[el.dataset.key];
+      });
+      root.querySelectorAll("[data-thr]").forEach((el) => {
+        cfg.options.thresholds = { ...cfg.options.thresholds || {} };
+        if (el.value !== "") cfg.options.thresholds[el.dataset.thr] = el.value;
+        else delete cfg.options.thresholds[el.dataset.thr];
+      });
+      root.querySelectorAll("[data-arr]").forEach((el) => {
+        const list = cfg.options[el.dataset.arr] || [];
+        const item = list[Number(el.dataset.idx)];
+        if (item) item[el.dataset.key] = el.value.trim();
+      });
+    }
+    _nextId(prefix, list) {
+      const used = new Set((list || []).map((item) => item.id));
+      let index = 1;
+      while (used.has(`${prefix}${index}`)) index += 1;
+      return `${prefix}${index}`;
+    }
     async _saveConfig() {
       if (!this._hass || !this._cfgData) return;
-      const root = this.shadowRoot;
-      const data = { ...this._cfgData.data };
-      const options = { ...this._cfgData.options };
-      root.querySelectorAll("[data-cfg]").forEach((el) => {
-        const group = el.dataset.cfg;
-        const key = el.dataset.key;
-        const val = el.value.trim();
-        if (group === "data") {
-          if (val) data[key] = val;
-          else delete data[key];
-        } else {
-          if (val) options[key] = val;
-          else delete options[key];
-        }
-      });
-      root.querySelectorAll("[data-cfgjson]").forEach((el) => {
-        const key = el.dataset.cfgjson;
-        const raw = el.value.trim();
-        try {
-          const parsed = raw ? JSON.parse(raw) : key === "thresholds" ? {} : [];
-          options[key] = parsed;
-        } catch (e) {
-          this._ui.cfgMsg = t("JSON-Fehler: {e}", { e: e.message || e });
-          this._render();
-          throw e;
-        }
-      });
+      this._collectConfig();
+      this._ui.cfgErrors = {};
       try {
-        await this._hass.callWS({ type: "heizungsanalyse/config/save", data, options });
+        const result = await this._hass.callWS({
+          type: "heizungsanalyse/config/save",
+          data: this._cfgData.data,
+          options: this._cfgData.options
+        });
+        if (result && result.ok === false) {
+          this._ui.cfgErrors = result.errors || {};
+          this._ui.cfgMsg = t("{n} Felder prüfen.", { n: Object.keys(this._ui.cfgErrors).length });
+          this._render();
+          return;
+        }
         this._ui.cfgMsg = t("Gespeichert");
         invalidate();
         setTimeout(() => this._load(true), 1500);
@@ -1784,6 +2245,7 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
       if (!d) return;
       if (!d.configured) return this._paint(`<div class="c empty">${esc(t("Die Heizungsanalyse ist noch nicht eingerichtet."))}</div>`);
       const view = this._config.view;
+      this._ui.hass = this._hass;
       let data = d;
       if (view === "protokoll") data = { ...d, diag: this._diag, log: { entries: this._log }, logError: this._logError };
       if (view === "einstellungen") data = { ...d, config: this._cfgData, configError: this._cfgError, suggestion: this._cfgSuggestion };
@@ -1844,8 +2306,60 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
       else if (el.dataset.act === "log-copy") return void this._copy();
       else if (el.dataset.act === "log-refresh") return void this._refresh();
       else if (el.dataset.act === "cfg-save") return void this._saveConfig();
-      else if (el.dataset.act === "inv-open") this._ui.invForm = true;
-      else if (el.dataset.act === "inv-close") this._ui.invForm = false;
+      else if (el.dataset.act === "cfg-circ-add") {
+        this._collectConfig();
+        const list = this._cfgData.options.circuits;
+        list.push({ id: this._nextId("hk", list), name: "", type: "radiators" });
+        this._render();
+        return;
+      } else if (el.dataset.act === "cfg-circ-del") {
+        this._collectConfig();
+        this._cfgData.options.circuits.splice(Number(el.dataset.idx), 1);
+        this._render();
+        return;
+      } else if (el.dataset.act === "cfg-room-add") {
+        this._collectConfig();
+        const list = this._cfgData.options.rooms;
+        const circuits = this._cfgData.options.circuits || [];
+        list.push({ id: this._nextId("raum", list), name: "", room_type: "", circuit: circuits[0] ? circuits[0].id : "" });
+        this._render();
+        return;
+      } else if (el.dataset.act === "cfg-room-del") {
+        this._collectConfig();
+        this._cfgData.options.rooms.splice(Number(el.dataset.idx), 1);
+        this._render();
+        return;
+      } else if (el.dataset.act === "cfg-thr-reset") {
+        this._collectConfig();
+        this._cfgData.options.thresholds = {};
+        this._render();
+        return;
+      } else if (el.dataset.act === "inv-add") {
+        this._ui.invForm = this._inventoryForm(el.dataset.section);
+        this._ui.invSaved = false;
+      } else if (el.dataset.act === "inv-edit") {
+        const section = el.dataset.section;
+        this._ui.invForm = this._inventoryForm(section, el.dataset.object);
+        this._ui.invSaved = false;
+      } else if (el.dataset.act === "inv-del") {
+        if (!window.confirm(t("Objekt wirklich löschen?"))) return;
+        this._hass.callWS({ type: "heizungsanalyse/inventory/remove", object: el.dataset.object }).then(async () => {
+          invalidate();
+          await this._load(true);
+          this._flash(t("Gelöscht"));
+        }).catch((err) => this._flash(t("Fehler: {e}", { e: err.message || err })));
+        return;
+      } else if (el.dataset.act === "inv-prefill") return void this._inventoryPrefill();
+      else if (el.dataset.act === "inv-export") return void this._inventoryExport();
+      else if (el.dataset.act === "inv-import") return void this._inventoryImport();
+      else if (el.dataset.act === "inv-close") {
+        this._ui.invForm = null;
+        this._ui.invSaved = false;
+      } else if (el.dataset.act === "goto-vergleich") {
+        window.history.pushState(null, "", "/heizungs-analyse/vergleich");
+        window.dispatchEvent(new CustomEvent("location-changed"));
+        return;
+      }
       this._render();
     }
     _input(e) {
@@ -1855,33 +2369,127 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
       clearTimeout(this._searchTimer);
       this._searchTimer = setTimeout(() => this._loadLog(true), 250);
     }
+    _change(e) {
+      const el = e.target;
+      if (!el || !el.dataset || !el.dataset.chg) return;
+      if (el.dataset.chg === "object") {
+        this._ui.chgObject = el.value;
+        this._ui.chgField = "";
+        this._render();
+      } else if (el.dataset.chg === "field") {
+        this._ui.chgField = el.value;
+        this._render();
+      }
+    }
+    _inventoryForm(section, object = null) {
+      const data = (this._data.inventory || {})[section] || {};
+      const key = object && object.includes(".") ? object.split(".").slice(1).join(".") : "";
+      const record = object ? section === "hydraulics" ? data : data[key] || {} : {};
+      return {
+        section,
+        object,
+        selection: object && object.includes(".") ? object.split(".").slice(1).join(".") : "",
+        values: { ...record },
+        note: "",
+        errors: {}
+      };
+    }
+    async _inventorySave(form, values, note) {
+      const section = form.section;
+      const object = form.object || objectKey(section, form.selection);
+      if (!form.object && section !== "hydraulics" && !form.selection) {
+        form.errors = { selection: "required" };
+        this._render();
+        return;
+      }
+      try {
+        const result = await this._hass.callWS({ type: "heizungsanalyse/inventory/save", object, values, note: note || void 0 });
+        if (result && result.ok === false) {
+          form.errors = result.errors || {};
+          form.message = t("Bitte die markierten Felder prüfen.");
+          this._render();
+          return;
+        }
+        this._ui.invForm = null;
+        this._ui.invSaved = true;
+        invalidate();
+        await this._load(true);
+        this._flash(t("Gespeichert"));
+      } catch (err) {
+        form.message = t("Fehler: {e}", { e: err.message || err });
+        this._render();
+      }
+    }
+    async _inventoryPrefill() {
+      const rooms = this._data && this._data.rooms || [];
+      let created = 0;
+      for (const room of rooms) {
+        if (!room.id) continue;
+        for (const [section, values] of [
+          ["thermostats", { room: room.id }],
+          ["radiators", { room: room.id, circuit: room.circuit || "" }]
+        ]) {
+          const object = `${section}.${room.id}`;
+          const existing = ((this._data.inventory || {})[section] || {})[room.id];
+          if (existing) continue;
+          const clean = Object.fromEntries(Object.entries(values).filter(([, value]) => value));
+          try {
+            await this._hass.callWS({ type: "heizungsanalyse/inventory/save", object, values: clean, note: t("Aus Räumen übernommen") });
+            created += 1;
+          } catch (err) {
+          }
+        }
+      }
+      invalidate();
+      await this._load(true);
+      this._flash(t("{n} Einträge aus Räumen angelegt", { n: created }));
+    }
+    async _inventoryExport() {
+      try {
+        const result = await this._hass.callWS({ type: "heizungsanalyse/inventory/export" });
+        const blob = new Blob([result.csv || ""], { type: "text/csv" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = result.filename || "inventar.csv";
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 2e3);
+        this._flash(t("CSV heruntergeladen"));
+      } catch (err) {
+        this._flash(t("Fehler: {e}", { e: err.message || err }));
+      }
+    }
+    async _inventoryImport() {
+      const area = this.shadowRoot.querySelector("[data-inv-csv]");
+      const csv = area ? area.value.trim() : "";
+      if (!csv) {
+        this._flash(t("Bitte CSV einfügen."));
+        return;
+      }
+      try {
+        const result = await this._hass.callWS({ type: "heizungsanalyse/inventory/import", csv });
+        invalidate();
+        this._ui.invSaved = true;
+        await this._load(true);
+        const problems = Object.keys(result.errors || {}).length + (result.rows || []).length;
+        this._flash(problems ? t("{n} übernommen, {e} Zeilen übersprungen", { n: result.imported || 0, e: problems }) : t("{n} übernommen", { n: result.imported || 0 }));
+      } catch (err) {
+        this._flash(t("Fehler: {e}", { e: err.message || err }));
+      }
+    }
     async _submit(e) {
       e.preventDefault();
       const data = Object.fromEntries(new FormData(e.target).entries());
       if (e.target.dataset.form === "inventory") {
-        const section = data.section;
-        const object = (data.object || "").trim();
-        if (!object) {
-          this._flash(t("Objekt fehlt"));
-          return;
+        const form = this._ui.invForm || { section: data.section, object: null };
+        let values = form.values || {};
+        for (const spec of sectionFields(this._data, form.section)) {
+          const key = `f_${spec.key}`;
+          if (data[key] !== void 0) values[spec.key] = data[key];
         }
-        const full = object.includes(".") ? object : `${section}.${object}`;
-        let values = {};
-        try {
-          values = data.values ? JSON.parse(data.values) : {};
-        } catch (err) {
-          this._flash(t("JSON-Fehler: {e}", { e: err.message || err }));
-          return;
-        }
-        try {
-          await this._hass.callService("heizungsanalyse", "update_inventory", { object: full, values, note: data.note || void 0 });
-          this._ui.invForm = false;
-          invalidate();
-          await this._load(true);
-          this._flash(t("Gespeichert"));
-        } catch (err) {
-          this._flash(t("Fehler: {e}", { e: err.message || err }));
-        }
+        if (!form.object) values = Object.fromEntries(Object.entries(values).filter(([, value]) => value !== ""));
+        form.values = values;
+        form.note = data.note || "";
+        await this._inventorySave(form, values, form.note);
         return;
       }
       const payload = { object: data.object.trim(), field: data.field.trim() };

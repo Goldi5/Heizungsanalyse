@@ -2330,6 +2330,13 @@
   "hydraulics": {
    "buffer_volume_l": 100,
    "bypass_valve": "ja"
+  },
+  "radiators": {
+   "wohnen": {
+    "circuit": "hk1",
+    "room": "wohnen",
+    "valve_preset": 4
+   }
   }
  },
  "sources": {
@@ -2354,5 +2361,711 @@
  },
  "missing": [],
  "configured": true,
- "last_update_success": true
+ "last_update_success": true,
+ "inventory_schema": {
+  "sections": {
+   "pumps": {
+    "title": "Pumps",
+    "fields": [
+     {
+      "key": "manufacturer",
+      "type": "text",
+      "label": "Manufacturer"
+     },
+     {
+      "key": "model",
+      "type": "text",
+      "label": "Model"
+     },
+     {
+      "key": "control_mode",
+      "type": "select",
+      "label": "Control mode",
+      "options": [
+       {
+        "value": "dp",
+        "label": "Pressure differential"
+       },
+       {
+        "value": "cp",
+        "label": "Constant pressure"
+       },
+       {
+        "value": "cs",
+        "label": "Constant speed"
+       },
+       {
+        "value": "auto",
+        "label": "Automatic"
+       },
+       {
+        "value": "other",
+        "label": "Other"
+       }
+      ],
+      "help": "Pressure differential is common for underfloor heating, constant pressure for radiators."
+     },
+     {
+      "key": "setting",
+      "type": "text",
+      "label": "Setting",
+      "help": "For example “stage 2” or “Δp 4”."
+     },
+     {
+      "key": "power_w",
+      "type": "number",
+      "label": "Power",
+      "unit": "W",
+      "min": 0,
+      "max": 3000,
+      "step": 1
+     },
+     {
+      "key": "notes",
+      "type": "text",
+      "label": "Note",
+      "important": false
+     }
+    ]
+   },
+   "thermostats": {
+    "title": "Thermostats",
+    "fields": [
+     {
+      "key": "model",
+      "type": "text",
+      "label": "Model"
+     },
+     {
+      "key": "valve_preset",
+      "type": "number",
+      "label": "Preset",
+      "min": 0,
+      "max": 10,
+      "step": 0.5,
+      "help": "Preset value on the valve. Enables evaluation of hydraulic balancing."
+     },
+     {
+      "key": "room",
+      "type": "room",
+      "label": "Room",
+      "options": [
+       {
+        "value": "wohnen",
+        "label": "Wohnzimmer"
+       },
+       {
+        "value": "bad",
+        "label": "Bad"
+       },
+       {
+        "value": "buero",
+        "label": "Arbeitszimmer"
+       },
+       {
+        "value": "schlafen",
+        "label": "Schlafzimmer"
+       },
+       {
+        "value": "kind",
+        "label": "Kinderzimmer"
+       }
+      ]
+     },
+     {
+      "key": "notes",
+      "type": "text",
+      "label": "Note",
+      "important": false
+     }
+    ]
+   },
+   "hydraulics": {
+    "title": "Hydraulics",
+    "fields": [
+     {
+      "key": "buffer_volume_l",
+      "type": "number",
+      "label": "Buffer volume",
+      "unit": "l",
+      "min": 0,
+      "max": 5000,
+      "step": 1
+     },
+     {
+      "key": "hydraulic_separator",
+      "type": "select",
+      "label": "Hydraulic separator",
+      "options": [
+       {
+        "value": "yes",
+        "label": "Yes"
+       },
+       {
+        "value": "no",
+        "label": "No"
+       },
+       {
+        "value": "unknown",
+        "label": "Unknown"
+       }
+      ]
+     },
+     {
+      "key": "bypass_valve",
+      "type": "select",
+      "label": "Bypass valve",
+      "options": [
+       {
+        "value": "yes",
+        "label": "Yes"
+       },
+       {
+        "value": "no",
+        "label": "No"
+       },
+       {
+        "value": "unknown",
+        "label": "Unknown"
+       }
+      ]
+     },
+     {
+      "key": "pump_stage",
+      "type": "number",
+      "label": "Pump stage",
+      "min": 1,
+      "max": 5,
+      "step": 1,
+      "help": "Enables before/after comparisons of the pump setting."
+     },
+     {
+      "key": "mixer_setting",
+      "type": "number",
+      "label": "Mixer setting",
+      "min": 0,
+      "max": 10,
+      "step": 0.5
+     },
+     {
+      "key": "notes",
+      "type": "text",
+      "label": "Note",
+      "important": false
+     }
+    ]
+   },
+   "radiators": {
+    "title": "Radiators",
+    "fields": [
+     {
+      "key": "circuit",
+      "type": "circuit",
+      "label": "Heating circuit",
+      "options": [
+       {
+        "value": "hk1",
+        "label": "Heizkörper OG"
+       },
+       {
+        "value": "hk2",
+        "label": "Fußboden EG"
+       }
+      ]
+     },
+     {
+      "key": "room",
+      "type": "room",
+      "label": "Room",
+      "options": [
+       {
+        "value": "wohnen",
+        "label": "Wohnzimmer"
+       },
+       {
+        "value": "bad",
+        "label": "Bad"
+       },
+       {
+        "value": "buero",
+        "label": "Arbeitszimmer"
+       },
+       {
+        "value": "schlafen",
+        "label": "Schlafzimmer"
+       },
+       {
+        "value": "kind",
+        "label": "Kinderzimmer"
+       }
+      ]
+     },
+     {
+      "key": "valve_preset",
+      "type": "number",
+      "label": "Preset",
+      "min": 0,
+      "max": 10,
+      "step": 0.5,
+      "help": "Preset value on the valve. Enables evaluation of hydraulic balancing."
+     },
+     {
+      "key": "nominal_flow_l_min",
+      "type": "number",
+      "label": "Nominal flow",
+      "unit": "l/min",
+      "min": 0,
+      "max": 60,
+      "step": 0.1
+     },
+     {
+      "key": "measured_flow_l_min",
+      "type": "number",
+      "label": "Measured flow",
+      "unit": "l/min",
+      "min": 0,
+      "max": 60,
+      "step": 0.1
+     },
+     {
+      "key": "measured_spread_k",
+      "type": "number",
+      "label": "Measured spread",
+      "unit": "K",
+      "min": 0,
+      "max": 30,
+      "step": 0.1
+     },
+     {
+      "key": "notes",
+      "type": "text",
+      "label": "Note",
+      "important": false
+     }
+    ]
+   }
+  }
+ },
+ "inventory_completeness": {
+  "percent": 47,
+  "sections": {
+   "pumps": {
+    "entries": 1,
+    "filled": 4,
+    "expected": 5,
+    "percent": 80
+   },
+   "thermostats": {
+    "entries": 0,
+    "filled": 0,
+    "expected": 3,
+    "percent": 0
+   },
+   "hydraulics": {
+    "entries": 1,
+    "filled": 2,
+    "expected": 5,
+    "percent": 40
+   },
+   "radiators": {
+    "entries": 1,
+    "filled": 3,
+    "expected": 6,
+    "percent": 50
+   }
+  }
+ },
+ "settings_schema": {
+  "sources": [
+   {
+    "key": "power_entity",
+    "scope": "data",
+    "label": "Heat pump electricity",
+    "domain": [
+     "sensor"
+    ],
+    "units": [
+     "Wh",
+     "kWh",
+     "MWh"
+    ],
+    "required": true
+   },
+   {
+    "key": "heat_entity",
+    "scope": "data",
+    "label": "Heat pump heat output",
+    "domain": [
+     "sensor"
+    ],
+    "units": [
+     "Wh",
+     "kWh",
+     "MWh"
+    ],
+    "required": true
+   },
+   {
+    "key": "outdoor_entity",
+    "scope": "data",
+    "label": "Outdoor temperature",
+    "domain": [
+     "sensor"
+    ],
+    "units": [
+     "°C"
+    ],
+    "required": true
+   },
+   {
+    "key": "compressor_entity",
+    "scope": "data",
+    "label": "Compressor running",
+    "domain": [
+     "binary_sensor",
+     "sensor"
+    ],
+    "units": [],
+    "required": true
+   },
+   {
+    "key": "power_fallback_entity",
+    "scope": "options",
+    "label": "Electricity fallback source",
+    "domain": [
+     "sensor"
+    ],
+    "units": [
+     "Wh",
+     "kWh",
+     "MWh"
+    ],
+    "required": false
+   },
+   {
+    "key": "dhw_heat_entity",
+    "scope": "options",
+    "label": "DHW heat output",
+    "domain": [
+     "sensor"
+    ],
+    "units": [
+     "Wh",
+     "kWh",
+     "MWh"
+    ],
+    "required": false
+   },
+   {
+    "key": "flow_entity",
+    "scope": "options",
+    "label": "Flow temperature",
+    "domain": [
+     "sensor"
+    ],
+    "units": [
+     "°C"
+    ],
+    "required": false
+   },
+   {
+    "key": "target_flow_entity",
+    "scope": "options",
+    "label": "Flow setpoint",
+    "domain": [
+     "sensor"
+    ],
+    "units": [
+     "°C"
+    ],
+    "required": false
+   },
+   {
+    "key": "return_entity",
+    "scope": "options",
+    "label": "Return temperature",
+    "domain": [
+     "sensor"
+    ],
+    "units": [
+     "°C"
+    ],
+    "required": false
+   },
+   {
+    "key": "buffer_entity",
+    "scope": "options",
+    "label": "Buffer temperature",
+    "domain": [
+     "sensor"
+    ],
+    "units": [
+     "°C"
+    ],
+    "required": false
+   },
+   {
+    "key": "defrost_entity",
+    "scope": "options",
+    "label": "Defrost",
+    "domain": [
+     "binary_sensor",
+     "sensor"
+    ],
+    "units": [],
+    "required": false
+   },
+   {
+    "key": "aux_heater_entity",
+    "scope": "options",
+    "label": "Auxiliary heater",
+    "domain": [
+     "binary_sensor",
+     "sensor"
+    ],
+    "units": [],
+    "required": false
+   },
+   {
+    "key": "compressor_starts_entity",
+    "scope": "options",
+    "label": "Compressor starts",
+    "domain": [
+     "sensor"
+    ],
+    "units": [],
+    "required": false
+   },
+   {
+    "key": "compressor_runtime_entity",
+    "scope": "options",
+    "label": "Compressor runtime",
+    "domain": [
+     "sensor"
+    ],
+    "units": [],
+    "required": false
+   },
+   {
+    "key": "hp_flow_entity",
+    "scope": "options",
+    "label": "Heat pump flow",
+    "domain": [
+     "sensor"
+    ],
+    "units": [
+     "l/min",
+     "L/min",
+     "m³/h"
+    ],
+    "required": false
+   },
+   {
+    "key": "volume_flow_entity",
+    "scope": "options",
+    "label": "Volume flow",
+    "domain": [
+     "sensor"
+    ],
+    "units": [
+     "l/min",
+     "L/min",
+     "m³/h"
+    ],
+    "required": false
+   },
+   {
+    "key": "power_now_entity",
+    "scope": "options",
+    "label": "Current power",
+    "domain": [
+     "sensor"
+    ],
+    "units": [
+     "W",
+     "kW"
+    ],
+    "required": false
+   },
+   {
+    "key": "dhw_power_entity",
+    "scope": "options",
+    "label": "DHW electricity",
+    "domain": [
+     "sensor"
+    ],
+    "units": [
+     "Wh",
+     "kWh",
+     "MWh"
+    ],
+    "required": false
+   },
+   {
+    "key": "dhw_operation_entity",
+    "scope": "options",
+    "label": "DHW operation",
+    "domain": [
+     "binary_sensor",
+     "sensor"
+    ],
+    "units": [],
+    "required": false
+   },
+   {
+    "key": "compressor_runtime_extra_entity",
+    "scope": "options",
+    "label": "Compressor runtime (extra)",
+    "domain": [
+     "sensor"
+    ],
+    "units": [],
+    "required": false
+   }
+  ],
+  "thresholds": [
+   {
+    "key": "flow_deviation_k",
+    "label": "Flow deviation",
+    "unit": "K",
+    "default": 2.0,
+    "min": 0,
+    "max": 20,
+    "step": 0.5
+   },
+   {
+    "key": "starts_per_day",
+    "label": "Starts per day",
+    "unit": "",
+    "default": 12.0,
+    "min": 0,
+    "max": 100,
+    "step": 1
+   },
+   {
+    "key": "runtime_minutes",
+    "label": "Runtime per start",
+    "unit": "min",
+    "default": 20.0,
+    "min": 0,
+    "max": 240,
+    "step": 1
+   },
+   {
+    "key": "pump_idle_share",
+    "label": "Pump idle share",
+    "unit": "",
+    "default": 0.4,
+    "min": 0,
+    "max": 1,
+    "step": 0.05
+   },
+   {
+    "key": "room_deviation_k",
+    "label": "Room deviation",
+    "unit": "K",
+    "default": 1.0,
+    "min": 0,
+    "max": 10,
+    "step": 0.5
+   },
+   {
+    "key": "aux_hours_per_day",
+    "label": "Aux heater hours per day",
+    "unit": "h",
+    "default": 1.0,
+    "min": 0,
+    "max": 24,
+    "step": 0.5
+   },
+   {
+    "key": "defrost_hours_per_day",
+    "label": "Defrost hours per day",
+    "unit": "h",
+    "default": 2.0,
+    "min": 0,
+    "max": 24,
+    "step": 0.5
+   },
+   {
+    "key": "cop_curve_deviation",
+    "label": "COP deviation",
+    "unit": "",
+    "default": 0.15,
+    "min": 0,
+    "max": 1,
+    "step": 0.05
+   },
+   {
+    "key": "mixer_pulses_per_day",
+    "label": "Mixer pulses per day",
+    "unit": "",
+    "default": 12.0,
+    "min": 0,
+    "max": 200,
+    "step": 1
+   },
+   {
+    "key": "power_source_deviation",
+    "label": "Power source deviation",
+    "unit": "",
+    "default": 0.15,
+    "min": 0,
+    "max": 1,
+    "step": 0.05
+   },
+   {
+    "key": "spread_min_k",
+    "label": "Spread minimum",
+    "unit": "K",
+    "default": 3.0,
+    "min": 0,
+    "max": 10,
+    "step": 0.5
+   },
+   {
+    "key": "spread_max_k",
+    "label": "Spread maximum",
+    "unit": "K",
+    "default": 8.0,
+    "min": 0,
+    "max": 20,
+    "step": 0.5
+   },
+   {
+    "key": "return_temp_max_c",
+    "label": "Return maximum",
+    "unit": "°C",
+    "default": 45.0,
+    "min": 0,
+    "max": 80,
+    "step": 1
+   }
+  ],
+  "circuit_types": [
+   "buffer",
+   "radiators",
+   "underfloor",
+   "dhw"
+  ],
+  "room_types": [
+   "living",
+   "kitchen",
+   "bedroom",
+   "bathroom",
+   "office",
+   "hallway",
+   "guest",
+   "child",
+   "utility"
+  ]
+ },
+ "settings_coverage": {
+  "required": 4,
+  "required_filled": 4,
+  "optional": 16,
+  "optional_filled": 0,
+  "mandatory_known": 4,
+  "optional_known": 16
+ }
 }

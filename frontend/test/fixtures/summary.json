@@ -2330,6 +2330,13 @@
   "hydraulics": {
    "buffer_volume_l": 100,
    "bypass_valve": "ja"
+  },
+  "radiators": {
+   "wohnen": {
+    "circuit": "hk1",
+    "room": "wohnen",
+    "valve_preset": 4
+   }
   }
  },
  "sources": {
@@ -2354,5 +2361,711 @@
  },
  "missing": [],
  "configured": true,
- "last_update_success": true
+ "last_update_success": true,
+ "inventory_schema": {
+  "sections": {
+   "pumps": {
+    "title": "Pumpen",
+    "fields": [
+     {
+      "key": "manufacturer",
+      "type": "text",
+      "label": "Hersteller"
+     },
+     {
+      "key": "model",
+      "type": "text",
+      "label": "Modell"
+     },
+     {
+      "key": "control_mode",
+      "type": "select",
+      "label": "Regelart",
+      "options": [
+       {
+        "value": "dp",
+        "label": "Druckdifferenz"
+       },
+       {
+        "value": "cp",
+        "label": "Konstantdruck"
+       },
+       {
+        "value": "cs",
+        "label": "Konstantdrehzahl"
+       },
+       {
+        "value": "auto",
+        "label": "Automatik"
+       },
+       {
+        "value": "other",
+        "label": "Sonstiges"
+       }
+      ],
+      "help": "Druckdifferenz ist bei Fußbodenheizung üblich, Konstantdruck bei Radiatoren."
+     },
+     {
+      "key": "setting",
+      "type": "text",
+      "label": "Einstellung",
+      "help": "Zum Beispiel „Stufe 2“ oder „Δp 4“."
+     },
+     {
+      "key": "power_w",
+      "type": "number",
+      "label": "Leistung",
+      "unit": "W",
+      "min": 0,
+      "max": 3000,
+      "step": 1
+     },
+     {
+      "key": "notes",
+      "type": "text",
+      "label": "Notiz",
+      "important": false
+     }
+    ]
+   },
+   "thermostats": {
+    "title": "Thermostate",
+    "fields": [
+     {
+      "key": "model",
+      "type": "text",
+      "label": "Modell"
+     },
+     {
+      "key": "valve_preset",
+      "type": "number",
+      "label": "Voreinstellung",
+      "min": 0,
+      "max": 10,
+      "step": 0.5,
+      "help": "Voreinstellwert am Ventil. Ermöglicht die Auswertung des hydraulischen Abgleichs."
+     },
+     {
+      "key": "room",
+      "type": "room",
+      "label": "Raum",
+      "options": [
+       {
+        "value": "wohnen",
+        "label": "Wohnzimmer"
+       },
+       {
+        "value": "bad",
+        "label": "Bad"
+       },
+       {
+        "value": "buero",
+        "label": "Arbeitszimmer"
+       },
+       {
+        "value": "schlafen",
+        "label": "Schlafzimmer"
+       },
+       {
+        "value": "kind",
+        "label": "Kinderzimmer"
+       }
+      ]
+     },
+     {
+      "key": "notes",
+      "type": "text",
+      "label": "Notiz",
+      "important": false
+     }
+    ]
+   },
+   "hydraulics": {
+    "title": "Hydraulik",
+    "fields": [
+     {
+      "key": "buffer_volume_l",
+      "type": "number",
+      "label": "Puffervolumen",
+      "unit": "l",
+      "min": 0,
+      "max": 5000,
+      "step": 1
+     },
+     {
+      "key": "hydraulic_separator",
+      "type": "select",
+      "label": "Hydraulische Trennung",
+      "options": [
+       {
+        "value": "yes",
+        "label": "Ja"
+       },
+       {
+        "value": "no",
+        "label": "Nein"
+       },
+       {
+        "value": "unknown",
+        "label": "Unbekannt"
+       }
+      ]
+     },
+     {
+      "key": "bypass_valve",
+      "type": "select",
+      "label": "Bypass-Ventil",
+      "options": [
+       {
+        "value": "yes",
+        "label": "Ja"
+       },
+       {
+        "value": "no",
+        "label": "Nein"
+       },
+       {
+        "value": "unknown",
+        "label": "Unbekannt"
+       }
+      ]
+     },
+     {
+      "key": "pump_stage",
+      "type": "number",
+      "label": "Pumpenstufe",
+      "min": 1,
+      "max": 5,
+      "step": 1,
+      "help": "Ermöglicht Vorher/Nachher-Vergleiche der Pumpeneinstellung."
+     },
+     {
+      "key": "mixer_setting",
+      "type": "number",
+      "label": "Mischer-Einstellung",
+      "min": 0,
+      "max": 10,
+      "step": 0.5
+     },
+     {
+      "key": "notes",
+      "type": "text",
+      "label": "Notiz",
+      "important": false
+     }
+    ]
+   },
+   "radiators": {
+    "title": "Heizkörper",
+    "fields": [
+     {
+      "key": "circuit",
+      "type": "circuit",
+      "label": "Heizkreis",
+      "options": [
+       {
+        "value": "hk1",
+        "label": "Heizkörper OG"
+       },
+       {
+        "value": "hk2",
+        "label": "Fußboden EG"
+       }
+      ]
+     },
+     {
+      "key": "room",
+      "type": "room",
+      "label": "Raum",
+      "options": [
+       {
+        "value": "wohnen",
+        "label": "Wohnzimmer"
+       },
+       {
+        "value": "bad",
+        "label": "Bad"
+       },
+       {
+        "value": "buero",
+        "label": "Arbeitszimmer"
+       },
+       {
+        "value": "schlafen",
+        "label": "Schlafzimmer"
+       },
+       {
+        "value": "kind",
+        "label": "Kinderzimmer"
+       }
+      ]
+     },
+     {
+      "key": "valve_preset",
+      "type": "number",
+      "label": "Voreinstellung",
+      "min": 0,
+      "max": 10,
+      "step": 0.5,
+      "help": "Voreinstellwert am Ventil. Ermöglicht die Auswertung des hydraulischen Abgleichs."
+     },
+     {
+      "key": "nominal_flow_l_min",
+      "type": "number",
+      "label": "Nenn-Durchfluss",
+      "unit": "l/min",
+      "min": 0,
+      "max": 60,
+      "step": 0.1
+     },
+     {
+      "key": "measured_flow_l_min",
+      "type": "number",
+      "label": "Gemessener Durchfluss",
+      "unit": "l/min",
+      "min": 0,
+      "max": 60,
+      "step": 0.1
+     },
+     {
+      "key": "measured_spread_k",
+      "type": "number",
+      "label": "Gemessene Spreizung",
+      "unit": "K",
+      "min": 0,
+      "max": 30,
+      "step": 0.1
+     },
+     {
+      "key": "notes",
+      "type": "text",
+      "label": "Notiz",
+      "important": false
+     }
+    ]
+   }
+  }
+ },
+ "inventory_completeness": {
+  "percent": 47,
+  "sections": {
+   "pumps": {
+    "entries": 1,
+    "filled": 4,
+    "expected": 5,
+    "percent": 80
+   },
+   "thermostats": {
+    "entries": 0,
+    "filled": 0,
+    "expected": 3,
+    "percent": 0
+   },
+   "hydraulics": {
+    "entries": 1,
+    "filled": 2,
+    "expected": 5,
+    "percent": 40
+   },
+   "radiators": {
+    "entries": 1,
+    "filled": 3,
+    "expected": 6,
+    "percent": 50
+   }
+  }
+ },
+ "settings_schema": {
+  "sources": [
+   {
+    "key": "power_entity",
+    "scope": "data",
+    "label": "Strombezug der Wärmepumpe",
+    "domain": [
+     "sensor"
+    ],
+    "units": [
+     "Wh",
+     "kWh",
+     "MWh"
+    ],
+    "required": true
+   },
+   {
+    "key": "heat_entity",
+    "scope": "data",
+    "label": "Wärmemenge der Wärmepumpe",
+    "domain": [
+     "sensor"
+    ],
+    "units": [
+     "Wh",
+     "kWh",
+     "MWh"
+    ],
+    "required": true
+   },
+   {
+    "key": "outdoor_entity",
+    "scope": "data",
+    "label": "Außentemperatur",
+    "domain": [
+     "sensor"
+    ],
+    "units": [
+     "°C"
+    ],
+    "required": true
+   },
+   {
+    "key": "compressor_entity",
+    "scope": "data",
+    "label": "Verdichter läuft",
+    "domain": [
+     "binary_sensor",
+     "sensor"
+    ],
+    "units": [],
+    "required": true
+   },
+   {
+    "key": "power_fallback_entity",
+    "scope": "options",
+    "label": "Strombezug Ersatzquelle",
+    "domain": [
+     "sensor"
+    ],
+    "units": [
+     "Wh",
+     "kWh",
+     "MWh"
+    ],
+    "required": false
+   },
+   {
+    "key": "dhw_heat_entity",
+    "scope": "options",
+    "label": "Wärmemenge Warmwasser",
+    "domain": [
+     "sensor"
+    ],
+    "units": [
+     "Wh",
+     "kWh",
+     "MWh"
+    ],
+    "required": false
+   },
+   {
+    "key": "flow_entity",
+    "scope": "options",
+    "label": "Vorlauftemperatur",
+    "domain": [
+     "sensor"
+    ],
+    "units": [
+     "°C"
+    ],
+    "required": false
+   },
+   {
+    "key": "target_flow_entity",
+    "scope": "options",
+    "label": "Vorlauf-Sollwert",
+    "domain": [
+     "sensor"
+    ],
+    "units": [
+     "°C"
+    ],
+    "required": false
+   },
+   {
+    "key": "return_entity",
+    "scope": "options",
+    "label": "Rücklauftemperatur",
+    "domain": [
+     "sensor"
+    ],
+    "units": [
+     "°C"
+    ],
+    "required": false
+   },
+   {
+    "key": "buffer_entity",
+    "scope": "options",
+    "label": "Puffertemperatur",
+    "domain": [
+     "sensor"
+    ],
+    "units": [
+     "°C"
+    ],
+    "required": false
+   },
+   {
+    "key": "defrost_entity",
+    "scope": "options",
+    "label": "Abtauung",
+    "domain": [
+     "binary_sensor",
+     "sensor"
+    ],
+    "units": [],
+    "required": false
+   },
+   {
+    "key": "aux_heater_entity",
+    "scope": "options",
+    "label": "Heizstab",
+    "domain": [
+     "binary_sensor",
+     "sensor"
+    ],
+    "units": [],
+    "required": false
+   },
+   {
+    "key": "compressor_starts_entity",
+    "scope": "options",
+    "label": "Verdichterstarts",
+    "domain": [
+     "sensor"
+    ],
+    "units": [],
+    "required": false
+   },
+   {
+    "key": "compressor_runtime_entity",
+    "scope": "options",
+    "label": "Verdichterlaufzeit",
+    "domain": [
+     "sensor"
+    ],
+    "units": [],
+    "required": false
+   },
+   {
+    "key": "hp_flow_entity",
+    "scope": "options",
+    "label": "Durchfluss Wärmepumpe",
+    "domain": [
+     "sensor"
+    ],
+    "units": [
+     "l/min",
+     "L/min",
+     "m³/h"
+    ],
+    "required": false
+   },
+   {
+    "key": "volume_flow_entity",
+    "scope": "options",
+    "label": "Volumenstrom",
+    "domain": [
+     "sensor"
+    ],
+    "units": [
+     "l/min",
+     "L/min",
+     "m³/h"
+    ],
+    "required": false
+   },
+   {
+    "key": "power_now_entity",
+    "scope": "options",
+    "label": "Leistung aktuell",
+    "domain": [
+     "sensor"
+    ],
+    "units": [
+     "W",
+     "kW"
+    ],
+    "required": false
+   },
+   {
+    "key": "dhw_power_entity",
+    "scope": "options",
+    "label": "Strom Warmwasser",
+    "domain": [
+     "sensor"
+    ],
+    "units": [
+     "Wh",
+     "kWh",
+     "MWh"
+    ],
+    "required": false
+   },
+   {
+    "key": "dhw_operation_entity",
+    "scope": "options",
+    "label": "Warmwasserbetrieb",
+    "domain": [
+     "binary_sensor",
+     "sensor"
+    ],
+    "units": [],
+    "required": false
+   },
+   {
+    "key": "compressor_runtime_extra_entity",
+    "scope": "options",
+    "label": "Verdichterlaufzeit zusätzlich",
+    "domain": [
+     "sensor"
+    ],
+    "units": [],
+    "required": false
+   }
+  ],
+  "thresholds": [
+   {
+    "key": "flow_deviation_k",
+    "label": "Vorlauf-Abweichung",
+    "unit": "K",
+    "default": 2.0,
+    "min": 0,
+    "max": 20,
+    "step": 0.5
+   },
+   {
+    "key": "starts_per_day",
+    "label": "Starts pro Tag",
+    "unit": "",
+    "default": 12.0,
+    "min": 0,
+    "max": 100,
+    "step": 1
+   },
+   {
+    "key": "runtime_minutes",
+    "label": "Laufzeit pro Start",
+    "unit": "min",
+    "default": 20.0,
+    "min": 0,
+    "max": 240,
+    "step": 1
+   },
+   {
+    "key": "pump_idle_share",
+    "label": "Pumpen-Leerlaufanteil",
+    "unit": "",
+    "default": 0.4,
+    "min": 0,
+    "max": 1,
+    "step": 0.05
+   },
+   {
+    "key": "room_deviation_k",
+    "label": "Raum-Abweichung",
+    "unit": "K",
+    "default": 1.0,
+    "min": 0,
+    "max": 10,
+    "step": 0.5
+   },
+   {
+    "key": "aux_hours_per_day",
+    "label": "Heizstab-Stunden pro Tag",
+    "unit": "h",
+    "default": 1.0,
+    "min": 0,
+    "max": 24,
+    "step": 0.5
+   },
+   {
+    "key": "defrost_hours_per_day",
+    "label": "Abtau-Stunden pro Tag",
+    "unit": "h",
+    "default": 2.0,
+    "min": 0,
+    "max": 24,
+    "step": 0.5
+   },
+   {
+    "key": "cop_curve_deviation",
+    "label": "COP-Abweichung",
+    "unit": "",
+    "default": 0.15,
+    "min": 0,
+    "max": 1,
+    "step": 0.05
+   },
+   {
+    "key": "mixer_pulses_per_day",
+    "label": "Mischer-Pulse pro Tag",
+    "unit": "",
+    "default": 12.0,
+    "min": 0,
+    "max": 200,
+    "step": 1
+   },
+   {
+    "key": "power_source_deviation",
+    "label": "Abweichung der Stromquellen",
+    "unit": "",
+    "default": 0.15,
+    "min": 0,
+    "max": 1,
+    "step": 0.05
+   },
+   {
+    "key": "spread_min_k",
+    "label": "Spreizung minimal",
+    "unit": "K",
+    "default": 3.0,
+    "min": 0,
+    "max": 10,
+    "step": 0.5
+   },
+   {
+    "key": "spread_max_k",
+    "label": "Spreizung maximal",
+    "unit": "K",
+    "default": 8.0,
+    "min": 0,
+    "max": 20,
+    "step": 0.5
+   },
+   {
+    "key": "return_temp_max_c",
+    "label": "Rücklauf maximal",
+    "unit": "°C",
+    "default": 45.0,
+    "min": 0,
+    "max": 80,
+    "step": 1
+   }
+  ],
+  "circuit_types": [
+   "buffer",
+   "radiators",
+   "underfloor",
+   "dhw"
+  ],
+  "room_types": [
+   "living",
+   "kitchen",
+   "bedroom",
+   "bathroom",
+   "office",
+   "hallway",
+   "guest",
+   "child",
+   "utility"
+  ]
+ },
+ "settings_coverage": {
+  "required": 4,
+  "required_filled": 4,
+  "optional": 16,
+  "optional_filled": 0,
+  "mandatory_known": 4,
+  "optional_known": 16
+ }
 }

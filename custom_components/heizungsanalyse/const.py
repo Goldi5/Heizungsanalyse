@@ -148,6 +148,7 @@ INVENTORY_FIELDS: Final = {
 }
 
 SERVICE_UPDATE_INVENTORY: Final = "update_inventory"
+SERVICE_REMOVE_INVENTORY: Final = "remove_inventory_item"
 SERVICE_LOG_CHANGE: Final = "log_change"
 SERVICE_COMPARE_PERIODS: Final = "compare_periods"
 SERVICE_EXPORT_REPORT: Final = "export_report"

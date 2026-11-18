@@ -4,13 +4,31 @@ import { setLang, t } from "./i18n.js";
 import { esc } from "./logic.js";
 import { STYLES } from "./styles.js";
 import { invalidate, loadSummary } from "./data.js";
+import { objectKey, sectionFields } from "./inventory.js";
 import { VIEWS, header, renderView } from "./views.js";
 
 export class HeizungsanalyseCard extends HTMLElement {
   setConfig(config) {
     this._config = { view: "anlage", ...(config || {}) };
     if (!VIEWS.includes(this._config.view)) this._config.view = "anlage";
-    this._ui = { help: null, range: 90, form: false, widths: {}, logCat: "", logLevel: "", logQ: "", logHours: 168, logOpen: null, cfgMsg: null, invForm: false };
+    this._ui = {
+      help: null,
+      range: 90,
+      form: false,
+      widths: {},
+      logCat: "",
+      logLevel: "",
+      logQ: "",
+      logHours: 168,
+      logOpen: null,
+      cfgMsg: null,
+      cfgErrors: {},
+      invForm: null,
+      invSaved: false,
+      chgObject: "heizkurve",
+      chgField: "",
+      hass: null,
+    };
     this._log = [];
     this._cfgData = null;
     this._cfgSuggestion = null;
@@ -22,6 +40,7 @@ export class HeizungsanalyseCard extends HTMLElement {
       this.shadowRoot.addEventListener("click", (e) => this._click(e));
       this.shadowRoot.addEventListener("submit", (e) => this._submit(e));
       this.shadowRoot.addEventListener("input", (e) => this._input(e));
+      this.shadowRoot.addEventListener("change", (e) => this._change(e));
     }
   }
 
@@ -146,7 +165,12 @@ export class HeizungsanalyseCard extends HTMLElement {
   async _loadConfig() {
     if (!this._hass) return;
     try {
-      this._cfgData = await this._hass.callWS({ type: "heizungsanalyse/config" });
+      const res = await this._hass.callWS({ type: "heizungsanalyse/config" });
+      res.options = res.options || {};
+      res.options.circuits = res.circuits || res.options.circuits || [];
+      res.options.rooms = res.rooms || res.options.rooms || [];
+      res.options.thresholds = res.thresholds || res.options.thresholds || {};
+      this._cfgData = res;
       this._cfgError = null;
     } catch (e) {
       this._cfgError = e && (e.message || e.code) ? e.message || e.code : String(e);
@@ -156,32 +180,51 @@ export class HeizungsanalyseCard extends HTMLElement {
     this._render();
   }
 
+  _collectConfig() {
+    const cfg = this._cfgData;
+    if (!cfg || !this.shadowRoot) return;
+    const root = this.shadowRoot;
+    root.querySelectorAll("[data-cfg]").forEach((el) => {
+      const target = el.dataset.cfg === "data" ? cfg.data : cfg.options;
+      const value = el.value.trim();
+      if (value !== "") target[el.dataset.key] = value;
+      else delete target[el.dataset.key];
+    });
+    root.querySelectorAll("[data-thr]").forEach((el) => {
+      cfg.options.thresholds = { ...(cfg.options.thresholds || {}) };
+      if (el.value !== "") cfg.options.thresholds[el.dataset.thr] = el.value;
+      else delete cfg.options.thresholds[el.dataset.thr];
+    });
+    root.querySelectorAll("[data-arr]").forEach((el) => {
+      const list = cfg.options[el.dataset.arr] || [];
+      const item = list[Number(el.dataset.idx)];
+      if (item) item[el.dataset.key] = el.value.trim();
+    });
+  }
+
+  _nextId(prefix, list) {
+    const used = new Set((list || []).map((item) => item.id));
+    let index = 1;
+    while (used.has(`${prefix}${index}`)) index += 1;
+    return `${prefix}${index}`;
+  }
+
   async _saveConfig() {
     if (!this._hass || !this._cfgData) return;
-    const root = this.shadowRoot;
-    const data = { ...this._cfgData.data };
-    const options = { ...this._cfgData.options };
-    root.querySelectorAll("[data-cfg]").forEach((el) => {
-      const group = el.dataset.cfg;
-      const key = el.dataset.key;
-      const val = el.value.trim();
-      if (group === "data") { if (val) data[key] = val; else delete data[key]; }
-      else { if (val) options[key] = val; else delete options[key]; }
-    });
-    root.querySelectorAll("[data-cfgjson]").forEach((el) => {
-      const key = el.dataset.cfgjson;
-      const raw = el.value.trim();
-      try {
-        const parsed = raw ? JSON.parse(raw) : (key === "thresholds" ? {} : []);
-        options[key] = parsed;
-      } catch (e) {
-        this._ui.cfgMsg = t("JSON-Fehler: {e}", { e: e.message || e });
-        this._render();
-        throw e;
-      }
-    });
+    this._collectConfig();
+    this._ui.cfgErrors = {};
     try {
-      await this._hass.callWS({ type: "heizungsanalyse/config/save", data, options });
+      const result = await this._hass.callWS({
+        type: "heizungsanalyse/config/save",
+        data: this._cfgData.data,
+        options: this._cfgData.options,
+      });
+      if (result && result.ok === false) {
+        this._ui.cfgErrors = result.errors || {};
+        this._ui.cfgMsg = t("{n} Felder prüfen.", { n: Object.keys(this._ui.cfgErrors).length });
+        this._render();
+        return;
+      }
       this._ui.cfgMsg = t("Gespeichert");
       invalidate();
       setTimeout(() => this._load(true), 1500);
@@ -213,6 +256,7 @@ export class HeizungsanalyseCard extends HTMLElement {
     if (!d) return;
     if (!d.configured) return this._paint(`<div class="c empty">${esc(t("Die Heizungsanalyse ist noch nicht eingerichtet."))}</div>`);
     const view = this._config.view;
+    this._ui.hass = this._hass;
     let data = d;
     if (view === "protokoll") data = { ...d, diag: this._diag, log: { entries: this._log }, logError: this._logError };
     if (view === "einstellungen") data = { ...d, config: this._cfgData, configError: this._cfgError, suggestion: this._cfgSuggestion };
@@ -258,8 +302,56 @@ export class HeizungsanalyseCard extends HTMLElement {
     else if (el.dataset.act === "log-copy") return void this._copy();
     else if (el.dataset.act === "log-refresh") return void this._refresh();
     else if (el.dataset.act === "cfg-save") return void this._saveConfig();
-    else if (el.dataset.act === "inv-open") this._ui.invForm = true;
-    else if (el.dataset.act === "inv-close") this._ui.invForm = false;
+    else if (el.dataset.act === "cfg-circ-add") {
+      this._collectConfig();
+      const list = this._cfgData.options.circuits;
+      list.push({ id: this._nextId("hk", list), name: "", type: "radiators" });
+      this._render();
+      return;
+    } else if (el.dataset.act === "cfg-circ-del") {
+      this._collectConfig();
+      this._cfgData.options.circuits.splice(Number(el.dataset.idx), 1);
+      this._render();
+      return;
+    } else if (el.dataset.act === "cfg-room-add") {
+      this._collectConfig();
+      const list = this._cfgData.options.rooms;
+      const circuits = this._cfgData.options.circuits || [];
+      list.push({ id: this._nextId("raum", list), name: "", room_type: "", circuit: circuits[0] ? circuits[0].id : "" });
+      this._render();
+      return;
+    } else if (el.dataset.act === "cfg-room-del") {
+      this._collectConfig();
+      this._cfgData.options.rooms.splice(Number(el.dataset.idx), 1);
+      this._render();
+      return;
+    } else if (el.dataset.act === "cfg-thr-reset") {
+      this._collectConfig();
+      this._cfgData.options.thresholds = {};
+      this._render();
+      return;
+    } else if (el.dataset.act === "inv-add") {
+      this._ui.invForm = this._inventoryForm(el.dataset.section);
+      this._ui.invSaved = false;
+    } else if (el.dataset.act === "inv-edit") {
+      const section = el.dataset.section;
+      this._ui.invForm = this._inventoryForm(section, el.dataset.object);
+      this._ui.invSaved = false;
+    } else if (el.dataset.act === "inv-del") {
+      if (!window.confirm(t("Objekt wirklich löschen?"))) return;
+      this._hass.callWS({ type: "heizungsanalyse/inventory/remove", object: el.dataset.object })
+        .then(async () => { invalidate(); await this._load(true); this._flash(t("Gelöscht")); })
+        .catch((err) => this._flash(t("Fehler: {e}", { e: err.message || err })));
+      return;
+    } else if (el.dataset.act === "inv-prefill") return void this._inventoryPrefill();
+    else if (el.dataset.act === "inv-export") return void this._inventoryExport();
+    else if (el.dataset.act === "inv-import") return void this._inventoryImport();
+    else if (el.dataset.act === "inv-close") { this._ui.invForm = null; this._ui.invSaved = false; }
+    else if (el.dataset.act === "goto-vergleich") {
+      window.history.pushState(null, "", "/heizungs-analyse/vergleich");
+      window.dispatchEvent(new CustomEvent("location-changed"));
+      return;
+    }
     this._render();
   }
 
@@ -271,25 +363,134 @@ export class HeizungsanalyseCard extends HTMLElement {
     this._searchTimer = setTimeout(() => this._loadLog(true), 250);
   }
 
+  _change(e) {
+    const el = e.target;
+    if (!el || !el.dataset || !el.dataset.chg) return;
+    if (el.dataset.chg === "object") {
+      this._ui.chgObject = el.value;
+      this._ui.chgField = "";
+      this._render();
+    } else if (el.dataset.chg === "field") {
+      this._ui.chgField = el.value;
+      this._render();
+    }
+  }
+
+  _inventoryForm(section, object = null) {
+    const data = (this._data.inventory || {})[section] || {};
+    const key = object && object.includes(".") ? object.split(".").slice(1).join(".") : "";
+    const record = object ? (section === "hydraulics" ? data : data[key] || {}) : {};
+    return {
+      section,
+      object,
+      selection: object && object.includes(".") ? object.split(".").slice(1).join(".") : "",
+      values: { ...record },
+      note: "",
+      errors: {},
+    };
+  }
+
+  async _inventorySave(form, values, note) {
+    const section = form.section;
+    const object = form.object || objectKey(section, form.selection);
+    if (!form.object && section !== "hydraulics" && !form.selection) {
+      form.errors = { selection: "required" };
+      this._render();
+      return;
+    }
+    try {
+      const result = await this._hass.callWS({ type: "heizungsanalyse/inventory/save", object, values, note: note || undefined });
+      if (result && result.ok === false) {
+        form.errors = result.errors || {};
+        form.message = t("Bitte die markierten Felder prüfen.");
+        this._render();
+        return;
+      }
+      this._ui.invForm = null;
+      this._ui.invSaved = true;
+      invalidate();
+      await this._load(true);
+      this._flash(t("Gespeichert"));
+    } catch (err) {
+      form.message = t("Fehler: {e}", { e: err.message || err });
+      this._render();
+    }
+  }
+
+  async _inventoryPrefill() {
+    const rooms = (this._data && this._data.rooms) || [];
+    let created = 0;
+    for (const room of rooms) {
+      if (!room.id) continue;
+      for (const [section, values] of [
+        ["thermostats", { room: room.id }],
+        ["radiators", { room: room.id, circuit: room.circuit || "" }],
+      ]) {
+        const object = `${section}.${room.id}`;
+        const existing = ((this._data.inventory || {})[section] || {})[room.id];
+        if (existing) continue;
+        const clean = Object.fromEntries(Object.entries(values).filter(([, value]) => value));
+        try {
+          await this._hass.callWS({ type: "heizungsanalyse/inventory/save", object, values: clean, note: t("Aus Räumen übernommen") });
+          created += 1;
+        } catch (err) {
+          // Einzelne Räume dürfen übersprungen werden.
+        }
+      }
+    }
+    invalidate();
+    await this._load(true);
+    this._flash(t("{n} Einträge aus Räumen angelegt", { n: created }));
+  }
+
+  async _inventoryExport() {
+    try {
+      const result = await this._hass.callWS({ type: "heizungsanalyse/inventory/export" });
+      const blob = new Blob([result.csv || ""], { type: "text/csv" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = result.filename || "inventar.csv";
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      this._flash(t("CSV heruntergeladen"));
+    } catch (err) {
+      this._flash(t("Fehler: {e}", { e: err.message || err }));
+    }
+  }
+
+  async _inventoryImport() {
+    const area = this.shadowRoot.querySelector("[data-inv-csv]");
+    const csv = area ? area.value.trim() : "";
+    if (!csv) {
+      this._flash(t("Bitte CSV einfügen."));
+      return;
+    }
+    try {
+      const result = await this._hass.callWS({ type: "heizungsanalyse/inventory/import", csv });
+      invalidate();
+      this._ui.invSaved = true;
+      await this._load(true);
+      const problems = Object.keys(result.errors || {}).length + (result.rows || []).length;
+      this._flash(problems ? t("{n} übernommen, {e} Zeilen übersprungen", { n: result.imported || 0, e: problems }) : t("{n} übernommen", { n: result.imported || 0 }));
+    } catch (err) {
+      this._flash(t("Fehler: {e}", { e: err.message || err }));
+    }
+  }
+
   async _submit(e) {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(e.target).entries());
     if (e.target.dataset.form === "inventory") {
-      const section = data.section;
-      const object = (data.object || "").trim();
-      if (!object) { this._flash(t("Objekt fehlt")); return; }
-      const full = object.includes(".") ? object : `${section}.${object}`;
-      let values = {};
-      try { values = data.values ? JSON.parse(data.values) : {}; } catch (err) { this._flash(t("JSON-Fehler: {e}", { e: err.message || err })); return; }
-      try {
-        await this._hass.callService("heizungsanalyse", "update_inventory", { object: full, values, note: data.note || undefined });
-        this._ui.invForm = false;
-        invalidate();
-        await this._load(true);
-        this._flash(t("Gespeichert"));
-      } catch (err) {
-        this._flash(t("Fehler: {e}", { e: err.message || err }));
+      const form = this._ui.invForm || { section: data.section, object: null };
+      let values = form.values || {};
+      for (const spec of sectionFields(this._data, form.section)) {
+        const key = `f_${spec.key}`;
+        if (data[key] !== undefined) values[spec.key] = data[key];
       }
+      if (!form.object) values = Object.fromEntries(Object.entries(values).filter(([, value]) => value !== ""));
+      form.values = values;
+      form.note = data.note || "";
+      await this._inventorySave(form, values, form.note);
       return;
     }
     const payload = { object: data.object.trim(), field: data.field.trim() };

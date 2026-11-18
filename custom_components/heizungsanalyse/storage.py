@@ -29,6 +29,7 @@ EMPTY_INVENTORY: dict[str, dict[str, Any]] = {
     "pumps": {},
     "thermostats": {},
     "hydraulics": {},
+    "radiators": {},
 }
 
 
@@ -121,6 +122,37 @@ class InventoryStore:
             data["change_log"] = data["change_log"][-CHANGE_LOG_LIMIT:]
             await self.async_save()
         return changes
+
+    async def async_remove_inventory_item(self, object_id: str, *, note: str | None = None) -> dict[str, Any] | None:
+        """Ein Inventar-Objekt löschen und den Löschvorgang protokollieren."""
+        data = await self.async_load()
+        section, key = _split_object(object_id)
+        target = data["inventory"].get(section)
+        if not isinstance(target, dict):
+            return None
+
+        if key is None:
+            if not target:
+                return None
+            old_value: Any = dict(target)
+            data["inventory"][section] = {}
+        else:
+            old_value = target.pop(key, None)
+            if old_value is None:
+                return None
+
+        change = {
+            "ts": dt_util.utcnow().isoformat(),
+            "object": object_id,
+            "field": "*",
+            "old": old_value,
+            "new": None,
+            "note": note,
+        }
+        data["change_log"].append(change)
+        data["change_log"] = data["change_log"][-CHANGE_LOG_LIMIT:]
+        await self.async_save()
+        return change
 
     async def async_log_change(
         self,

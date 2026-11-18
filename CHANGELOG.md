@@ -1,3 +1,32 @@
+## 0.7.0 – 2026-11-18
+
+### Neu
+- **Inventar ohne JSON**: Felder kommen aus dem Backend-Schema
+  (`heizungsanalyse/inventory/schema`), Schlüssel werden aus Heizkreis oder
+  Raum abgeleitet. Tabelle mit Bearbeiten/Löschen, Vorbelegung, Grund-Feld,
+  Vollständigkeitsanzeige, „Aus Räumen übernehmen“ und Link zum Vergleich.
+- **CSV-Austausch** für das Inventar (Export und Import mit Zeilen- und
+  Feldfehlern) statt handgeschriebenem JSON.
+- **Einstellungen ohne JSON**: Quellen mit Entity-Feldern, Heizkreise und
+  Räume als Listen, Schwellen mit Einheit/Grenzen und Zurücksetzen.
+  `config/save` liefert feldbezogene Fehler; unveränderte Werte blockieren
+  das Speichern nicht.
+- **Vorher/Nachher-Formular**: „Was“ und „Einstellung“ als Auswahl aus
+  Inventar und Heizkurve, alter Wert vorbelegt.
+- Neuer Dienst `remove_inventory_item`.
+- `docs/design.md` mit Bestandsaufnahme und Gestaltungsregeln.
+
+### Geändert
+- Gemeinsame Bausteine (`components.js`): Kacheln, Formularfelder, Tabellen,
+  Hinweise und Fortschritt; einheitliche Abstände und Typografie.
+- Tabellen werden auf schmalen Bildschirmen zu Karten; Bedienelemente
+  mindestens 44 px hoch.
+- Umlaute in sichtbaren Texten korrigiert (u. a. „Räume“, „lädt“,
+  „Wärmepumpe“).
+
+### Behoben
+- `radiators` fehlte im leeren Inventar und wurde beim Laden nicht ergänzt.
+
 ## 0.7.0b2 – 2026-11-17 (Beta)
 
 ### Behoben

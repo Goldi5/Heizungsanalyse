@@ -14,7 +14,7 @@ Stammdaten setzen. Jede tatsächliche Änderung landet automatisch im
 
 | Feld | Pflicht | Bedeutung |
 |---|---|---|
-| `object` | ja | `pumps.<key>`, `thermostats.<key>` oder `hydraulics` |
+| `object` | ja | `pumps.<key>`, `thermostats.<key>`, `radiators.<key>` oder `hydraulics` |
 | `values` | ja | Feld/Wert-Paare, erlaubte Felder je Bereich |
 | `note` | nein | Grund oder Hinweis zur Änderung |
 
@@ -33,6 +33,25 @@ Erlaubte Felder: `custom_components/heizungsanalyse/const.py`,
 `ServiceValidationError` abgelehnt.
 
 Rückgabe: `{"object": "pumps.hk2", "changed": 2}`.
+
+## `heizungsanalyse.remove_inventory_item`
+
+Ein Inventar-Objekt löschen. Der Vorgang wird mit Feld `*` im
+Änderungsverlauf protokolliert (alter Stand bleibt nachvollziehbar).
+
+| Feld | Pflicht | Bedeutung |
+|---|---|---|
+| `object` | ja | wie bei `update_inventory` |
+| `note` | nein | Grund der Löschung |
+
+```yaml
+action: heizungsanalyse.remove_inventory_item
+data:
+  object: radiators.wohnen
+  note: "Heizkörper entfernt"
+```
+
+Rückgabe: `{"object": "...", "removed": true, "change": {...}}`.
 
 ## `heizungsanalyse.log_change`
 
