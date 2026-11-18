@@ -9,6 +9,14 @@ export function head(title, key, ui, sub = "") {
   return `<div class="h">${esc(title)}${sub ? ` <span class="sub">${sub}</span>` : ""}<button class="q ${open ? "on" : ""}" data-help="${key}" aria-label="?">?</button></div>${open ? `<div class="help">${esc(helpText(key))}</div>` : ""}`;
 }
 
+export function kpiTile({ title, key, ui, value, unit = "", spark = "", body = "", sub = "" }) {
+  return `<div class="c">${head(title, key, ui, sub)}<div class="big">${value}${unit ? `<small>${esc(unit)}</small>` : ""}</div>${spark}${body}</div>`;
+}
+
+export function statusPill(tone, text) {
+  return `<span class="pill tone-${tone}">${esc(text)}</span>`;
+}
+
 export function card(title, key, ui, body, sub = "", cls = "") {
   return `<section class="c ${cls}">${head(title, key, ui, sub)}${body}</section>`;
 }

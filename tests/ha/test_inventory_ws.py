@@ -27,6 +27,9 @@ async def test_inventory_schema_lists_all_sections(hass: HomeAssistant, hass_ws_
     for field in sections["radiators"]["fields"]:
         assert field["label"]["de"] and field["label"]["en"]
     assert "percent" in result["completeness"]
+    for section, info in result["completeness"]["sections"].items():
+        assert info["percent"] < 100
+        assert info["hint"]["de"] and info["hint"]["en"], section
 
 
 async def test_inventory_save_rejects_bad_values(hass: HomeAssistant, hass_ws_client) -> None:

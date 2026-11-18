@@ -13,6 +13,13 @@
   das Speichern nicht.
 - **Vorher/Nachher-Formular**: „Was“ und „Einstellung“ als Auswahl aus
   Inventar und Heizkurve, alter Wert vorbelegt.
+- **Vorabprüfung im Browser**: Pflichtfelder, unbekannte Entities, Einheiten,
+  doppelte Kennungen und Schwellenbereiche werden vor dem Speichern geprüft;
+  die Fehler stehen direkt am Feld. „Aus Räumen übernehmen“ fragt vorher nach.
+- **Vollständigkeitshinweise**: Jeder unvollständige Inventarbereich erklärt,
+  wofür die fehlenden Angaben gebraucht werden.
+- **Screenshots** aller acht Tabs in hell/dunkel und Desktop/Mobile unter
+  `docs/screenshots/0.7.0/`.
 - Neuer Dienst `remove_inventory_item`.
 - `docs/design.md` mit Bestandsaufnahme und Gestaltungsregeln.
 
@@ -20,7 +27,8 @@
 - Gemeinsame Bausteine (`components.js`): Kacheln, Formularfelder, Tabellen,
   Hinweise und Fortschritt; einheitliche Abstände und Typografie.
 - Tabellen werden auf schmalen Bildschirmen zu Karten; Bedienelemente
-  mindestens 44 px hoch.
+  mindestens 44 px hoch; Navigation bricht auf Mobil um statt seitlich zu
+  scrollen. Akzentfarben an `raumklima-2` angeglichen.
 - Umlaute in sichtbaren Texten korrigiert (u. a. „Räume“, „lädt“,
   „Wärmepumpe“).
 

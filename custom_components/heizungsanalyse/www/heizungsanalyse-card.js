@@ -325,7 +325,15 @@
     "Bereich ist unbekannt": "Unknown section",
     "Wert prüfen": "Check value",
     "Bezeichner ist doppelt": "Identifier is duplicated",
-    "Aufbau ist ungültig": "Structure is invalid"
+    "Aufbau ist ungültig": "Structure is invalid",
+    "Alles in Ordnung": "All good",
+    "{w} Warnungen · {i} Hinweise": "{w} warnings · {i} notes",
+    "COP {v} in den letzten 7 Tagen": "COP {v} over the last 7 days",
+    "Noch keine Daten für die Effizienz.": "No efficiency data yet.",
+    "{n} Räume · {k} außerhalb der Toleranz": "{n} rooms · {k} outside tolerance",
+    "{n} Ereignisse in den letzten 48 Stunden": "{n} events in the last 48 hours",
+    "{c} Heizkreise · {r} Räume": "{c} heating circuits · {r} rooms",
+    "Für alle Räume Thermostat und Heizkörper anlegen?": "Create a thermostat and radiator for every room?"
   };
   var lang = "de";
   function setLang(hass) {
@@ -459,9 +467,11 @@
   --hz-line: var(--divider-color, #e6e9f0);
   --hz-card: var(--ha-card-background, var(--card-background-color, #fff));
   --hz-soft: color-mix(in srgb, var(--hz-ink) 4%, transparent);
-  --hz-heat: #ff7a45; --hz-ok: #22b89a; --hz-warn: #f2a93b; --hz-bad: #e5484d; --hz-cool: #4c8dff; --hz-vio: #8b7cf6;
-  --hz-radius: 20px; --hz-radius-sm: 14px; --hz-shadow: 0 4px 16px rgba(16,24,40,.06); --hz-shadow-lg: 0 8px 32px rgba(16,24,40,.10);
+  --hz-heat: #ff7a45; --hz-ok: #2ec4a6; --hz-warn: #ffb020; --hz-bad: #ff4d6d; --hz-cool: #4f9dff; --hz-vio: #8b7cf6;
+  --hz-radius: 24px; --hz-radius-sm: 14px; --hz-shadow: 0 4px 16px rgba(16,24,40,.06); --hz-shadow-lg: 0 8px 32px rgba(16,24,40,.10);
   --hz-gap: 18px;
+  --hz-space-1: 4px; --hz-space-2: 6px; --hz-space-3: 8px; --hz-space-4: 12px; --hz-space-5: 16px; --hz-space-6: 18px; --hz-space-7: 24px;
+  --hz-text-xs: .72rem; --hz-text-sm: .82rem; --hz-text-md: .9rem; --hz-text-lg: 1.1rem; --hz-text-xl: 1.35rem;
   font-family: var(--ha-font-family-body, Inter, system-ui, sans-serif); color: var(--hz-ink);
 }
 * { box-sizing: border-box; }
@@ -528,6 +538,8 @@
 .chart .hlt { fill:var(--hz-ink); font-weight:700; font-size:12px; }
 .legend { display:flex; flex-wrap:wrap; gap:6px 14px; font-size:.78rem; color:var(--hz-mut); margin-top:6px; }
 .legend i { display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; vertical-align:-1px; }
+.legend i.sw-ok { background:var(--hz-ok); } .legend i.sw-heat { background:var(--hz-heat); } .legend i.sw-cool { background:var(--hz-cool); }
+.legend i.sw-vio { background:var(--hz-vio); } .legend i.sw-bad { background:var(--hz-bad); } .legend i.sw-warn { background:var(--hz-warn); }
 .alert { display:flex; gap:14px; padding:16px 18px; border-radius:var(--hz-radius-sm); border:1px solid var(--hz-line); background:var(--hz-card); margin-bottom:10px; position:relative; overflow:hidden; }
 .alert::before { content:""; position:absolute; left:0; top:0; bottom:0; width:5px; }
 .alert.warning::before { background:var(--hz-bad); }
@@ -659,7 +671,7 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
 .skeleton .sk-line { width:90%; }
 .skeleton .sk-line.short { width:60%; }
 @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-@media (max-width: 760px) { .nav { overflow-x:auto; flex-wrap:nowrap; padding-bottom:4px; } .navpill { white-space:nowrap; } }
+@media (max-width: 760px) { .nav { flex-wrap:wrap; gap:5px; } .navpill { padding:5px 9px; font-size:.74rem; } }
 
 .flash { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--hz-ink); color:var(--hz-card); padding:9px 16px; border-radius:999px; font-size:.85rem; font-weight:600; z-index:9; }
 .mt6 { margin-top:6px; } .mt8 { margin-top:8px; } .mt10 { margin-top:10px; } .mt12 { margin-top:12px; }
@@ -1163,6 +1175,12 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     const open = ui.help === key;
     return `<div class="h">${esc(title)}${sub ? ` <span class="sub">${sub}</span>` : ""}<button class="q ${open ? "on" : ""}" data-help="${key}" aria-label="?">?</button></div>${open ? `<div class="help">${esc(helpText(key))}</div>` : ""}`;
   }
+  function kpiTile({ title, key, ui, value, unit = "", spark = "", body = "", sub = "" }) {
+    return `<div class="c">${head(title, key, ui, sub)}<div class="big">${value}${unit ? `<small>${esc(unit)}</small>` : ""}</div>${spark}${body}</div>`;
+  }
+  function statusPill(tone, text) {
+    return `<span class="pill tone-${tone}">${esc(text)}</span>`;
+  }
   function card(title, key, ui, body, sub = "", cls = "") {
     return `<section class="c ${cls}">${head(title, key, ui, sub)}${body}</section>`;
   }
@@ -1228,7 +1246,6 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     const w = ui.widths && ui.widths[id] || 640;
     return `<div class="cbox" data-cid="${id}">${withWidth(w, fn)}</div>`;
   }
-  var pill = (tone, text) => `<span class="pill tone-${tone}">${esc(text)}</span>`;
   var EVIDENCE = {
     median_k: (v) => `Median ${signed(v)} K`,
     p90_k: (v) => `p90 ${signed(v)} K`,
@@ -1259,6 +1276,33 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     <span class="meta"><span class="dot ${d.last_update_success === false ? "off" : ""}"></span>${esc(t("Aktualisiert {t}", { t: time }))} · ${esc(t("Version {v}", { v: d.version }))}</span></div>
     <nav class="nav">${nav}</nav>`;
   }
+  function tabVerdict(d, view) {
+    const k = d.kpis || {};
+    const score = d.score || {};
+    const line = (text, extra = "") => `<div class="intro"><span>${esc(text)}</span>${extra ? `<span class="muted">${esc(extra)}</span>` : ""}</div>`;
+    if (view === "anlage") {
+      const text = score.active ? t("{w} Warnungen · {i} Hinweise", { w: score.warnings || 0, i: score.infos || 0 }) : t("Alles in Ordnung");
+      return line(text, t("Datenbasis {d} Tage", { d: k.days_with_data ?? 0 }));
+    }
+    if (view === "effizienz") {
+      const cop = (k.cop_short || {}).value;
+      return line(cop != null ? t("COP {v} in den letzten 7 Tagen", { v: fmt(cop, 1) }) : t("Noch keine Daten für die Effizienz."));
+    }
+    if (view === "raeume") {
+      const rooms = d.rooms || [];
+      const tol = (d.thresholds || {}).room_deviation_k ?? 1;
+      const outside = rooms.filter((r) => r.deviation && r.deviation.median != null && Math.abs(r.deviation.median) > tol).length;
+      return line(t("{n} Räume · {k} außerhalb der Toleranz", { n: rooms.length, k: outside }));
+    }
+    if (view === "protokoll") {
+      const count = (d.log && d.log.entries || []).length;
+      return line(t("{n} Ereignisse in den letzten 48 Stunden", { n: count }));
+    }
+    if (view === "schema") {
+      return line(t("{c} Heizkreise · {r} Räume", { c: (d.circuits || []).length, r: (d.rooms || []).length }));
+    }
+    return "";
+  }
   function copFit(d) {
     return linearFit(d.series.filter((r) => r.cop != null && r.outdoor != null && r.cop < 12).map((r) => ({ x: r.outdoor, y: r.cop })));
   }
@@ -1274,29 +1318,29 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     <div class="score">${ring(d.score.value, lvl.tone)}
       <div><div class="lvl">${esc(t(lvl.label))}</div>
       <div class="muted">${esc(t("{w} Warnung · {i} Hinweise", { w: d.score.warnings, i: d.score.infos }))}<br>${esc(t("Datenbasis {d} Tage", { d: k.days_with_data }))}${d.score.total ? `<br>${esc(t("{a} von {n} Prüfungen aktiv", { a: d.score.active, n: d.score.total }))}` : ""}</div>
-      ${k.power_source === "fallback" ? `<div class="mt8">${pill("warn", t("Quelle {s}", { s: t("Ersatzquelle") }))}</div>` : ""}</div></div>
+      ${k.power_source === "fallback" ? `<div class="mt8">${statusPill("warn", t("Quelle {s}", { s: t("Ersatzquelle") }))}</div>` : ""}</div></div>
     ${(d.score.checks || []).some((c) => !c.active) ? `<div class="fs mt10">${esc(t("Ohne Bewertung:"))}</div><div class="ev">${(d.score.checks || []).filter((c) => !c.active).map((c) => `<span title="${esc(c.reason === "no_source" ? t("kein Sensor zugeordnet") : t("noch keine Daten"))}">${esc(t(CHECK_NAMES[c.key] || c.key))} · ${esc(c.reason === "no_source" ? t("kein Sensor") : t("keine Daten"))}</span>`).join("")}</div>` : ""}</div>`;
     const cop = k.cop_short.value;
     const copPill = (() => {
-      if (cop == null) return pill("mut", t("keine Daten"));
+      if (cop == null) return statusPill("mut", t("keine Daten"));
       const today = d.series[d.series.length - 1];
       if (fit && today && today.cop != null && today.outdoor != null) {
         const exp = fit.at(today.outdoor);
         const rel = (today.cop - exp) / exp;
-        return pill(rel > 0.08 ? "ok" : rel < -0.08 ? "warn" : "cool", rel > 0.08 ? t("über Kennlinie") : rel < -0.08 ? t("unter Kennlinie") : t("auf Kennlinie"));
+        return statusPill(rel > 0.08 ? "ok" : rel < -0.08 ? "warn" : "cool", rel > 0.08 ? t("über Kennlinie") : rel < -0.08 ? t("unter Kennlinie") : t("auf Kennlinie"));
       }
-      return trendTxt ? pill(copTrend.dir === "down" ? "warn" : "ok", `${t("Trend")}: ${trendTxt}`) : "";
+      return trendTxt ? statusPill(copTrend.dir === "down" ? "warn" : "ok", `${t("Trend")}: ${trendTxt}`) : "";
     })();
     const startsTone = kpiTone(k.starts_per_day, th.starts_per_day);
     const runTone = kpiTone(k.runtime_per_cycle, th.runtime_minutes, false);
     const flow = k.flow_deviation.median;
     const flowTone = flow == null ? "mut" : Math.abs(flow) <= 1 ? "ok" : Math.abs(flow) < (th.flow_deviation_k ?? 5) ? "warn" : "bad";
-    const kpi = (key, title, value, unit, spark, p) => `<div class="c">${head(title, key, ui)}<div class="big">${value}${unit ? `<small>${unit}</small>` : ""}</div>${spark}${p}</div>`;
+    const kpi = (key, title, value, unit, spark, body) => kpiTile({ title, key, ui, value, unit, spark, body });
     const kpis = `<div class="kpis">
     ${kpi("cop", t("COP 7 Tage"), fmt(cop, 1), cop != null && k.cop_long.value != null ? esc(t("30 T: {v}", { v: fmt(k.cop_long.value, 1) })) : "", sparkline(last30.map((r) => r.cop), "var(--hz-ok)"), copPill + (k.cop_total_short && k.cop_total_short.value != null ? `<div class="muted mt6">${esc(t("inkl. Warmwasser {v}", { v: fmt(k.cop_total_short.value, 1) }))}</div>` : ""))}
-    ${kpi("starts", t("Starts / Tag"), fmt(k.starts_per_day, 0), th.starts_per_day ? esc(t("Schwelle {v}", { v: fmt(th.starts_per_day, 0) })) : "", sparkline(last30.map((r) => r.starts), "var(--hz-warn)", { kind: "bar", ref: th.starts_per_day }), k.starts_per_day == null ? pill("mut", t("keine Daten")) : pill(startsTone, startsTone === "bad" ? t("über der Schwelle") : t("im grünen Bereich")))}
-    ${kpi("runtime", t("Laufzeit / Zyklus"), fmt(k.runtime_per_cycle, 0), t("min"), sparkline(last30.map((r) => r.cycle_min), "var(--hz-cool)"), k.runtime_per_cycle == null ? pill("mut", t("keine Daten")) : pill(runTone, runTone === "bad" ? t("unter der Schwelle") : t("im grünen Bereich")))}
-    ${kpi("flow", t("Vorlauf Ist − Soll"), signed(flow), "K", sparkline(last30.map((r) => r.flow != null && r.target_flow != null ? r.flow - r.target_flow : null), "var(--hz-bad)", { ref: 0 }), flow == null ? pill("mut", t("keine Daten")) : pill(flowTone, flow > 1 ? t("Vorlauf zu warm → Kurve prüfen") : flow < -1 ? t("Vorlauf zu kalt") : t("passt")))}
+    ${kpi("starts", t("Starts / Tag"), fmt(k.starts_per_day, 0), th.starts_per_day ? esc(t("Schwelle {v}", { v: fmt(th.starts_per_day, 0) })) : "", sparkline(last30.map((r) => r.starts), "var(--hz-warn)", { kind: "bar", ref: th.starts_per_day }), k.starts_per_day == null ? statusPill("mut", t("keine Daten")) : statusPill(startsTone, startsTone === "bad" ? t("über der Schwelle") : t("im grünen Bereich")))}
+    ${kpi("runtime", t("Laufzeit / Zyklus"), fmt(k.runtime_per_cycle, 0), t("min"), sparkline(last30.map((r) => r.cycle_min), "var(--hz-cool)"), k.runtime_per_cycle == null ? statusPill("mut", t("keine Daten")) : statusPill(runTone, runTone === "bad" ? t("unter der Schwelle") : t("im grünen Bereich")))}
+    ${kpi("flow", t("Vorlauf Ist − Soll"), signed(flow), "K", sparkline(last30.map((r) => r.flow != null && r.target_flow != null ? r.flow - r.target_flow : null), "var(--hz-bad)", { ref: 0 }), flow == null ? statusPill("mut", t("keine Daten")) : statusPill(flowTone, flow > 1 ? t("Vorlauf zu warm → Kurve prüfen") : flow < -1 ? t("Vorlauf zu kalt") : t("passt")))}
   </div>`;
     const findings = d.findings.length ? d.findings.map((f) => `<div class="alert ${f.severity === "warning" ? "warning" : "info"}">
           <div class="abody">
@@ -1320,7 +1364,7 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     const lv = h.live;
     if (!lv || lv.spread == null && lv.power_kw == null) return "";
     const tile = (label, value, unit, tone = "") => `<div class="lv"><div class="muted">${esc(t(label))}</div><div class="big ${tone}">${value}<small>${esc(unit)}</small></div></div>`;
-    const state = lv.running === true ? pill("ok", t("Verdichter läuft")) : lv.running === false ? pill("mut", t("Verdichter aus")) : "";
+    const state = lv.running === true ? statusPill("ok", t("Verdichter läuft")) : lv.running === false ? statusPill("mut", t("Verdichter aus")) : "";
     const sp = h.spread || {};
     return `<div class="c">${head(t("Jetzt"), "live", ui)}<div class="row mt6">${state}</div>
     <div class="lvgrid">
@@ -1339,7 +1383,7 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     const lines = fit && xs.length ? [{ color: "var(--hz-ok)", points: [{ x: Math.min(...xs), y: fit.at(Math.min(...xs)) }, { x: Math.max(...xs), y: fit.at(Math.max(...xs)) }] }] : [];
     const svg = box(ui, "copcurve", () => scatterChart(pts, { unitY: "COP", lines, highlight: today ? { x: today.outdoor, y: today.cop, label: `${t("heute")} ${fmt(today.cop)}` } : null }));
     return `<div class="c">${head(t("COP-Kennlinie"), "copcurve", ui, esc(t("Tages-COP gegen Außentemperatur")))}${svg || `<div class="empty">${esc(t("keine Daten"))}</div>`}
-    <div class="legend"><span><i style="background:var(--hz-ok)"></i>${esc(t("eigene Anlage"))} (${rows.length} ${esc(t("Tage"))})</span>${fit ? `<span>${esc(t("Kennlinie"))}: COP ≈ ${fmt(fit.a, 2)} ${fit.b >= 0 ? "+" : "−"} ${fmt(Math.abs(fit.b), 3)} × T</span>` : ""}</div></div>`;
+    <div class="legend"><span><i class="sw-ok"></i>${esc(t("eigene Anlage"))} (${rows.length} ${esc(t("Tage"))})</span>${fit ? `<span>${esc(t("Kennlinie"))}: COP ≈ ${fmt(fit.a, 2)} ${fit.b >= 0 ? "+" : "−"} ${fmt(Math.abs(fit.b), 3)} × T</span>` : ""}</div></div>`;
   }
   function energyCard(d, ui, days) {
     const rows = rangeRows(d.series, days).map((r) => ({ ...r, space: r.heat != null && r.dhw != null ? Math.max(0, r.heat - r.dhw) : r.heat }));
@@ -1355,7 +1399,7 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     const sumHeat = rows.reduce((s, r) => s + (r.heat || 0), 0);
     const sumPower = rows.reduce((s, r) => s + (r.power || 0), 0);
     return `<div class="c">${head(t("Energie"), "energy", ui, `${days} ${esc(t("Tage"))}`)}${box(ui, `energy${days}`, () => timeChart(rows, series, { unitL: "kWh" }))}
-    <div class="legend"><span><i style="background:var(--hz-heat)"></i>${esc(t("Wärme"))} ${fmt(sumHeat, 0)} kWh</span>${hasDhw ? `<span><i style="background:var(--hz-vio)"></i>${esc(t("Warmwasser"))}</span>` : ""}<span><i style="background:var(--hz-cool)"></i>${esc(t("Strom"))} ${fmt(sumPower, 0)} kWh</span></div></div>`;
+    <div class="legend"><span><i class="sw-heat"></i>${esc(t("Wärme"))} ${fmt(sumHeat, 0)} kWh</span>${hasDhw ? `<span><i class="sw-vio"></i>${esc(t("Warmwasser"))}</span>` : ""}<span><i class="sw-cool"></i>${esc(t("Strom"))} ${fmt(sumPower, 0)} kWh</span></div></div>`;
   }
   function missingCard(d) {
     if (!d.missing || !d.missing.length) return "";
@@ -1382,7 +1426,7 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
       { key: "cop", kind: "area", color: "var(--hz-ok)", axis: "l", digits: 2 },
       { key: "outdoor", kind: "line", color: "var(--hz-cool)", axis: "r", width: 1.6, dash: "4 3" }
     ], { unitL: "COP", unitR: "°C", markers }))}
-    <div class="legend"><span><i style="background:var(--hz-ok)"></i>COP</span><span><i style="background:var(--hz-cool)"></i>${esc(t("Außentemperatur"))}</span>${markers.length ? `<span><i style="background:var(--hz-vio)"></i>${esc(t("Änderung"))}</span>` : ""}</div></div>`;
+    <div class="legend"><span><i class="sw-ok"></i>COP</span><span><i class="sw-cool"></i>${esc(t("Außentemperatur"))}</span>${markers.length ? `<span><i class="sw-vio"></i>${esc(t("Änderung"))}</span>` : ""}</div></div>`;
     const curveRows = rows.filter((r) => r.outdoor != null && (r.flow != null || r.target_flow != null));
     const flowPts = curveRows.filter((r) => r.flow != null).map((r) => ({ x: r.outdoor, y: r.flow, color: "var(--hz-heat)", opacity: 0.7, title: `${dayLabel(r.day)} ${t("Vorlauf")} ${fmt(r.flow)} °C` }));
     const tgtPts = curveRows.filter((r) => r.target_flow != null).map((r) => ({ x: r.outdoor, y: r.target_flow, color: "var(--hz-cool)", opacity: 0.55, r: 3.4, title: `${dayLabel(r.day)} ${t("Soll-Vorlauf")} ${fmt(r.target_flow)} °C` }));
@@ -1391,7 +1435,7 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     const xs = curveRows.map((r) => r.outdoor);
     const lineOf = (fit, color, dash) => fit && xs.length ? [{ color, dash, points: [{ x: Math.min(...xs), y: fit.at(Math.min(...xs)) }, { x: Math.max(...xs), y: fit.at(Math.max(...xs)) }] }] : [];
     const curve = `<div class="c">${head(t("Heizkurve"), "curve", ui)}${box(ui, "curve", () => scatterChart(flowPts.concat(tgtPts), { unitY: "°C", lines: lineOf(fitF, "var(--hz-heat)").concat(lineOf(fitT, "var(--hz-cool)", "6 4")) })) || `<div class="empty">${esc(t("keine Daten"))}</div>`}
-    <div class="legend"><span><i style="background:var(--hz-heat)"></i>${esc(t("Vorlauf"))}</span><span><i style="background:var(--hz-cool)"></i>${esc(t("Soll-Vorlauf"))}</span></div></div>`;
+    <div class="legend"><span><i class="sw-heat"></i>${esc(t("Vorlauf"))}</span><span><i class="sw-cool"></i>${esc(t("Soll-Vorlauf"))}</span></div></div>`;
     const th = d.thresholds || {};
     const startBins = binByOutdoor(rows, "starts");
     const cycling = `<div class="c">${head(t("Takten"), "cycling", ui, esc(t("Starts pro Tag nach Außentemperatur")))}${startBins.length ? box(ui, "cycling", () => binChart(startBins, { ref: th.starts_per_day, unit: t("Starts/Tag"), digits: 0 })) : `<div class="empty">${esc(t("keine Daten"))}</div>`}</div>`;
@@ -1401,7 +1445,7 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
       { key: "defrost_h", kind: "bar", color: "var(--hz-cool)", axis: "l", stack: true, label: t("Abtauen") },
       { key: "aux_h", kind: "bar", color: "var(--hz-bad)", axis: "l", stack: true, label: t("Heizstab") }
     ], { unitL: t("h/Tag") })) : `<div class="empty">${esc(t("keine Daten"))}</div>`}
-    <div class="legend"><span><i style="background:var(--hz-cool)"></i>${esc(t("Abtauen"))}</span><span><i style="background:var(--hz-bad)"></i>${esc(t("Heizstab"))}</span></div></div>`;
+    <div class="legend"><span><i class="sw-cool"></i>${esc(t("Abtauen"))}</span><span><i class="sw-bad"></i>${esc(t("Heizstab"))}</span></div></div>`;
     const heat = rows.reduce((s, r) => s + (r.heat || 0), 0);
     const dhw = rows.reduce((s, r) => s + (r.dhw || 0), 0);
     const dhwCard = rows.some((r) => r.dhw != null) ? `<div class="c">${head(t("Warmwasseranteil"), "dhw", ui)}<div class="big">${fmt(heat ? dhw / heat * 100 : null, 0)}<small>%</small></div><div class="meter"><i style="width:${heat ? Math.min(100, dhw / heat * 100) : 0}%;background:var(--hz-vio)"></i></div><div class="muted mt8">${fmt(dhw, 0)} / ${fmt(heat, 0)} kWh</div></div>` : "";
@@ -1434,11 +1478,11 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
       const lv = live[r.climate_entity];
       const now = lv ? `${fmt(lv.current)} / ${fmt(lv.target)} °C` : "";
       const extras = [
-        dv?.under_share != null && dv.under_share > 0.05 ? pill("cool", t("zu kalt {p} %", { p: fmt(dv.under_share * 100, 0) })) : "",
-        dv?.over_share != null && dv.over_share > 0.05 ? pill("warn", t("zu warm {p} %", { p: fmt(dv.over_share * 100, 0) })) : "",
-        r.heating_up_min != null ? pill("mut", `${t("Aufheizzeit")} ${fmt(r.heating_up_min, 0)} min`) : "",
-        !r.valve_available ? pill("mut", t("ohne Ventilwert")) : "",
-        dv && !dv.samples ? pill("mut", t("noch keine Stichproben")) : ""
+        dv?.under_share != null && dv.under_share > 0.05 ? statusPill("cool", t("zu kalt {p} %", { p: fmt(dv.under_share * 100, 0) })) : "",
+        dv?.over_share != null && dv.over_share > 0.05 ? statusPill("warn", t("zu warm {p} %", { p: fmt(dv.over_share * 100, 0) })) : "",
+        r.heating_up_min != null ? statusPill("mut", `${t("Aufheizzeit")} ${fmt(r.heating_up_min, 0)} min`) : "",
+        !r.valve_available ? statusPill("mut", t("ohne Ventilwert")) : "",
+        dv && !dv.samples ? statusPill("mut", t("noch keine Stichproben")) : ""
       ].filter(Boolean).join("");
       return `<div class="room"><div class="nm">${esc(r.name)}<small>${esc(r.circuit_name || "")}${now ? ` · ${now}` : ""}</small></div>
             <div class="dev"><span class="tol" style="left:${pos(-tol)}%;width:${pos(tol) - pos(-tol)}%"></span><span class="mid"></span>${bar}${p90}</div>
@@ -1602,8 +1646,9 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     );
     const intro = `<div class="intro"><span>${esc(t("Inventar zu {p} % vollständig · {n} Einträge", { p: percent, n: count }))}</span>${progress(percent)}</div>`;
     const sections = ["pumps", "thermostats", "hydraulics", "radiators"].map((section) => {
-      const body = `${invTable(d, ui, section)}<div class="row start">${button(`+ ${t("Eintrag hinzufügen")}`, { act: "inv-add", attrs: `data-section="${esc(section)}"` })}</div>`;
       const info = (completeness.sections || {})[section] || {};
+      const hint = info.hint && (info.percent || 0) < 100 ? `<div class="fd mt6">${esc(localized(info.hint))}</div>` : "";
+      const body = `${invTable(d, ui, section)}${hint}<div class="row start">${button(`+ ${t("Eintrag hinzufügen")}`, { act: "inv-add", attrs: `data-section="${esc(section)}"` })}</div>`;
       return card(sectionTitle(d, section), "inventory", ui, body, info.percent != null ? `${info.percent} %` : "");
     }).join("");
     const prefill = (d.rooms || []).length ? `<div class="row start">${button(t("Aus Räumen übernehmen"), { act: "inv-prefill" })}<span class="muted">${esc(t("Legt Thermostat und Heizkörper je Raum an, ohne Werte zu erfinden."))}</span></div>` : "";
@@ -1646,7 +1691,7 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
       power_now_entity: "Leistung jetzt",
       dhw_power_entity: "Warmwasser-Strom"
     };
-    return Object.entries(d.sources || {}).map(([key, ok]) => `<div class="src"><span>${esc(labels[key] ? t(labels[key]) : key)}</span>${pill(ok ? "ok" : "mut", ok ? t("verbunden") : t("fehlt"))}</div>`).join("");
+    return Object.entries(d.sources || {}).map(([key, ok]) => `<div class="src"><span>${esc(labels[key] ? t(labels[key]) : key)}</span>${statusPill(ok ? "ok" : "mut", ok ? t("verbunden") : t("fehlt"))}</div>`).join("");
   }
   var LEVELS_LOG = [
     ["error", "Fehler"],
@@ -1734,11 +1779,11 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
       [t("Karte"), esc(String(card2.version || "–"))],
       [t("Letzter Lauf"), `${esc(String(rt.run_index ?? 0))}. ${esc(t("Lauf"))} · ${esc(fmt(rt.last_duration_ms, 0))} ${esc(t("ms"))}`],
       [t("Nächster Lauf"), esc(next)],
-      [t("Letzter Fehler"), rt.last_error ? pill("bad", rt.last_error) : pill("ok", t("keiner"))],
+      [t("Letzter Fehler"), rt.last_error ? statusPill("bad", rt.last_error) : statusPill("ok", t("keiner"))],
       [t("Tage mit Daten"), esc(fmt(k.days_with_data, 0))],
       [t("Speicherstand"), `${esc(fmt(storage.rollups, 0))} ${esc(t("Roll-ups"))} · ${esc(fmt(storage.log_entries, 0))} ${esc(t("Protokollzeilen"))}`]
     ];
-    return `<div class="c">${head(t("Systemstatus"), "system", ui)}${mismatch ? `<div class="fs">${pill("warn", t("Version weicht ab"))}</div>` : ""}
+    return `<div class="c">${head(t("Systemstatus"), "system", ui)}${mismatch ? `<div class="fs">${statusPill("warn", t("Version weicht ab"))}</div>` : ""}
     <table class="kv">${rows.map(([a, b]) => `<tr><th>${a}</th><td>${b}</td></tr>`).join("")}</table>
     <div class="row mt10">
       <button class="btn" data-act="log-download">${esc(t("Diagnose herunterladen"))}</button>
@@ -1756,7 +1801,7 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
       const last = row.daily_last ? `${dayOf(row.daily_last)} ${timeOf(row.daily_last)}` : "–";
       return `<tr>
         <td><b>${esc(row.entity)}</b><div class="muted">${esc(row.kind || "")}</div></td>
-        <td>${pill(tone, t(label))}${row.advice ? `<div class="fd">${esc(t(row.advice))}</div>` : ""}</td>
+        <td>${statusPill(tone, t(label))}${row.advice ? `<div class="fd">${esc(t(row.advice))}</div>` : ""}</td>
         <td>${esc(row.unit || row.statistic_unit || "–")}<div class="muted">${esc(row.state_class || "")}</div></td>
         <td>${esc(fmt(row.hourly_rows, 0))} / ${esc(fmt(row.daily_rows, 0))}</td>
         <td>${esc(last)}</td>
@@ -1982,24 +2027,35 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
   </div>`;
   }
   function renderView(view, d, ui, live) {
+    let body;
     switch (view) {
       case "effizienz":
-        return viewEffizienz(d, ui);
+        body = viewEffizienz(d, ui);
+        break;
       case "raeume":
-        return viewRaeume(d, ui, live);
+        body = viewRaeume(d, ui, live);
+        break;
       case "vergleich":
-        return viewVergleich(d, ui);
+        body = viewVergleich(d, ui);
+        break;
       case "inventar":
-        return viewInventar(d, ui);
+        body = viewInventar(d, ui);
+        break;
       case "protokoll":
-        return viewProtokoll(d, ui);
+        body = viewProtokoll(d, ui);
+        break;
       case "einstellungen":
-        return viewEinstellungen(d, ui);
+        body = viewEinstellungen(d, ui);
+        break;
       case "schema":
-        return viewSchema(d, ui, live);
+        body = viewSchema(d, ui, live);
+        break;
       default:
-        return viewAnlage(d, ui);
+        body = viewAnlage(d, ui);
+        break;
     }
+    const withVerdict = ["anlage", "effizienz", "raeume", "protokoll", "schema"];
+    return (withVerdict.includes(view) ? tabVerdict(d, view) : "") + body;
   }
 
   // src/card.js
@@ -2165,6 +2221,7 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
         res.options.rooms = res.rooms || res.options.rooms || [];
         res.options.thresholds = res.thresholds || res.options.thresholds || {};
         this._cfgData = res;
+        this._cfgOriginal = JSON.parse(JSON.stringify({ data: res.data || {}, options: res.options || {} }));
         this._cfgError = null;
       } catch (e) {
         this._cfgError = e && (e.message || e.code) ? e.message || e.code : String(e);
@@ -2200,9 +2257,71 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
       while (used.has(`${prefix}${index}`)) index += 1;
       return `${prefix}${index}`;
     }
+    _validateConfigDraft() {
+      const cfg = this._cfgData;
+      const errors = {};
+      if (!cfg) return errors;
+      const states = this._hass && this._hass.states || {};
+      const previous = this._cfgOriginal || {};
+      const previousData = previous.data || {};
+      const previousOptions = previous.options || {};
+      for (const spec of cfg.schema && cfg.schema.sources || []) {
+        const target = spec.scope === "data" ? cfg.data : cfg.options;
+        const value = String((target || {})[spec.key] || "").trim();
+        const was = String((spec.scope === "data" ? previousData : previousOptions)[spec.key] || "").trim();
+        if (!value) {
+          if (spec.required && !was) errors[spec.key] = "required";
+          continue;
+        }
+        if (value === was) continue;
+        const state = states[value];
+        if (!state) {
+          errors[spec.key] = "not_found";
+          continue;
+        }
+        const unit = state.attributes && state.attributes.unit_of_measurement;
+        if (spec.units && spec.units.length && unit && !spec.units.includes(unit)) errors[spec.key] = "unit";
+      }
+      const circuits = cfg.options && cfg.options.circuits || [];
+      const circuitIds = /* @__PURE__ */ new Set();
+      circuits.forEach((circuit, index) => {
+        const id = String(circuit.id || "").trim();
+        if (!id) errors[`circuits.${index}.id`] = "required";
+        else if (circuitIds.has(id)) errors[`circuits.${index}.id`] = "duplicate";
+        else circuitIds.add(id);
+        if (!String(circuit.name || "").trim()) errors[`circuits.${index}.name`] = "required";
+        if (!String(circuit.type || "").trim()) errors[`circuits.${index}.type`] = "required";
+      });
+      const rooms = cfg.options && cfg.options.rooms || [];
+      const roomIds = /* @__PURE__ */ new Set();
+      rooms.forEach((room, index) => {
+        const id = String(room.id || "").trim();
+        if (!id) errors[`rooms.${index}.id`] = "required";
+        else if (roomIds.has(id)) errors[`rooms.${index}.id`] = "duplicate";
+        else roomIds.add(id);
+        if (!String(room.name || "").trim()) errors[`rooms.${index}.name`] = "required";
+        if (!String(room.circuit || "").trim()) errors[`rooms.${index}.circuit`] = "required";
+      });
+      const thresholds = cfg.options && cfg.options.thresholds || {};
+      for (const spec of cfg.schema && cfg.schema.thresholds || []) {
+        const raw = thresholds[spec.key];
+        if (raw == null || raw === "") continue;
+        const number = Number(String(raw).replace(",", "."));
+        if (!Number.isFinite(number)) errors[`thresholds.${spec.key}`] = "number";
+        else if (number < spec.min || number > spec.max) errors[`thresholds.${spec.key}`] = "range";
+      }
+      return errors;
+    }
     async _saveConfig() {
       if (!this._hass || !this._cfgData) return;
       this._collectConfig();
+      const draftErrors = this._validateConfigDraft();
+      if (Object.keys(draftErrors).length) {
+        this._ui.cfgErrors = draftErrors;
+        this._ui.cfgMsg = t("{n} Felder prüfen.", { n: Object.keys(draftErrors).length });
+        this._render();
+        return;
+      }
       this._ui.cfgErrors = {};
       try {
         const result = await this._hass.callWS({
@@ -2421,6 +2540,7 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
       }
     }
     async _inventoryPrefill() {
+      if (typeof window !== "undefined" && typeof window.confirm === "function" && !window.confirm(t("Für alle Räume Thermostat und Heizkörper anlegen?"))) return;
       const rooms = this._data && this._data.rooms || [];
       let created = 0;
       for (const room of rooms) {

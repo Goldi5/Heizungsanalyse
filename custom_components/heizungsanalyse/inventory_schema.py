@@ -202,6 +202,26 @@ def validate_values(
     return errors
 
 
+COMPLETENESS_HINTS = {
+    "pumps": {
+        "de": "Regelart und Pumpenstufe ermöglichen Vorher/Nachher-Vergleiche.",
+        "en": "Control mode and pump stage enable before/after comparisons.",
+    },
+    "thermostats": {
+        "de": "Voreinstellungen ermöglichen die Auswertung des hydraulischen Abgleichs.",
+        "en": "Presets enable evaluation of hydraulic balancing.",
+    },
+    "hydraulics": {
+        "de": "Puffervolumen und Mischer-Einstellung erklären Taktung und Vorlauf.",
+        "en": "Buffer volume and mixer setting explain cycling and flow temperature.",
+    },
+    "radiators": {
+        "de": "Voreinstellung und Durchfluss ermöglichen den Abgleich je Raum.",
+        "en": "Preset and flow enable balancing per room.",
+    },
+}
+
+
 def _important_fields(section: str) -> list[str]:
     return [field for field in INVENTORY_FIELDS.get(section, ()) if field_spec(field).get("important", True)]
 
@@ -220,7 +240,13 @@ def completeness(inventory: Mapping[str, Any]) -> dict[str, Any]:
         if not records:
             filled = 0
         percent = 0 if not expected else round(filled / expected * 100)
-        sections[section] = {"entries": len(records), "filled": filled, "expected": expected, "percent": percent}
+        sections[section] = {
+            "entries": len(records),
+            "filled": filled,
+            "expected": expected,
+            "percent": percent,
+            "hint": COMPLETENESS_HINTS.get(section) if percent < 100 else None,
+        }
         filled_total += filled
         expected_total += expected
     percent = 0 if not expected_total else round(filled_total / expected_total * 100)

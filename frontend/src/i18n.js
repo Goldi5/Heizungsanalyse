@@ -322,6 +322,14 @@ export const EN = {
   "Wert prüfen": "Check value",
   "Bezeichner ist doppelt": "Identifier is duplicated",
   "Aufbau ist ungültig": "Structure is invalid",
+  "Alles in Ordnung": "All good",
+  "{w} Warnungen · {i} Hinweise": "{w} warnings · {i} notes",
+  "COP {v} in den letzten 7 Tagen": "COP {v} over the last 7 days",
+  "Noch keine Daten für die Effizienz.": "No efficiency data yet.",
+  "{n} Räume · {k} außerhalb der Toleranz": "{n} rooms · {k} outside tolerance",
+  "{n} Ereignisse in den letzten 48 Stunden": "{n} events in the last 48 hours",
+  "{c} Heizkreise · {r} Räume": "{c} heating circuits · {r} rooms",
+  "Für alle Räume Thermostat und Heizkörper anlegen?": "Create a thermostat and radiator for every room?",
 };
 
 let lang = "de";

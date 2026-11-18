@@ -171,6 +171,7 @@ export class HeizungsanalyseCard extends HTMLElement {
       res.options.rooms = res.rooms || res.options.rooms || [];
       res.options.thresholds = res.thresholds || res.options.thresholds || {};
       this._cfgData = res;
+      this._cfgOriginal = JSON.parse(JSON.stringify({ data: res.data || {}, options: res.options || {} }));
       this._cfgError = null;
     } catch (e) {
       this._cfgError = e && (e.message || e.code) ? e.message || e.code : String(e);
@@ -209,9 +210,72 @@ export class HeizungsanalyseCard extends HTMLElement {
     return `${prefix}${index}`;
   }
 
+  _validateConfigDraft() {
+    const cfg = this._cfgData;
+    const errors = {};
+    if (!cfg) return errors;
+    const states = (this._hass && this._hass.states) || {};
+    const previous = this._cfgOriginal || {};
+    const previousData = previous.data || {};
+    const previousOptions = previous.options || {};
+    for (const spec of (cfg.schema && cfg.schema.sources) || []) {
+      const target = spec.scope === "data" ? cfg.data : cfg.options;
+      const value = String((target || {})[spec.key] || "").trim();
+      const was = String((spec.scope === "data" ? previousData : previousOptions)[spec.key] || "").trim();
+      if (!value) {
+        if (spec.required && !was) errors[spec.key] = "required";
+        continue;
+      }
+      if (value === was) continue;
+      const state = states[value];
+      if (!state) {
+        errors[spec.key] = "not_found";
+        continue;
+      }
+      const unit = state.attributes && state.attributes.unit_of_measurement;
+      if (spec.units && spec.units.length && unit && !spec.units.includes(unit)) errors[spec.key] = "unit";
+    }
+    const circuits = (cfg.options && cfg.options.circuits) || [];
+    const circuitIds = new Set();
+    circuits.forEach((circuit, index) => {
+      const id = String(circuit.id || "").trim();
+      if (!id) errors[`circuits.${index}.id`] = "required";
+      else if (circuitIds.has(id)) errors[`circuits.${index}.id`] = "duplicate";
+      else circuitIds.add(id);
+      if (!String(circuit.name || "").trim()) errors[`circuits.${index}.name`] = "required";
+      if (!String(circuit.type || "").trim()) errors[`circuits.${index}.type`] = "required";
+    });
+    const rooms = (cfg.options && cfg.options.rooms) || [];
+    const roomIds = new Set();
+    rooms.forEach((room, index) => {
+      const id = String(room.id || "").trim();
+      if (!id) errors[`rooms.${index}.id`] = "required";
+      else if (roomIds.has(id)) errors[`rooms.${index}.id`] = "duplicate";
+      else roomIds.add(id);
+      if (!String(room.name || "").trim()) errors[`rooms.${index}.name`] = "required";
+      if (!String(room.circuit || "").trim()) errors[`rooms.${index}.circuit`] = "required";
+    });
+    const thresholds = (cfg.options && cfg.options.thresholds) || {};
+    for (const spec of (cfg.schema && cfg.schema.thresholds) || []) {
+      const raw = thresholds[spec.key];
+      if (raw == null || raw === "") continue;
+      const number = Number(String(raw).replace(",", "."));
+      if (!Number.isFinite(number)) errors[`thresholds.${spec.key}`] = "number";
+      else if (number < spec.min || number > spec.max) errors[`thresholds.${spec.key}`] = "range";
+    }
+    return errors;
+  }
+
   async _saveConfig() {
     if (!this._hass || !this._cfgData) return;
     this._collectConfig();
+    const draftErrors = this._validateConfigDraft();
+    if (Object.keys(draftErrors).length) {
+      this._ui.cfgErrors = draftErrors;
+      this._ui.cfgMsg = t("{n} Felder prüfen.", { n: Object.keys(draftErrors).length });
+      this._render();
+      return;
+    }
     this._ui.cfgErrors = {};
     try {
       const result = await this._hass.callWS({
@@ -418,6 +482,7 @@ export class HeizungsanalyseCard extends HTMLElement {
   }
 
   async _inventoryPrefill() {
+    if (typeof window !== "undefined" && typeof window.confirm === "function" && !window.confirm(t("Für alle Räume Thermostat und Heizkörper anlegen?"))) return;
     const rooms = (this._data && this._data.rooms) || [];
     let created = 0;
     for (const room of rooms) {

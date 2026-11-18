@@ -20,6 +20,14 @@ test("alle Ansichten rendern (de)", () => {
   }
 });
 
+test("jeder Tab beginnt mit einer Einordnung", () => {
+  setLang({ language: "de" });
+  for (const v of VIEWS) {
+    const html = renderView(v, de, { help: null, range: 90, form: v === "vergleich", widths: {}, cfgErrors: {} }, {});
+    assert.ok(html.includes('class="intro"'), `${v}: Einordnung fehlt`);
+  }
+});
+
 test("englische Oberflaeche ohne deutsche Reste", () => {
   setLang({ language: "en" });
   const names = /Heizkörper OG|Fußboden EG|Wärmepumpe|Kinderzimmer|Bad|Wohnzimmer|Schlafzimmer|Arbeitszimmer|Steigung gesenkt|heizkurve|Stufe \d/g;
