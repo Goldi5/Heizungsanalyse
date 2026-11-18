@@ -1,3 +1,14 @@
+## 0.7.0b5 – 2026-11-18
+
+### Neu
+- **Katalog deutlich erweitert** (22 Pumpen, 6 Thermostatventile): Grundfos
+  ALPHA2 und ALPHA3 (15-40 bis 32-60), MAGNA3 32-60 und 40-80, Wilo Yonos PICO
+  25/1-4 und 25/1-6, Danfoss RA-N 10/15/20/25, Oventrop AV 6 und AV 9.
+- **Korrektur Oventrop AV 6**: Die bisher hinterlegten kv-Werte gehörten zur
+  Baureihe F. Jetzt stehen die AV-6-Werte bei 2 K P-Abweichung im Katalog.
+- Jeder Eintrag nennt Quelle und Datenblattbezug; die Werte sind
+  Maximalwerte, keine Auslegung.
+
 ## 0.7.0b4 – 2026-11-18
 
 ### Neu
