@@ -13,8 +13,9 @@ Test prüft den Quelltext auf steuernde Aufrufe.
 ## Dashboard
 
 Nach der Einrichtung legt die Integration das Dashboard **Heizungsanalyse**
-selbst an (Seitenleiste) – sechs Ansichten, keine Entity-Namen von Hand, mit
-„?“-Erklärung an jeder Kachel, hell und dunkel, auf Deutsch und Englisch.
+selbst an (Seitenleiste) – acht Ansichten, keine Entity-Namen oder JSON von
+Hand, mit „?“-Erklärung an jeder Kachel, hell und dunkel, auf Deutsch und
+Englisch.
 
 ![Ansicht Anlage](docs/images/anlage.png)
 
@@ -32,7 +33,7 @@ Bilder mit Beispieldaten. Details: [Dashboard](docs/dashboard.md).
 
 ## Status
 
-Version 0.7.0b2 (Beta). Alle Analysestufen sind vorhanden: Repo-Gerüst (M0),
+Version 0.7.0. Alle Analysestufen sind vorhanden: Repo-Gerüst (M0),
 Einrichtung (M1), Kennzahlen (M2), Inventar und Dienste (M3), Raum- und
 Kreisanalyse (M4), Findings (M5), Doku (M6), die dokumentierte Schnittstelle
 zu raumklima-2 (M7), das selbst angelegte Dashboard (M8–M12) sowie
@@ -58,6 +59,7 @@ HACS-Validierung und Dashboard-Tests (Node).
 | M12 | „?“-Hilfe, Hell/Dunkel, DE/EN, Handy-Layout | erledigt (0.2.0) |
 | M13 | Hydraulik: Spreizung, Wärmeleistung, COP jetzt, Puffer-Ladung, COP mit Warmwasser | erledigt (0.4.0) |
 | M13 | Ereignisprotokoll, Diagnose, Debug-Spur, Reiter „Protokoll“ | erledigt (0.3.0) |
+| M14 | Bedienung 0.7.0: Inventar und Einstellungen ohne JSON, Vergleichsformular, gemeinsame Bausteine | erledigt (0.7.0) |
 
 ## Voraussetzungen
 

@@ -6,11 +6,13 @@ from typing import Any
 
 from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.util import dt as dt_util
 import voluptuous as vol
 
 from .analysis.curve_suggestion import suggest_curve
 from .analysis.periods import merge_samples, samples_from_rollups
+from .config_validation import coverage, settings_schema, validate_config
 from .const import (
     CARD_URL,
     CONF_CIRCUITS,
@@ -21,11 +23,15 @@ from .const import (
     DASHBOARD_ICON,
     DASHBOARD_PATH,
     DOMAIN,
+    INVENTORY_FIELDS,
     MANDATORY_SOURCES,
     OPTIONAL_SOURCES,
     VERSION,
 )
 from .diagnostics import async_build_diagnostics
+from .inventory_io import export_csv, parse_csv, validate_import
+from .inventory_schema import build_schema, completeness, validate_values
+from .services import async_apply_inventory, async_remove_inventory
 from .summary import build_summary, local_day
 
 
@@ -50,6 +56,11 @@ def async_register(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_dashboard_mark)
     websocket_api.async_register_command(hass, ws_config_get)
     websocket_api.async_register_command(hass, ws_config_set)
+    websocket_api.async_register_command(hass, ws_inventory_schema)
+    websocket_api.async_register_command(hass, ws_inventory_save)
+    websocket_api.async_register_command(hass, ws_inventory_remove)
+    websocket_api.async_register_command(hass, ws_inventory_export)
+    websocket_api.async_register_command(hass, ws_inventory_import)
     websocket_api.async_register_command(hass, ws_suggest_curve)
     websocket_api.async_register_command(hass, ws_status)
     websocket_api.async_register_command(hass, ws_log)
@@ -75,13 +86,15 @@ async def ws_summary(hass: HomeAssistant, connection: websocket_api.ActiveConnec
     sources |= {key: entry.options.get(key) for key in OPTIONAL_SOURCES}
     energy_price = runtime.entry.options.get(CONF_ENERGY_PRICE)
     co2_factor = runtime.entry.options.get(CONF_CO2_FACTOR)
+    rooms = list(entry.options.get(CONF_ROOMS) or [])
+    circuits = list(entry.options.get(CONF_CIRCUITS) or [])
     result = build_summary(
         snapshot,
         version=VERSION,
         title=entry.title,
         language=msg.get("language") or hass.config.language,
-        rooms=list(entry.options.get(CONF_ROOMS) or []),
-        circuits=list(entry.options.get(CONF_CIRCUITS) or []),
+        rooms=rooms,
+        circuits=circuits,
         sources=sources,
         history=history,
         changes=changes,
@@ -93,6 +106,10 @@ async def ws_summary(hass: HomeAssistant, connection: websocket_api.ActiveConnec
     )
     result["configured"] = True
     result["last_update_success"] = bool(runtime.coordinator.last_update_success)
+    result["inventory_schema"] = build_schema(rooms, circuits)
+    result["inventory_completeness"] = completeness(inventory)
+    result["settings_schema"] = settings_schema()
+    result["settings_coverage"] = coverage(entry.data, entry.options)
     connection.send_result(msg["id"], result)
 
 
@@ -244,6 +261,8 @@ async def ws_config_get(hass: HomeAssistant, connection: websocket_api.ActiveCon
             "circuits": list(entry.options.get(CONF_CIRCUITS) or []),
             "rooms": list(entry.options.get(CONF_ROOMS) or []),
             "thresholds": dict(entry.options.get(CONF_THRESHOLDS) or {}),
+            "schema": settings_schema(),
+            "coverage": coverage(entry.data, entry.options),
         },
     )
 
@@ -270,10 +289,160 @@ async def ws_config_set(hass: HomeAssistant, connection: websocket_api.ActiveCon
     new_options = dict(entry.options)
     if msg.get("options"):
         new_options.update(msg["options"])
+    errors = validate_config(new_data, new_options, hass, previous={**entry.data, **entry.options})
+    if errors:
+        connection.send_result(msg["id"], {"ok": False, "errors": errors})
+        return
     hass.config_entries.async_update_entry(entry, data=new_data, options=new_options)
     await hass.config_entries.async_reload(entry.entry_id)
     await hass.async_block_till_done()
     connection.send_result(msg["id"], {"ok": True})
+
+
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/inventory/schema"})
+@websocket_api.async_response
+async def ws_inventory_schema(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Feldschema, Bestand und Vollständigkeit des Inventars."""
+    runtime = _runtime(hass)
+    if runtime is None:
+        connection.send_error(msg["id"], "not_setup", "Heizungsanalyse ist nicht eingerichtet")
+        return
+    entry = runtime.entry
+    rooms = list(entry.options.get(CONF_ROOMS) or [])
+    circuits = list(entry.options.get(CONF_CIRCUITS) or [])
+    inventory = await runtime.store.async_inventory()
+    connection.send_result(
+        msg["id"],
+        {
+            "schema": build_schema(rooms, circuits),
+            "inventory": inventory,
+            "rooms": rooms,
+            "circuits": circuits,
+            "completeness": completeness(inventory),
+        },
+    )
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/inventory/save",
+        vol.Required("object"): str,
+        vol.Required("values"): dict,
+        vol.Optional("note"): str,
+    }
+)
+@websocket_api.require_admin
+@websocket_api.async_response
+async def ws_inventory_save(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Ein Inventar-Objekt speichern; Feldfehler einzeln zurückmelden."""
+    runtime = _runtime(hass)
+    if runtime is None:
+        connection.send_error(msg["id"], "not_setup", "Heizungsanalyse ist nicht eingerichtet")
+        return
+    entry = runtime.entry
+    object_id = str(msg["object"])
+    section = object_id.partition(".")[0]
+    if section not in INVENTORY_FIELDS:
+        connection.send_result(msg["id"], {"ok": False, "errors": {"object": "section"}})
+        return
+    values = dict(msg["values"])
+    errors = validate_values(
+        section,
+        values,
+        rooms=list(entry.options.get(CONF_ROOMS) or []),
+        circuits=list(entry.options.get(CONF_CIRCUITS) or []),
+    )
+    if errors:
+        connection.send_result(msg["id"], {"ok": False, "errors": errors})
+        return
+    try:
+        changes = await async_apply_inventory(runtime, object_id, values, note=msg.get("note"))
+    except ServiceValidationError as err:
+        connection.send_result(msg["id"], {"ok": False, "errors": {"object": str(err)}})
+        return
+    connection.send_result(msg["id"], {"ok": True, "changed": len(changes)})
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/inventory/remove",
+        vol.Required("object"): str,
+        vol.Optional("note"): str,
+    }
+)
+@websocket_api.require_admin
+@websocket_api.async_response
+async def ws_inventory_remove(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Ein Inventar-Objekt löschen (mit Protokolleintrag)."""
+    runtime = _runtime(hass)
+    if runtime is None:
+        connection.send_error(msg["id"], "not_setup", "Heizungsanalyse ist nicht eingerichtet")
+        return
+    try:
+        change = await async_remove_inventory(runtime, str(msg["object"]), note=msg.get("note"))
+    except ServiceValidationError as err:
+        connection.send_result(msg["id"], {"ok": False, "errors": {"object": str(err)}})
+        return
+    connection.send_result(msg["id"], {"ok": True, "change": change})
+
+
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/inventory/export"})
+@websocket_api.async_response
+async def ws_inventory_export(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Inventar als CSV zum Herunterladen."""
+    runtime = _runtime(hass)
+    if runtime is None:
+        connection.send_error(msg["id"], "not_setup", "Heizungsanalyse ist nicht eingerichtet")
+        return
+    inventory = await runtime.store.async_inventory()
+    connection.send_result(msg["id"], {"csv": export_csv(inventory), "filename": "inventar.csv"})
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/inventory/import",
+        vol.Required("csv"): str,
+        vol.Optional("replace"): bool,
+    }
+)
+@websocket_api.require_admin
+@websocket_api.async_response
+async def ws_inventory_import(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Inventar aus CSV übernehmen; Zeilen- und Feldfehler je Objekt melden."""
+    runtime = _runtime(hass)
+    if runtime is None:
+        connection.send_error(msg["id"], "not_setup", "Heizungsanalyse ist nicht eingerichtet")
+        return
+    entry = runtime.entry
+    grouped, row_errors = parse_csv(str(msg["csv"]))
+    rooms = list(entry.options.get(CONF_ROOMS) or [])
+    circuits = list(entry.options.get(CONF_CIRCUITS) or [])
+    problems = validate_import(grouped, rooms=rooms, circuits=circuits)
+    imported = 0
+    if msg.get("replace"):
+        inventory = await runtime.store.async_inventory()
+        for section in INVENTORY_FIELDS:
+            if section == "hydraulics":
+                await runtime.store.async_remove_inventory_item(section, note="CSV-Import")
+                continue
+            for key in list(inventory.get(section) or {}):
+                await runtime.store.async_remove_inventory_item(f"{section}.{key}", note="CSV-Import")
+    for object_id, values in grouped.items():
+        if object_id in problems:
+            continue
+        section = object_id.partition(".")[0]
+        clean = {field: value for field, value in values.items() if field in INVENTORY_FIELDS[section]}
+        if not clean:
+            continue
+        try:
+            await async_apply_inventory(runtime, object_id, clean, note="CSV-Import")
+        except ServiceValidationError:
+            continue
+        imported += 1
+    connection.send_result(
+        msg["id"],
+        {"ok": not row_errors and not problems, "imported": imported, "errors": problems, "rows": row_errors},
+    )
 
 
 @websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/suggest_curve"})

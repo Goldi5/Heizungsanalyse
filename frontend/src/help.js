@@ -79,8 +79,8 @@ const HELP = {
     en: "Log every settings change (heating curve, pump stage, balancing …). The 7 days before are compared with the 7 days after. “Weather-adjusted” subtracts what the different outdoor temperature alone would change in COP – according to your own curve.",
   },
   inventory: {
-    de: "Stammdaten deiner Anlage: Pumpen, Thermostate, Hydraulik. Pflege sie über den Dienst „Heizungsanalyse: Inventar aktualisieren“ – jede Änderung landet automatisch im Verlauf.",
-    en: "Master data of your system: pumps, thermostats, hydraulics. Maintain it via the service “Heating analysis: update inventory” – every change lands in the history automatically.",
+    de: "Stammdaten deiner Anlage: Pumpen, Thermostate, Hydraulik und Heizkörper. Die Felder kommen aus dem Schema – Schlüssel werden aus Kreis oder Raum abgeleitet, nie getippt. Jede Änderung landet automatisch im Verlauf. CSV dient nur dem Austausch vieler Werte.",
+    en: "Master data of your system: pumps, thermostats, hydraulics and radiators. Fields come from the schema – keys are derived from circuit or room, never typed. Every change lands in the history automatically. CSV is only for exchanging many values.",
   },
   system: {
     de: "Der Systemstatus zeigt, welche Version die Karte und welche das Backend hat, wann der letzte Lauf war und ob ein Fehler auftrat. Die Karte meldet eigene Fehler selbst mit – dann steht hier die gekürzte Meldung statt einer stillen Fehlfunktion.",
@@ -99,20 +99,20 @@ const HELP = {
     en: "Mandatory and optional sources. Changes apply after saving; the integration reloads. Empty fields stay unused.",
   },
   cfg_circuits: {
-    de: "Heizkreise als JSON. Jeder Eintrag braucht id und name; type ist buffer, radiators, underfloor oder dhw.",
-    en: "Heating circuits as JSON. Each entry needs id and name; type is buffer, radiators, underfloor or dhw.",
+    de: "Heizkreise mit Name, Typ und den zugeordneten Entities. Der Bezeichner wird automatisch vergeben, damit er stabil bleibt.",
+    en: "Heating circuits with name, type and mapped entities. The identifier is assigned automatically so it stays stable.",
   },
   cfg_rooms: {
-    de: "Räume als JSON. climate_entity optional; ohne Thermostat kein Komfort-Finding.",
-    en: "Rooms as JSON. climate_entity optional; without a thermostat no comfort finding.",
+    de: "Räume mit Heizkreis und optionalem Thermostat. Ohne Klima-Entity gibt es kein Komfort-Finding, die Raumauswertung bleibt aber möglich.",
+    en: "Rooms with heating circuit and optional thermostat. Without a climate entity there is no comfort finding, but room evaluation still works.",
   },
   cfg_curve: {
     de: "Vorschlag aus der Vorlauf-Abweichung der letzten 7 Tage. Offset senkt/anhebt die ganze Kurve, Steigung ändert die Temperaturabhängigkeit. Werte werden erst nach Speichern übernommen.",
     en: "Suggestion from the flow deviation of the last 7 days. Offset shifts the whole curve, slope changes the temperature dependence. Values apply only after saving.",
   },
   cfg_thresholds: {
-    de: "Schwellen der Findings. Startwerte sind Platzhalter.",
-    en: "Finding thresholds. Starting values are placeholders.",
+    de: "Schwellen der Findings mit Einheit und Grenzen. „Auf Standard zurücksetzen“ stellt die Platzhalter wieder her.",
+    en: "Finding thresholds with unit and limits. “Reset to defaults” restores the placeholder values.",
   },
   schema: {
     de: "Schematische Darstellung von Wärmepumpe, Puffer und Heizkreisen mit Live-Werten. Dient der Orientierung; keine Steuerung.",

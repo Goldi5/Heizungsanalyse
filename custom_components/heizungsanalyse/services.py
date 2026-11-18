@@ -31,6 +31,7 @@ from .const import (
     SERVICE_EXPORT_REPORT,
     SERVICE_LOG_CHANGE,
     SERVICE_REFRESH,
+    SERVICE_REMOVE_INVENTORY,
     SERVICE_SUGGEST_HEATING_CURVE,
     SERVICE_UPDATE_INVENTORY,
 )
@@ -45,6 +46,13 @@ UPDATE_INVENTORY_SCHEMA = vol.Schema(
     {
         vol.Required("object"): OBJECT_SCHEMA,
         vol.Required("values"): dict,
+        vol.Optional("note"): str,
+    }
+)
+
+REMOVE_INVENTORY_SCHEMA = vol.Schema(
+    {
+        vol.Required("object"): OBJECT_SCHEMA,
         vol.Optional("note"): str,
     }
 )
@@ -112,20 +120,24 @@ def _check_object(object_id: str) -> tuple[str, str | None]:
     return section, key or None
 
 
-async def _handle_update_inventory(call: ServiceCall) -> ServiceResponse:
-    runtime = _runtime(call.hass)
-    object_id = str(call.data["object"])
+async def async_apply_inventory(
+    runtime: Any,
+    object_id: str,
+    values: dict[str, Any],
+    *,
+    note: str | None = None,
+) -> list[dict[str, Any]]:
+    """Inventarwerte prüfen, speichern, Ereignis und Protokoll auslösen."""
     section, _ = _check_object(object_id)
-    values: dict[str, Any] = dict(call.data["values"])
     unknown = sorted(set(values) - set(INVENTORY_FIELDS[section]))
     if unknown:
         raise ServiceValidationError(
             f"Unbekannte Felder fuer {section}: {', '.join(unknown)}. Erlaubt: {', '.join(INVENTORY_FIELDS[section])}."
         )
 
-    changes = await runtime.store.async_update_inventory(object_id, values, note=call.data.get("note"))
+    changes = await runtime.store.async_update_inventory(object_id, values, note=note)
     if changes:
-        call.hass.bus.async_fire(EVENT_INVENTORY_CHANGED, {"changes": changes})
+        runtime.hass.bus.async_fire(EVENT_INVENTORY_CHANGED, {"changes": changes})
         await runtime.log.async_add(
             "info",
             "inventory",
@@ -134,7 +146,39 @@ async def _handle_update_inventory(call: ServiceCall) -> ServiceResponse:
             params={"object": object_id, "count": len(changes)},
             details={"object": object_id, "changes": changes},
         )
+    return changes
+
+
+async def async_remove_inventory(runtime: Any, object_id: str, *, note: str | None = None) -> dict[str, Any]:
+    """Ein Inventar-Objekt löschen, Ereignis und Protokoll auslösen."""
+    _check_object(object_id)
+    change = await runtime.store.async_remove_inventory_item(object_id, note=note)
+    if change is None:
+        raise ServiceValidationError(f"'{object_id}' ist nicht im Inventar.")
+    runtime.hass.bus.async_fire(EVENT_INVENTORY_CHANGED, {"changes": [change]})
+    await runtime.log.async_add(
+        "info",
+        "inventory",
+        f"Inventar {object_id}: gelöscht",
+        key="inventory.removed",
+        params={"object": object_id},
+        details=change,
+    )
+    return change
+
+
+async def _handle_update_inventory(call: ServiceCall) -> ServiceResponse:
+    object_id = str(call.data["object"])
+    changes = await async_apply_inventory(
+        _runtime(call.hass), object_id, dict(call.data["values"]), note=call.data.get("note")
+    )
     return {"object": object_id, "changed": len(changes)}
+
+
+async def _handle_remove_inventory(call: ServiceCall) -> ServiceResponse:
+    object_id = str(call.data["object"])
+    change = await async_remove_inventory(_runtime(call.hass), object_id, note=call.data.get("note"))
+    return {"object": object_id, "removed": True, "change": change}
 
 
 async def _handle_log_change(call: ServiceCall) -> ServiceResponse:
@@ -253,6 +297,13 @@ async def async_setup_services(hass: HomeAssistant) -> None:
     )
     hass.services.async_register(
         DOMAIN,
+        SERVICE_REMOVE_INVENTORY,
+        _handle_remove_inventory,
+        schema=REMOVE_INVENTORY_SCHEMA,
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+    hass.services.async_register(
+        DOMAIN,
         SERVICE_LOG_CHANGE,
         _handle_log_change,
         schema=LOG_CHANGE_SCHEMA,
@@ -295,4 +346,4 @@ async def async_setup_services(hass: HomeAssistant) -> None:
     )
 
 
-__all__ = ["async_setup_services"]
+__all__ = ["async_apply_inventory", "async_remove_inventory", "async_setup_services"]
