@@ -1,4 +1,4 @@
-## 0.7.0 – 2026-11-18
+## 0.7.0b3 – 2026-11-18
 
 ### Neu
 - **Inventar ohne JSON**: Felder kommen aus dem Backend-Schema
