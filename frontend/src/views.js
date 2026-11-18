@@ -428,7 +428,34 @@ function invInputs(d, ui, section, state) {
   const fields = sectionFields(d, section);
   const errors = state.errors || {};
   const editing = Boolean(state.object);
-  return fields
+  const catalog = (d.inventory_catalog || {})[section] || [];
+  const groups = [];
+  if (catalog.length) {
+    const byManufacturer = new Map();
+    for (const entry of catalog) {
+      const manufacturer = entry.manufacturer || "";
+      if (!byManufacturer.has(manufacturer)) byManufacturer.set(manufacturer, []);
+      byManufacturer.get(manufacturer).push({
+        value: entry.id,
+        label: { de: entry.model || entry.id, en: entry.model || entry.id },
+        attrs: `data-fields="${esc(JSON.stringify(entry.fields || {}))}" data-note="${esc(localized(entry.note) || "")}"`,
+      });
+    }
+    for (const [manufacturer, options] of byManufacturer) {
+      groups.push({ label: { de: manufacturer, en: manufacturer }, options });
+    }
+  }
+  const catalogField = groups.length
+    ? `<div class="span2">${selectField({
+        name: `cat_${section}`,
+        label: t("Modell aus Katalog"),
+        value: "",
+        options: [{ value: "", label: { de: "– Freitext –", en: "– free text –" } }],
+        groups,
+        attrs: `data-catalog="${section}"`,
+      })}<div class="fd mt6" data-cat-note></div></div>`
+    : "";
+  return catalogField + fields
     .map((spec) => {
       const value = state.values && state.values[spec.key] != null ? state.values[spec.key] : "";
       const name = `f_${spec.key}`;

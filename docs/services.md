@@ -32,6 +32,12 @@ Erlaubte Felder: `custom_components/heizungsanalyse/const.py`,
 `INVENTORY_FIELDS`. Unbekannte Bereiche oder Felder werden mit
 `ServiceValidationError` abgelehnt.
 
+Pumpen haben zusätzlich `flow_m3h` (max. Förderstrom) und `max_head_m`
+(max. Förderhöhe). Der Herstellerkatalog (`heizungsanalyse/inventory/catalog`)
+liefert für gängige Pumpen und Thermostatventile Datenblattwerte samt Quelle;
+die Oberfläche füllt damit das Formular vor, ersetzt aber keine Prüfung am
+Typenschild.
+
 Rückgabe: `{"object": "pumps.hk2", "changed": 2}`.
 
 ## `heizungsanalyse.remove_inventory_item`

@@ -50,6 +50,26 @@ FIELD_META: dict[str, dict[str, Any]] = {
         "help": _text("Zum Beispiel „Stufe 2“ oder „Δp 4“.", "For example “stage 2” or “Δp 4”."),
     },
     "power_w": {"type": "number", "label": _text("Leistung", "Power"), "unit": "W", "min": 0, "max": 3000, "step": 1},
+    "flow_m3h": {
+        "type": "number",
+        "label": _text("Förderstrom (max.)", "Max. flow"),
+        "unit": "m³/h",
+        "min": 0,
+        "max": 30,
+        "step": 0.1,
+        "help": _text(
+            "Höchster Förderstrom aus dem Datenblatt, nicht der Auslegungspunkt der Anlage.",
+            "Maximum flow from the datasheet, not the system's design point.",
+        ),
+    },
+    "max_head_m": {
+        "type": "number",
+        "label": _text("Förderhöhe (max.)", "Max. head"),
+        "unit": "m",
+        "min": 0,
+        "max": 40,
+        "step": 0.1,
+    },
     # Thermostate und Heizkörper
     "valve_preset": {
         "type": "number",

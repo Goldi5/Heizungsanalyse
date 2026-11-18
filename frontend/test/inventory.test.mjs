@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { setLang } from "../src/i18n.js";
-import { renderView } from "../src/views.js";
+import { renderView, viewInventar } from "../src/views.js";
 import {
   comparisonFields,
   currentValue,
@@ -126,4 +126,29 @@ test("alle Formularzustände rendern ohne undefined und NaN", () => {
     }
   }
   setLang({ language: "de" });
+});
+
+test("Katalog füllt das Formular vor", () => {
+  setLang({ language: "de" });
+  const withCatalog = {
+    ...d,
+    inventory_catalog: {
+      pumps: [
+        {
+          id: "grundfos-alpha2-25-40",
+          manufacturer: "Grundfos",
+          model: "ALPHA2 25-40",
+          fields: { model: "ALPHA2 25-40", power_w: 18, flow_m3h: 2.4, max_head_m: 4 },
+          note: { de: "P1 3–18 W", en: "P1 3–18 W" },
+        },
+      ],
+      thermostats: [],
+    },
+  };
+  const html = viewInventar(withCatalog, { invForm: { section: "pumps", selection: "hk2", values: {}, errors: {}, note: "" }, cfgErrors: {}, hass: null });
+  assert.ok(html.includes('data-catalog="pumps"'), "Katalogauswahl fehlt");
+  assert.ok(html.includes("Grundfos"), "Hersteller fehlt");
+  assert.ok(html.includes("data-fields="), "Werte fehlen");
+  const plain = viewInventar(d, { invForm: { section: "pumps", selection: "hk2", values: {}, errors: {}, note: "" }, cfgErrors: {}, hass: null });
+  assert.ok(!plain.includes('data-catalog='), "Katalog darf ohne Daten nicht erscheinen");
 });

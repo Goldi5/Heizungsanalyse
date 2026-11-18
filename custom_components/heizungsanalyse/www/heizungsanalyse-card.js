@@ -1,7 +1,7 @@
-/* Heizungsanalyse 0.7.0b3 - gebaut aus frontend/src (npm run build). Nicht von Hand bearbeiten. */
+/* Heizungsanalyse 0.7.0b4 - gebaut aus frontend/src (npm run build). Nicht von Hand bearbeiten. */
 (() => {
   // src/version.js
-  var HA_VERSION = "0.7.0b3";
+  var HA_VERSION = "0.7.0b4";
 
   // src/i18n.js
   var EN = {
@@ -137,6 +137,7 @@
     "90 Tage": "90 days",
     "1 Jahr": "1 year",
     "Hersteller": "Vendor",
+    "Modell aus Katalog": "Model from catalog",
     "eigene Anlage": "own system",
     "kWh": "kWh",
     "Wochentag": "Weekday",
@@ -1115,8 +1116,8 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
       en: "Log every settings change (heating curve, pump stage, balancing …). The 7 days before are compared with the 7 days after. “Weather-adjusted” subtracts what the different outdoor temperature alone would change in COP – according to your own curve."
     },
     inventory: {
-      de: "Stammdaten deiner Anlage: Pumpen, Thermostate, Hydraulik und Heizkörper. Die Felder kommen aus dem Schema – Schlüssel werden aus Kreis oder Raum abgeleitet, nie getippt. Jede Änderung landet automatisch im Verlauf. CSV dient nur dem Austausch vieler Werte.",
-      en: "Master data of your system: pumps, thermostats, hydraulics and radiators. Fields come from the schema – keys are derived from circuit or room, never typed. Every change lands in the history automatically. CSV is only for exchanging many values."
+      de: "Stammdaten deiner Anlage: Pumpen, Thermostate, Hydraulik und Heizkörper. Die Felder kommen aus dem Schema – Schlüssel werden aus Kreis oder Raum abgeleitet, nie getippt. Für gängige Pumpen und Ventile gibt es einen Herstellerkatalog, der die Werte aus dem Datenblatt vorbelegt; prüfe sie am Typenschild. Jede Änderung landet automatisch im Verlauf. CSV dient nur dem Austausch vieler Werte.",
+      en: "Master data of your system: pumps, thermostats, hydraulics and radiators. Fields come from the schema – keys are derived from circuit or room, never typed. A manufacturer catalogue pre-fills common pumps and valves with datasheet values; check them on the nameplate. Every change lands in the history automatically. CSV is only for exchanging many values."
     },
     system: {
       de: "Der Systemstatus zeigt, welche Version die Karte und welche das Backend hat, wann der letzte Lauf war und ob ein Fehler auftrat. Die Karte meldet eigene Fehler selbst mit – dann steht hier die gekürzte Meldung statt einer stillen Fehlfunktion.",
@@ -1202,12 +1203,14 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     <input id="${esc(name)}" name="${esc(name)}" type="${esc(type)}" value="${esc(value ?? "")}" placeholder="${esc(placeholder)}"${attrs ? ` ${attrs}` : ""} aria-invalid="${error ? "true" : "false"}">
     ${error ? `<div class="ferr" role="alert">${esc(error)}</div>` : ""}</div>`;
   }
-  function selectField({ name, label, value = "", options = [], error = "", attrs = "" }) {
-    const opts = options.map((option) => {
-      const val = typeof option === "object" ? option.value : option;
-      const text = typeof option === "object" ? localized(option.label) || option.value : option;
-      return `<option value="${esc(val)}"${String(val) === String(value ?? "") ? " selected" : ""}>${esc(text)}</option>`;
-    }).join("");
+  function selectField({ name, label, value = "", options = [], groups = [], error = "", attrs = "" }) {
+    const option = (item) => {
+      const val = typeof item === "object" ? item.value : item;
+      const text = typeof item === "object" ? localized(item.label) || item.value : item;
+      const extra = typeof item === "object" && item.attrs ? ` ${item.attrs}` : "";
+      return `<option value="${esc(val)}"${String(val) === String(value ?? "") ? " selected" : ""}${extra}>${esc(text)}</option>`;
+    };
+    const opts = options.map(option).join("") + groups.map((group) => `<optgroup label="${esc(localized(group.label))}">${group.options.map(option).join("")}</optgroup>`).join("");
     return `<div class="field${error ? " invalid" : ""}">${fieldLabel(name, label)}
     <select id="${esc(name)}" name="${esc(name)}"${attrs ? ` ${attrs}` : ""} aria-invalid="${error ? "true" : "false"}">${opts}</select>
     ${error ? `<div class="ferr" role="alert">${esc(error)}</div>` : ""}</div>`;
@@ -1575,7 +1578,32 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     const fields = sectionFields(d, section);
     const errors = state.errors || {};
     const editing = Boolean(state.object);
-    return fields.map((spec) => {
+    const catalog = (d.inventory_catalog || {})[section] || [];
+    const groups = [];
+    if (catalog.length) {
+      const byManufacturer = /* @__PURE__ */ new Map();
+      for (const entry of catalog) {
+        const manufacturer = entry.manufacturer || "";
+        if (!byManufacturer.has(manufacturer)) byManufacturer.set(manufacturer, []);
+        byManufacturer.get(manufacturer).push({
+          value: entry.id,
+          label: { de: entry.model || entry.id, en: entry.model || entry.id },
+          attrs: `data-fields="${esc(JSON.stringify(entry.fields || {}))}" data-note="${esc(localized(entry.note) || "")}"`
+        });
+      }
+      for (const [manufacturer, options] of byManufacturer) {
+        groups.push({ label: { de: manufacturer, en: manufacturer }, options });
+      }
+    }
+    const catalogField = groups.length ? `<div class="span2">${selectField({
+      name: `cat_${section}`,
+      label: t("Modell aus Katalog"),
+      value: "",
+      options: [{ value: "", label: { de: "– Freitext –", en: "– free text –" } }],
+      groups,
+      attrs: `data-catalog="${section}"`
+    })}<div class="fd mt6" data-cat-note></div></div>` : "";
+    return catalogField + fields.map((spec) => {
       const value = state.values && state.values[spec.key] != null ? state.values[spec.key] : "";
       const name = `f_${spec.key}`;
       const error = errors[spec.key] ? invErrorText(errors[spec.key]) : "";
@@ -2490,7 +2518,26 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     }
     _change(e) {
       const el = e.target;
-      if (!el || !el.dataset || !el.dataset.chg) return;
+      if (!el || !el.dataset) return;
+      if (el.dataset.catalog) {
+        const selected = el.selectedOptions && el.selectedOptions[0];
+        if (!selected) return;
+        const form = el.closest("form");
+        let fields = {};
+        try {
+          fields = JSON.parse(selected.dataset.fields || "{}");
+        } catch (err) {
+          fields = {};
+        }
+        for (const [key, value] of Object.entries(fields)) {
+          const input = form && form.querySelector(`[name="f_${key}"]`);
+          if (input) input.value = value == null ? "" : String(value);
+        }
+        const note = form && form.querySelector("[data-cat-note]");
+        if (note) note.textContent = selected.dataset.note || "";
+        return;
+      }
+      if (!el.dataset.chg) return;
       if (el.dataset.chg === "object") {
         this._ui.chgObject = el.value;
         this._ui.chgField = "";

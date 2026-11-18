@@ -133,6 +133,7 @@ export const EN = {
   "90 Tage": "90 days",
   "1 Jahr": "1 year",
   "Hersteller": "Vendor",
+  "Modell aus Katalog": "Model from catalog",
   "eigene Anlage": "own system",
   "kWh": "kWh",
   "Wochentag": "Weekday",
