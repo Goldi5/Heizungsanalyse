@@ -136,3 +136,22 @@ async def test_config_save_accepts_valid_change(hass: HomeAssistant, hass_ws_cli
     )
     msg = await client.receive_json()
     assert msg["result"]["ok"] is True, msg
+
+
+async def test_inventory_catalog_lists_pumps_and_valves(hass: HomeAssistant, hass_ws_client) -> None:
+    client = await _client(hass, hass_ws_client)
+    await client.send_json({"id": 1, "type": f"{DOMAIN}/inventory/catalog"})
+    msg = await client.receive_json()
+    assert msg["success"], msg
+    result = msg["result"]
+    assert result["pumps"] and result["thermostats"]
+    for entry in result["pumps"]:
+        assert entry["manufacturer"] and entry["model"]
+        assert entry["source"].startswith("https://")
+        assert "flow_m3h" in entry["fields"]
+        assert "max_head_m" in entry["fields"]
+        assert entry["note"]["de"] and entry["note"]["en"]
+    for entry in result["thermostats"]:
+        assert entry["presets"]
+        assert all(0 < value < 2 for value in entry["presets"].values())
+        assert entry["note"]["de"] and entry["note"]["en"]

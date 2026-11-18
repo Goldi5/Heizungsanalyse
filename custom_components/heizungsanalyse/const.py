@@ -141,7 +141,7 @@ CIRCUIT_TYPES: Final = ("buffer", "radiators", "underfloor", "dhw")
 
 # --- Inventar und Dienste --------------------------------------------------------
 INVENTORY_FIELDS: Final = {
-    "pumps": ("manufacturer", "model", "control_mode", "setting", "power_w", "notes"),
+    "pumps": ("manufacturer", "model", "control_mode", "setting", "power_w", "flow_m3h", "max_head_m", "notes"),
     "thermostats": ("model", "valve_preset", "room", "notes"),
     "hydraulics": ("buffer_volume_l", "hydraulic_separator", "bypass_valve", "pump_stage", "mixer_setting", "notes"),
     "radiators": ("circuit", "room", "valve_preset", "nominal_flow_l_min", "measured_flow_l_min", "measured_spread_k", "notes"),

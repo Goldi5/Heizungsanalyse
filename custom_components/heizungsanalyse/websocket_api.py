@@ -12,6 +12,7 @@ import voluptuous as vol
 
 from .analysis.curve_suggestion import suggest_curve
 from .analysis.periods import merge_samples, samples_from_rollups
+from .catalog import inventory_catalog
 from .config_validation import coverage, settings_schema, validate_config
 from .const import (
     CARD_URL,
@@ -57,6 +58,7 @@ def async_register(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_config_get)
     websocket_api.async_register_command(hass, ws_config_set)
     websocket_api.async_register_command(hass, ws_inventory_schema)
+    websocket_api.async_register_command(hass, ws_inventory_catalog)
     websocket_api.async_register_command(hass, ws_inventory_save)
     websocket_api.async_register_command(hass, ws_inventory_remove)
     websocket_api.async_register_command(hass, ws_inventory_export)
@@ -107,6 +109,7 @@ async def ws_summary(hass: HomeAssistant, connection: websocket_api.ActiveConnec
     result["configured"] = True
     result["last_update_success"] = bool(runtime.coordinator.last_update_success)
     result["inventory_schema"] = build_schema(rooms, circuits)
+    result["inventory_catalog"] = inventory_catalog()
     result["inventory_completeness"] = completeness(inventory)
     result["settings_schema"] = settings_schema()
     result["settings_coverage"] = coverage(entry.data, entry.options)
@@ -321,6 +324,13 @@ async def ws_inventory_schema(hass: HomeAssistant, connection: websocket_api.Act
             "completeness": completeness(inventory),
         },
     )
+
+
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/inventory/catalog"})
+@websocket_api.async_response
+async def ws_inventory_catalog(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Herstellerkatalog für Pumpen und Thermostatventile."""
+    connection.send_result(msg["id"], inventory_catalog())
 
 
 @websocket_api.websocket_command(

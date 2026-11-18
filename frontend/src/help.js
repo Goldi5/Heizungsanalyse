@@ -79,8 +79,8 @@ const HELP = {
     en: "Log every settings change (heating curve, pump stage, balancing …). The 7 days before are compared with the 7 days after. “Weather-adjusted” subtracts what the different outdoor temperature alone would change in COP – according to your own curve.",
   },
   inventory: {
-    de: "Stammdaten deiner Anlage: Pumpen, Thermostate, Hydraulik und Heizkörper. Die Felder kommen aus dem Schema – Schlüssel werden aus Kreis oder Raum abgeleitet, nie getippt. Jede Änderung landet automatisch im Verlauf. CSV dient nur dem Austausch vieler Werte.",
-    en: "Master data of your system: pumps, thermostats, hydraulics and radiators. Fields come from the schema – keys are derived from circuit or room, never typed. Every change lands in the history automatically. CSV is only for exchanging many values.",
+    de: "Stammdaten deiner Anlage: Pumpen, Thermostate, Hydraulik und Heizkörper. Die Felder kommen aus dem Schema – Schlüssel werden aus Kreis oder Raum abgeleitet, nie getippt. Für gängige Pumpen und Ventile gibt es einen Herstellerkatalog, der die Werte aus dem Datenblatt vorbelegt; prüfe sie am Typenschild. Jede Änderung landet automatisch im Verlauf. CSV dient nur dem Austausch vieler Werte.",
+    en: "Master data of your system: pumps, thermostats, hydraulics and radiators. Fields come from the schema – keys are derived from circuit or room, never typed. A manufacturer catalogue pre-fills common pumps and valves with datasheet values; check them on the nameplate. Every change lands in the history automatically. CSV is only for exchanging many values.",
   },
   system: {
     de: "Der Systemstatus zeigt, welche Version die Karte und welche das Backend hat, wann der letzte Lauf war und ob ein Fehler auftrat. Die Karte meldet eigene Fehler selbst mit – dann steht hier die gekürzte Meldung statt einer stillen Fehlfunktion.",

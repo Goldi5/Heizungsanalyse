@@ -429,7 +429,26 @@ export class HeizungsanalyseCard extends HTMLElement {
 
   _change(e) {
     const el = e.target;
-    if (!el || !el.dataset || !el.dataset.chg) return;
+    if (!el || !el.dataset) return;
+    if (el.dataset.catalog) {
+      const selected = el.selectedOptions && el.selectedOptions[0];
+      if (!selected) return;
+      const form = el.closest("form");
+      let fields = {};
+      try {
+        fields = JSON.parse(selected.dataset.fields || "{}");
+      } catch (err) {
+        fields = {};
+      }
+      for (const [key, value] of Object.entries(fields)) {
+        const input = form && form.querySelector(`[name="f_${key}"]`);
+        if (input) input.value = value == null ? "" : String(value);
+      }
+      const note = form && form.querySelector("[data-cat-note]");
+      if (note) note.textContent = selected.dataset.note || "";
+      return;
+    }
+    if (!el.dataset.chg) return;
     if (el.dataset.chg === "object") {
       this._ui.chgObject = el.value;
       this._ui.chgField = "";

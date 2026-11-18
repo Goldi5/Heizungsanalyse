@@ -1,3 +1,17 @@
+## 0.7.0b4 – 2026-11-18
+
+### Neu
+- **Herstellerkatalog für das Inventar**: gängige Pumpen (Grundfos ALPHA2
+  25-40, Wilo Yonos PICO 25/1-4 und 25/1-6) und Thermostatventile (Danfoss
+  RA-N 10/15/20, Oventrop AV 6) lassen sich als Auswahl anlegen. Das Formular
+  wird mit den Datenblattwerten (Hersteller, Modell, Regelart, Leistung,
+  Förderstrom, Förderhöhe, Voreinstellungen) vorbelegt, die Quelle steht am
+  Feld. Freitext bleibt möglich; die Werte sind Maximalwerte und keine
+  Auslegung der Anlage.
+- **Neue Pumpenfelder** `flow_m3h` (max. Förderstrom) und `max_head_m`
+  (max. Förderhöhe) im Inventar und in der Vollständigkeitsanzeige.
+- Neuer WebSocket-Befehl `heizungsanalyse/inventory/catalog`.
+
 ## 0.7.0b3 – 2026-11-18
 
 ### Neu

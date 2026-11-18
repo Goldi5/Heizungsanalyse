@@ -44,14 +44,18 @@ export function textField({ name, label, value = "", type = "text", unit = "", p
     ${error ? `<div class="ferr" role="alert">${esc(error)}</div>` : ""}</div>`;
 }
 
-export function selectField({ name, label, value = "", options = [], error = "", attrs = "" }) {
-  const opts = options
-    .map((option) => {
-      const val = typeof option === "object" ? option.value : option;
-      const text = typeof option === "object" ? localized(option.label) || option.value : option;
-      return `<option value="${esc(val)}"${String(val) === String(value ?? "") ? " selected" : ""}>${esc(text)}</option>`;
-    })
-    .join("");
+export function selectField({ name, label, value = "", options = [], groups = [], error = "", attrs = "" }) {
+  const option = (item) => {
+    const val = typeof item === "object" ? item.value : item;
+    const text = typeof item === "object" ? localized(item.label) || item.value : item;
+    const extra = typeof item === "object" && item.attrs ? ` ${item.attrs}` : "";
+    return `<option value="${esc(val)}"${String(val) === String(value ?? "") ? " selected" : ""}${extra}>${esc(text)}</option>`;
+  };
+  const opts =
+    options.map(option).join("") +
+    groups
+      .map((group) => `<optgroup label="${esc(localized(group.label))}">${group.options.map(option).join("")}</optgroup>`)
+      .join("");
   return `<div class="field${error ? " invalid" : ""}">${fieldLabel(name, label)}
     <select id="${esc(name)}" name="${esc(name)}"${attrs ? ` ${attrs}` : ""} aria-invalid="${error ? "true" : "false"}">${opts}</select>
     ${error ? `<div class="ferr" role="alert">${esc(error)}</div>` : ""}</div>`;
