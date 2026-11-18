@@ -36,8 +36,8 @@ Version) und der Navigationsleiste. Danach folgt eine kurze Einordnung
 - `banner`, `empty`, `progress`, `button`, `detailRow`
 - `entityDatalists` – Vorschlagslisten aus den vorhandenen Entities
 
-`entityField` ist ein Eingabefeld mit Vorschlagsliste (`<datalist>`), gefiltert
-nach Domain und Geräteklasse. `ha-entity-picker` wird bewusst nicht verwendet:
+`entityField` ist ein Eingabefeld mit Vorschlagsliste (`<datalist>`, nach
+Domain gefiltert); die passende Einheit wird beim Speichern geprüft. `ha-entity-picker` wird bewusst nicht verwendet:
 Das Element erwartet seine Daten als Properties im Shadow-DOM der Karte, ein
 Attribut allein reicht nicht; der Fallback ist deshalb der stabile Weg.
 
