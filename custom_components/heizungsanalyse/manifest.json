@@ -2,6 +2,7 @@
   "domain": "heizungsanalyse",
   "name": "Heizungsanalyse",
   "after_dependencies": [
+    "energy",
     "recorder"
   ],
   "codeowners": [
