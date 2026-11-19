@@ -42,6 +42,7 @@ class HeatingCircuit:
     pump_entity: str | None = None
     mixer_open_entity: str | None = None
     mixer_close_entity: str | None = None
+    target_entity: str | None = None
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -49,6 +50,7 @@ class HeatingCircuit:
             "name": self.name,
             "type": self.type,
             "temperature_entity": self.temperature_entity,
+            "target_entity": self.target_entity,
             "pump_entity": self.pump_entity,
             "mixer_open_entity": self.mixer_open_entity,
             "mixer_close_entity": self.mixer_close_entity,
@@ -61,6 +63,7 @@ class HeatingCircuit:
             name=str(data["name"]),
             type=str(data.get("type") or "radiators"),
             temperature_entity=data.get("temperature_entity") or None,
+            target_entity=data.get("target_entity") or None,
             pump_entity=data.get("pump_entity") or None,
             mixer_open_entity=data.get("mixer_open_entity") or None,
             mixer_close_entity=data.get("mixer_close_entity") or None,

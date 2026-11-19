@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from hz.analysis.event_log import (
     RESTART_KEY,
     RESTART_MESSAGE,
     EventLogBuffer,
+    FindingDebouncer,
     LogEntry,
     finding_diff,
     restart_entry,
@@ -150,3 +151,21 @@ def test_config_diff_erkennt_entfernen() -> None:
     new = config_snapshot({}, {"circuits": [], "rooms": []})
     keys = {entry["key"] for entry in config_diff(old, new)}
     assert keys == {"config.circuit_removed", "config.room_removed"}
+
+
+def test_debouncer_meldet_pendeln_nur_einmal() -> None:
+    deb = FindingDebouncer(resolve_after=timedelta(hours=2))
+    t = datetime(2026, 11, 19, 8, 0, tzinfo=UTC)
+    assert deb.update(t, {"F05:bad": "info"}) == [("F05:bad", "new", "", "info")]
+    # Raum pendelt um die Schwelle: 5 Minuten weg, wieder da – keine neuen Einträge
+    for step in range(1, 12):
+        now = t + timedelta(minutes=5 * step)
+        current = {} if step % 2 else {"F05:bad": "info"}
+        assert deb.update(now, current) == []
+    # Stufenwechsel wird gemeldet
+    assert deb.update(t + timedelta(hours=1), {"F05:bad": "warning"}) == [("F05:bad", "severity", "info", "warning")]
+    # Erst nach zwei Stunden durchgehend weg gilt er als erledigt
+    gone = t + timedelta(hours=1, minutes=5)
+    assert deb.update(gone, {}) == []
+    assert deb.update(gone + timedelta(hours=1), {}) == []
+    assert deb.update(gone + timedelta(hours=2), {}) == [("F05:bad", "resolved", "warning", "")]

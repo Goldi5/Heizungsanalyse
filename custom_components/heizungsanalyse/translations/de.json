@@ -49,7 +49,10 @@
           "remove_circuit": "Heizkreis entfernen",
           "add_room": "Raum hinzufügen",
           "remove_room": "Raum entfernen",
-          "save": "Speichern"
+          "save": "Speichern",
+          "edit_circuit": "Heizkreis bearbeiten",
+          "edit_room": "Raum bearbeiten",
+          "thresholds": "Schwellen"
         },
         "description": "Quellen, Heizkreise, Räume oder Schwellen ändern."
       },
@@ -72,7 +75,10 @@
           "volume_flow_entity": "Volumenstrom der Wärmepumpe",
           "power_now_entity": "Elektrische Leistung jetzt (W/kW)",
           "dhw_power_entity": "Warmwasser-Strom (kWh)",
-          "dhw_operation_entity": "Warmwasserbetrieb (binary)"
+          "dhw_operation_entity": "Warmwasserbetrieb (binary)",
+          "dhw_temp_entity": "Warmwasserspeicher Ist-Temperatur",
+          "dhw_target_entity": "Warmwasserspeicher Soll-Temperatur",
+          "dhw_pump_entity": "Warmwasser-Ladepumpe"
         },
         "data_description": {
           "compressor_runtime_extra_entity": "Wird zur ersten Laufzeit addiert, wenn die Anlage Heizung und Warmwasser getrennt zählt.",
@@ -81,7 +87,8 @@
           "power_now_entity": "Momentane Stromaufnahme; zusammen mit der Wärmeleistung der COP jetzt.",
           "dhw_power_entity": "Für den COP inklusive Warmwasser und den Abgleich mit einem Gesamtzähler als Ersatzquelle.",
           "return_entity": "Eintritt der Wärmepumpe. Zusammen mit dem WP-Vorlauf ergibt das die Spreizung.",
-          "dhw_operation_entity": "Aktiv, während die Wärmepumpe Warmwasser lädt. Dient zum Herausrechnen der Warmwasser-Ladung aus der Puffer-Ladung."
+          "dhw_operation_entity": "Aktiv, während die Wärmepumpe Warmwasser lädt. Dient zum Herausrechnen der Warmwasser-Ladung aus der Puffer-Ladung.",
+          "dhw_temp_entity": "Für Ladungen pro Tag, Ladedauer und Abkühlung des Speichers."
         }
       },
       "add_circuit": {
@@ -92,10 +99,12 @@
           "temperature_entity": "Ist-Temperatur des Kreises",
           "pump_entity": "Kreispumpe",
           "mixer_open_entity": "Mischer öffnet",
-          "mixer_close_entity": "Mischer schließt"
+          "mixer_close_entity": "Mischer schließt",
+          "target_entity": "Soll-Temperatur des Kreises"
         },
         "data_description": {
-          "type": "Puffer, Heizkörper, Fußbodenheizung oder Warmwasser. Die Zuordnung kommt vom Nutzer, nie aus Entity-Namen."
+          "type": "Puffer, Heizkörper, Fußbodenheizung oder Warmwasser. Die Zuordnung kommt vom Nutzer, nie aus Entity-Namen.",
+          "target_entity": "Optional. Mit Ist und Soll zeigt die Analyse, ob der Mischer den Kreis sauber auf Soll hält."
         }
       },
       "remove_circuit": {
@@ -113,7 +122,7 @@
           "valve_position_entity": "Ventilposition"
         },
         "data_description": {
-          "climate_entity": "Optional. Ohne Thermostat wird der Raum ohne Regelung geführt und löst keine Komfort-Findings aus.",
+          "climate_entity": "Optional. Am besten das Raumklima-Klima des Raums: Es liefert den echten Raumfühler, das wirksame Soll und die Ventilöffnung. Ohne Thermostat wird der Raum ohne Regelung geführt.",
           "valve_position_entity": "Optional. Livisi-Thermostate liefern keine Ventilposition."
         }
       },
@@ -140,6 +149,47 @@
           "spread_min_k": "Spreizung mindestens (K)",
           "spread_max_k": "Spreizung höchstens (K)",
           "return_temp_max_c": "Rücklauf max. (°C)"
+        }
+      },
+      "edit_circuit": {
+        "title": "Heizkreis bearbeiten",
+        "data": {
+          "circuit": "Heizkreis"
+        }
+      },
+      "edit_circuit_details": {
+        "title": "{name} bearbeiten",
+        "data": {
+          "name": "Name",
+          "type": "Typ",
+          "temperature_entity": "Ist-Temperatur des Kreises",
+          "pump_entity": "Kreispumpe",
+          "mixer_open_entity": "Mischer öffnet",
+          "mixer_close_entity": "Mischer schließt",
+          "target_entity": "Soll-Temperatur des Kreises"
+        },
+        "data_description": {
+          "type": "Puffer, Heizkörper, Fußbodenheizung oder Warmwasser. Die Zuordnung kommt vom Nutzer, nie aus Entity-Namen.",
+          "target_entity": "Optional. Mit Ist und Soll zeigt die Analyse, ob der Mischer den Kreis sauber auf Soll hält."
+        }
+      },
+      "edit_room": {
+        "title": "Raum bearbeiten",
+        "data": {
+          "id": "Raum"
+        }
+      },
+      "edit_room_details": {
+        "title": "{name} bearbeiten",
+        "data": {
+          "name": "Name",
+          "circuit": "Heizkreis",
+          "climate_entity": "Thermostat (climate)",
+          "valve_position_entity": "Ventilposition"
+        },
+        "data_description": {
+          "climate_entity": "Optional. Am besten das Raumklima-Klima des Raums: Es liefert den echten Raumfühler, das wirksame Soll und die Ventilöffnung. Ohne Thermostat wird der Raum ohne Regelung geführt.",
+          "valve_position_entity": "Optional. Livisi-Thermostate liefern keine Ventilposition."
         }
       }
     },

@@ -49,7 +49,9 @@ def test_room_tracker_heating_up_median() -> None:
         NOW,
     )
 
-    assert tracker.heating_up(trigger=0.3, tolerance=0.5, max_minutes=360) == {"az": 40.0}
+    assert tracker.heating_up(trigger=0.3, tolerance=0.5, max_minutes=360, min_episodes=1) == {"az": 40.0}
+    # Ein einzelner Fall reicht für die Anzeige nicht – sonst bestimmt ein Zufall den Wert
+    assert tracker.heating_up(trigger=0.3, tolerance=0.5, max_minutes=360) == {"az": None}
 
 
 def test_circuit_tracker_stats() -> None:

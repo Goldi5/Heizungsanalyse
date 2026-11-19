@@ -20,11 +20,20 @@ from homeassistant.util import dt as dt_util
 
 from .analysis.circuits import CircuitSample, CircuitStats, MixerSample, MixerStats
 from .analysis.cop import CopBin, CopResult, cop_curve, cop_window
+from .analysis.costs import (
+    clean_water_days,
+    dhw_stats,
+    heat_price_ct,
+    month_start,
+    numeric_changes,
+    sum_since,
+    weighted_cost,
+)
 from .analysis.cycling import mean_runtime_per_cycle, starts_per_day
 from .analysis.event_log import (
+    FindingDebouncer,
     config_diff,
     config_snapshot,
-    finding_diff,
     should_log_update,
     update_signature,
 )
@@ -47,7 +56,7 @@ from .analysis.onoff import (
     starts_per_day as onoff_starts_per_day,
     value_at,
 )
-from .analysis.rooms import RoomDeviation, RoomReading
+from .analysis.rooms import RoomDeviation, RoomReading, climate_values
 from .analysis.series import build_samples, counter_by_day, energy_by_day, mean_by_day
 from .analysis.types import DaySample, HourSample
 from .const import (
@@ -65,6 +74,9 @@ from .const import (
     CONF_DHW_HEAT_ENTITY,
     CONF_DHW_OPERATION_ENTITY,
     CONF_DHW_POWER_ENTITY,
+    CONF_DHW_PUMP_ENTITY,
+    CONF_DHW_TARGET_ENTITY,
+    CONF_DHW_TEMP_ENTITY,
     CONF_FLOW_ENTITY,
     CONF_HEAT_ENTITY,
     CONF_HP_FLOW_ENTITY,
@@ -79,7 +91,9 @@ from .const import (
     CONF_PUMP_ENTITY,
     CONF_RETURN_ENTITY,
     CONF_ROOMS,
+    CONF_TARGET_ENTITY,
     CONF_TARGET_FLOW_ENTITY,
+    CONF_TEMPERATURE_ENTITY,
     CONF_THRESHOLDS,
     CONF_VALVE_POSITION_ENTITY,
     CONF_VOLUME_FLOW_ENTITY,
@@ -95,7 +109,9 @@ from .const import (
     HISTORY_DAYS,
     HISTORY_ONOFF_DAYS,
     HISTORY_REFRESH_MINUTES,
+    MANDATORY_SOURCES,
     MIXER_RESOLUTION_MINUTES,
+    OPTIONAL_SOURCES,
     POWER_SOURCE_FALLBACK,
     POWER_SOURCE_PRIMARY,
     ROOM_MIN_TARGET,
@@ -103,7 +119,13 @@ from .const import (
     ROOM_WINDOW_DAYS,
     UPDATE_INTERVAL_MINUTES,
 )
-from .data_access import async_read_daily, async_read_history, async_read_hourly
+from .data_access import (
+    async_read_daily,
+    async_read_energy_prefs,
+    async_read_history,
+    async_read_hourly,
+    async_read_hourly_change,
+)
 from .event_log import EventLog
 from .tracking import CircuitTracker, MixerTracker, RoomTracker, rank_rooms_with_circuits
 
@@ -135,6 +157,9 @@ SOURCE_KINDS: dict[str, str] = {
     CONF_COMPRESSOR_RUNTIME_ENTITY: "counter",
     CONF_DEFROST_ENTITY: "binary",
     CONF_AUX_HEATER_ENTITY: "binary",
+    CONF_DHW_TEMP_ENTITY: "temperature",
+    CONF_DHW_TARGET_ENTITY: "temperature",
+    CONF_DHW_PUMP_ENTITY: "binary",
 }
 
 
@@ -161,6 +186,8 @@ class AnalysisSnapshot:
     findings: list[Finding]
     thresholds: Thresholds
     hydraulics: dict = field(default_factory=dict)
+    buffer_system: bool = False
+    costs: dict = field(default_factory=dict)
 
 
 EMPTY_COP = CopResult(None, 0.0, 0.0, 0, None)
@@ -208,6 +235,7 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
         self._mixer_tracker = MixerTracker(window_days=ROOM_WINDOW_DAYS)
         self._findings_signature: str | None = None
         self._findings_by_id: dict[str, str] = {}
+        self._finding_debouncer = FindingDebouncer()
         self._sources_state: dict[str, str] = {}
         self._no_statistics: set[str] = set()
         self._run_index = 0
@@ -220,6 +248,8 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
         self._history_at: datetime | None = None
         self._changes: dict[str, list[tuple[datetime, bool | None]]] = {}
         self._spans: dict[str, list[tuple[datetime, datetime]]] = {}
+        self._costs: dict = {}
+        self._costs_at: datetime | None = None
         self._history_start: datetime | None = None
         self._backfilled = False
         self._hydraulics: dict = {}
@@ -337,6 +367,9 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
         outdoor_id = self.entry.data.get(CONF_OUTDOOR_ENTITY)
         hours, compressor_filtered = await self._read_hours(flow_id, target_flow_id, compressor_id, dhw_op_id, outdoor_id)
         self._hydraulics = await self._read_hydraulics(target_flow_id, compressor_id, dhw_op_id)
+        self._hydraulics["circuits"] = await self._read_circuit_flows()
+        self._hydraulics["dhw"] = await self._read_dhw()
+        await self._refresh_costs()
         self._flow_hours = hours
         await self._evaluate_change_outcomes(samples)
         self._source_counts = {key: len(rows) for key, rows in daily.items()}
@@ -384,7 +417,18 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
             findings=findings,
             thresholds=thresholds,
             hydraulics=self._hydraulics,
+            buffer_system=self.buffer_system,
+            costs=self._costs,
         )
+
+    @property
+    def buffer_system(self) -> bool:
+        """Anlage mit Puffer: Puffer-Quelle, Puffer-Kreis oder Soll-Vorlauf des Puffers."""
+        if self._entity(CONF_BUFFER_ENTITY):
+            return True
+        if any(str(circuit.get("type")) == "buffer" for circuit in self._circuits_config()):
+            return True
+        return "puffer" in str(self._entity(CONF_TARGET_FLOW_ENTITY) or "").lower()
 
     async def _evaluate_findings(
         self,
@@ -465,6 +509,7 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
             spread_median=(self._hydraulics.get("spread") or {}).get("median"),
             spread_hours=int((self._hydraulics.get("spread") or {}).get("hours") or 0),
             return_temp_median=return_temp_median,
+            buffer_system=self.buffer_system,
         )
         findings = evaluate(results, thresholds)
         await self._log_findings(findings)
@@ -472,19 +517,18 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
         return findings
 
     async def _log_findings(self, findings: list[Finding]) -> None:
-        """Neue, geänderte und erledigte Hinweise protokollieren."""
-        current = {finding.id: self._finding_key(finding) for finding in findings}
-        changes = finding_diff(self._findings_by_id, current)
-        self._findings_by_id = current
-        if not changes or self.log is None:
+        """Neue und erledigte Hinweise protokollieren – entprellt, ohne Messwert-Rauschen."""
+        self._findings_by_id = {finding.id: self._finding_key(finding) for finding in findings}
+        events = self._finding_debouncer.update(dt_util.utcnow(), {finding.id: finding.severity for finding in findings})
+        if not events or self.log is None:
             return
         by_id = {finding.id: finding for finding in findings}
         from .summary import TITLES
 
-        for finding_id, old, new in changes:
+        for finding_id, kind, old, new in events:
             finding = by_id.get(finding_id)
             title = TITLES["de"].get(finding.key, finding_id) if finding is not None else finding_id
-            if old and not new:
+            if kind == "resolved":
                 await self.log.async_add(
                     "info",
                     "finding",
@@ -493,16 +537,16 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
                     params={"id": finding_id, "title": title},
                     details={"id": finding_id, "previous": old},
                 )
-            elif finding is None:
+            elif kind == "severity" and finding is not None:
                 await self.log.async_add(
-                    "info",
+                    "warn" if finding.severity == "warning" else "info",
                     "finding",
-                    f"Hinweis {finding_id} geändert",
+                    f"Hinweis {finding_id} jetzt {'Warnung' if new == 'warning' else 'Hinweis'}",
                     key="finding.changed",
                     params={"id": finding_id, "title": title},
                     details={"id": finding_id, "previous": old, "current": new},
                 )
-            else:
+            elif finding is not None:
                 await self.log.async_add(
                     "warn" if finding.severity == "warning" else "info",
                     "finding",
@@ -601,6 +645,15 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
                     details={"entity": entity_id, "state_class": state_class},
                 )
 
+    def source_kinds(self) -> dict[str, str]:
+        """Alle zugeordneten Quellen (Entity → erwartete Art), auch die ohne erwartete Art."""
+        kinds = dict(self._source_expectations())
+        for key in (*MANDATORY_SOURCES, *OPTIONAL_SOURCES):
+            entity_id = self.entry.data.get(key) or self.entry.options.get(key)
+            if entity_id and entity_id not in kinds:
+                kinds[entity_id] = "binary" if str(entity_id).startswith("binary_sensor.") else "source"
+        return kinds
+
     def _source_expectations(self) -> dict[str, str]:
         """Nur tatsächlich zugeordnete Quellen mit erwarteter Art."""
         result: dict[str, str] = {}
@@ -657,14 +710,14 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
         state = self.hass.states.get(climate_id)
         if state is None:
             return "unknown"
-        if state.state in (STATE_OFF, STATE_UNAVAILABLE, STATE_UNKNOWN):
-            return "off"
-        target = _as_float(state.attributes.get("temperature"))
-        current = _as_float(state.attributes.get("current_temperature"))
-        if current is None:
-            return "no_values"
-        if target is None:
+        values = climate_values(state.state, dict(state.attributes))
+        if values is None:
+            if state.state in (STATE_OFF, STATE_UNAVAILABLE, STATE_UNKNOWN):
+                return "off"
+            if _as_float(state.attributes.get("current_temperature")) is None:
+                return "no_values"
             return "no_target"
+        _current, target, _valve = values
         if target < ROOM_MIN_TARGET:
             return "target_low"
         return "ok"
@@ -881,16 +934,15 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
         if not climate_id:
             return None
         state = self.hass.states.get(climate_id)
-        if state is None or state.state in (STATE_OFF, STATE_UNAVAILABLE, STATE_UNKNOWN):
+        if state is None:
             return None
-        current = _as_float(state.attributes.get("current_temperature"))
-        target = _as_float(state.attributes.get("temperature"))
-        if current is None or target is None:
+        values = climate_values(state.state, dict(state.attributes))
+        if values is None:
             return None
+        current, target, valve = values
         if target < ROOM_MIN_TARGET:
             # Frostschutz oder bewusst abgeschaltet: kein Komfortziel, keine Raumhinweise
             return None
-        valve = None
         valve_id = room.get(CONF_VALVE_POSITION_ENTITY)
         if valve_id:
             valve_state = self.hass.states.get(valve_id)
@@ -935,6 +987,7 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
             self._entity(CONF_DEFROST_ENTITY),
             self._entity(CONF_AUX_HEATER_ENTITY),
             self._entity(CONF_DHW_OPERATION_ENTITY),
+            self._entity(CONF_DHW_PUMP_ENTITY),
         }
         for circuit in self._circuits_config():
             ids |= {circuit.get(CONF_PUMP_ENTITY), circuit.get(CONF_MIXER_OPEN_ENTITY), circuit.get(CONF_MIXER_CLOSE_ENTITY)}
@@ -995,19 +1048,21 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
             rows = climate_rows.get(room.get(CONF_CLIMATE_ENTITY) or "", [])
             if not rows or CONF_ID not in room:
                 continue
-            values = [
-                (at, (state, _as_float(attrs.get("current_temperature")), _as_float(attrs.get("temperature"))))
-                for at, state, attrs in rows
-            ]
+            values = [(at, climate_values(state, attrs)) for at, state, attrs in rows]
             for at, value in value_at(values, times):
-                state, current, target = value  # type: ignore[misc]
-                if state in (STATE_OFF, STATE_UNAVAILABLE, STATE_UNKNOWN) or current is None or target is None:
+                if value is None:
                     continue
+                current, target, valve = value
                 if target < ROOM_MIN_TARGET:
                     continue
                 readings.append(
                     RoomReading(
-                        at=at, room_id=str(room[CONF_ID]), current_c=current, target_c=target, circuit=room.get(CONF_CIRCUIT)
+                        at=at,
+                        room_id=str(room[CONF_ID]),
+                        current_c=current,
+                        target_c=target,
+                        circuit=room.get(CONF_CIRCUIT),
+                        valve=valve,
                     )
                 )
         readings.sort(key=lambda item: item.at)
@@ -1117,6 +1172,168 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
             power=power_kw(power_value, power_unit),
             running=self._on_off(compressor_id),
         )
+        return result
+
+    def circuit_target(self, circuit: dict) -> tuple[str | None, bool]:
+        """Soll-Vorlauf eines Kreises: eingetragen oder – bei Stiebel Eltron – zum Ist passend abgeleitet."""
+        target = circuit.get(CONF_TARGET_ENTITY)
+        if target:
+            return target, False
+        actual = str(circuit.get(CONF_TEMPERATURE_ENTITY) or "")
+        if "ist_temperatur" in actual:
+            guess = actual.replace("ist_temperatur", "soll_temperatur", 1)
+            if self.hass.states.get(guess) is not None:
+                return guess, True
+        return None, False
+
+    async def _read_circuit_flows(self) -> dict:
+        """Vorlauf Ist − Soll je Heizkreis (Stundenmittel, 7 Tage) und Momentanwerte."""
+        circuits = [c for c in self._circuits_config() if c.get(CONF_ID) and c.get(CONF_TEMPERATURE_ENTITY)]
+        if not circuits:
+            return {}
+        pairs = {str(c[CONF_ID]): (c[CONF_TEMPERATURE_ENTITY], *self.circuit_target(c)) for c in circuits}
+        wanted = {entity for actual, target, _ in pairs.values() for entity in (actual, target) if entity}
+        hourly = await async_read_hourly(self.hass, wanted, DEVIATION_DAYS)
+
+        def means(entity_id: str | None) -> dict:
+            if not entity_id:
+                return {}
+            return {value.hour: value.mean for value in hourly.get(entity_id, []) if value.mean is not None}
+
+        def now_value(entity_id: str | None) -> float | None:
+            state = self.hass.states.get(entity_id) if entity_id else None
+            if state is None or state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+                return None
+            return _as_float(state.state)
+
+        result: dict = {}
+        for circuit in circuits:
+            circuit_id = str(circuit[CONF_ID])
+            actual_id, target_id, inferred = pairs[circuit_id]
+            pump_id = circuit.get(CONF_PUMP_ENTITY)
+            running = share_per_hour(self._spans[pump_id], means(actual_id).keys()) if pump_id and pump_id in (self._spans or {}) else None
+            deviation_hours = overshoot_hours(means(actual_id), means(target_id), running) if target_id else {}
+            actual_now, target_now = now_value(actual_id), now_value(target_id)
+            result[circuit_id] = {
+                "actual": actual_now,
+                "target": target_now,
+                "deviation_now": round(actual_now - target_now, 2) if actual_now is not None and target_now is not None else None,
+                "deviation": spread_stats(deviation_hours).as_dict() if deviation_hours else None,
+                "target_entity": target_id,
+                "target_inferred": inferred,
+            }
+        return result
+
+    async def _read_dhw(self) -> dict:
+        """Warmwasserspeicher: Ist/Soll, Ladepumpe, Ladungen pro Tag, Abkühlung."""
+        temp_id = self._entity(CONF_DHW_TEMP_ENTITY)
+        target_id = self._entity(CONF_DHW_TARGET_ENTITY)
+        pump_id = self._entity(CONF_DHW_PUMP_ENTITY)
+        op_id = self._entity(CONF_DHW_OPERATION_ENTITY)
+        if not temp_id:
+            return {}
+        now = dt_util.utcnow()
+        window_start = now - timedelta(days=HISTORY_ONOFF_DAYS)
+        hourly = await async_read_hourly(self.hass, {temp_id}, HISTORY_ONOFF_DAYS)
+        temps = {value.hour: value.mean for value in hourly.get(temp_id, []) if value.mean is not None}
+        spans = (self._spans or {}).get(op_id or pump_id or "", [])
+        charging = share_per_hour(spans, temps.keys()) if spans else {}
+        stats = dhw_stats(spans, temps, charging, window_start=window_start, now=now)
+
+        def now_value(entity_id: str | None) -> float | None:
+            state = self.hass.states.get(entity_id) if entity_id else None
+            if state is None or state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+                return None
+            return _as_float(state.state)
+
+        return {
+            "temperature": now_value(temp_id),
+            "target": now_value(target_id),
+            "pump_on": self._on_off(pump_id),
+            "charging": self._on_off(op_id) if op_id else self._on_off(pump_id),
+            **stats.as_dict(),
+        }
+
+    async def _refresh_costs(self) -> None:
+        """Kosten und Wasser – stündlich neu, weil sich Preise und Zähler nur stündlich ändern."""
+        now = dt_util.utcnow()
+        if self._costs_at is not None and now - self._costs_at < timedelta(minutes=55):
+            return
+        self._costs_at = now
+        try:
+            self._costs = await self._read_costs(now)
+        except Exception as err:  # noqa: BLE001 - Kosten sind Zusatz, nie ein Abbruchgrund
+            _LOGGER.debug("Kosten nicht berechenbar: %s", err)
+            self._costs = {}
+
+    async def _read_costs(self, now: datetime) -> dict:
+        prefs = await async_read_energy_prefs(self.hass)
+        tz = dt_util.get_default_time_zone()
+        first = month_start(now, tz)
+        since = min(first.astimezone(dt_util.UTC), now - timedelta(days=30))
+        power_id = self.entry.data[CONF_POWER_ENTITY]
+        heat_id = self.entry.data[CONF_HEAT_ENTITY]
+        dhw_power_id = self._entity(CONF_DHW_POWER_ENTITY)
+        dhw_heat_id = self._entity(CONF_DHW_HEAT_ENTITY)
+        usage = await async_read_hourly_change(self.hass, {power_id, heat_id, dhw_power_id, dhw_heat_id}, since)
+
+        price_id = prefs.get("grid_price_entity")
+        prices: list[tuple[datetime, float]] = []
+        if price_id:
+            rows = await async_read_history(self.hass, {price_id}, (now - since).total_seconds() / 86400 + 1)
+            prices = numeric_changes((at, state) for at, state, _attrs in rows.get(price_id, []))
+            if prices and max(price for _at, price in prices) > 5:
+                prices = [(at, price / 100) for at, price in prices]  # ct/kWh statt €/kWh
+        fixed = prefs.get("grid_price")
+        last_30 = now - timedelta(days=30)
+
+        def period(start: datetime) -> dict:
+            heating = weighted_cost(usage.get(power_id, {}), prices, fallback_price=fixed, since=start)
+            dhw = weighted_cost(usage.get(dhw_power_id, {}), prices, fallback_price=fixed, since=start) if dhw_power_id else None
+            heat = sum(v for h, v in usage.get(heat_id, {}).items() if h >= start and v and v > 0)
+            dhw_heat = sum(v for h, v in usage.get(dhw_heat_id, {}).items() if h >= start and v and v > 0) if dhw_heat_id else 0.0
+            total = None
+            if heating.eur is not None or (dhw and dhw.eur is not None):
+                total = round((heating.eur or 0) + ((dhw.eur if dhw else 0) or 0), 2)
+            return {
+                "heating": heating.as_dict(),
+                "dhw": dhw.as_dict() if dhw else None,
+                "heat_kwh": round(heat, 1),
+                "dhw_heat_kwh": round(dhw_heat, 1),
+                "total_eur": total,
+                "heat_price_ct": heat_price_ct(total, heat + dhw_heat),
+            }
+
+        result: dict = {
+            "price_entity": price_id,
+            "price_now": prices[-1][1] if prices else fixed,
+            "price_fixed": fixed,
+            "feed_in_price": prefs.get("feed_in_price"),
+            "month": period(first.astimezone(dt_util.UTC)),
+            "last_30_days": period(last_30),
+        }
+
+        water_id = self._entity("water_entity") or prefs.get("water_entity")
+        if water_id:
+            daily = await async_read_daily(self.hass, {water_id}, 32)
+            changes = {value.day: value.change for value in daily.get(water_id, []) if value.change is not None}
+            clean = clean_water_days(changes)
+            water_price = prefs.get("water_price")
+            if water_price is None and prefs.get("water_price_entity"):
+                state = self.hass.states.get(prefs["water_price_entity"])
+                water_price = _as_float(state.state) if state is not None else None
+            today = now.astimezone(tz).date()
+            month_m3 = sum_since(clean, first.date())
+            m30 = sum_since(clean, (now - timedelta(days=30)).astimezone(tz).date())
+            result["water"] = {
+                "entity": water_id,
+                "price_eur_m3": water_price,
+                "today_m3": round(clean.get(today, 0.0), 3),
+                "month_m3": round(month_m3, 3),
+                "month_eur": round(month_m3 * water_price, 2) if water_price is not None else None,
+                "last_30_days_m3": round(m30, 3),
+                "skipped_days": len(changes) - len(clean),
+            }
         return result
 
     async def _read_hours(

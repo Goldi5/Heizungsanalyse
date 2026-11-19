@@ -85,13 +85,16 @@ def heating_up_times(
     trigger: float = 0.3,
     tolerance: float = 0.5,
     max_minutes: float = 360.0,
+    min_gap: float = 1.0,
 ) -> list[float]:
     """Zeit bis zum Erreichen des neuen Solls nach einer Sollwert-Anhebung.
 
     Flankenerkennung: Steigt das Soll um mindestens ``trigger`` Kelvin, läuft
     die Messung, bis Ist mindestens ``target - tolerance`` erreicht. Wird das
     Ziel nicht innerhalb von ``max_minutes`` erreicht oder sinkt das Soll
-    wieder, entfällt der Versuch.
+    wieder, entfällt der Versuch. Gezählt wird nur, wenn der Raum beim Anheben
+    mindestens ``min_gap`` Kelvin unter dem neuen Soll lag – sonst zählt jedes
+    kleine Nachstellen (z. B. Vorheizen um 0,5 K) als „nach 5 Minuten warm“.
     """
     ordered = sorted(readings, key=lambda item: item.at)
     results: list[float] = []
@@ -101,8 +104,12 @@ def heating_up_times(
 
     for reading in ordered:
         if previous_target is not None and reading.target_c - previous_target >= trigger:
-            start = reading.at
-            goal = reading.target_c
+            if reading.target_c - reading.current_c >= min_gap:
+                start = reading.at
+                goal = reading.target_c
+            else:
+                start = None
+                goal = None
         previous_target = reading.target_c
 
         if start is None or goal is None:
@@ -161,3 +168,38 @@ def circuit_ranking(
         }
         for circuit, values in sorted(grouped.items())
     }
+
+
+_INACTIVE = ("off", "unavailable", "unknown")
+
+
+def _num(value) -> float | None:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if number == number else None  # NaN aussortieren
+
+
+def climate_values(state: str | None, attrs: dict | None) -> tuple[float, float, float | None] | None:
+    """Ist, Soll und Ventilöffnung aus einem Klima-Entity.
+
+    Raumklima-Räume (erkennbar am Attribut ``plan_reason``) liefern den echten
+    Raumfühler, das wirksame Soll und die Ventilöffnung. Räume im Beobachtungsmodus
+    (Fußboden ohne Thermostat) haben den Zustand „unknown“ und kein ``temperature`` –
+    dort gilt die Komforttemperatur als Soll.
+    """
+    attrs = attrs or {}
+    raumklima = "plan_reason" in attrs
+    if state == "off" or (state in _INACTIVE and not (raumklima and attrs.get("monitor"))):
+        return None
+    current = _num(attrs.get("current_temperature"))
+    target = _num(attrs.get("temperature"))
+    if target is None and raumklima:
+        target = _num(attrs.get("effective_target"))
+        if target is None and attrs.get("monitor"):
+            target = _num(attrs.get("comfort_temperature"))
+    if current is None or target is None:
+        return None
+    valve = _num(attrs.get("valve_position")) if raumklima else None  # Prozent, Mittel aller Ventile
+    return current, target, valve

@@ -126,6 +126,9 @@ class FindingsInput:
     spread_median: float | None = None
     spread_hours: int = 0
     return_temp_median: float | None = None
+    # Heizkreise hinter einem Puffer: Die Pumpe darf laufen, während der Verdichter steht –
+    # der Puffer liefert die Wärme. „Pumpe ohne Verdichter“ ist dort keine Verschwendung.
+    buffer_system: bool = False
 
 
 def _mean(values: Sequence[float]) -> float | None:
@@ -181,6 +184,8 @@ def _cycling(results: FindingsInput, thresholds: Thresholds) -> list[Finding]:
 
 
 def _pump_idle(results: FindingsInput, thresholds: Thresholds) -> list[Finding]:
+    if results.buffer_system:
+        return []
     findings: list[Finding] = []
     for circuit_id, stats in results.circuit_stats.items():
         if stats.idle_share is None or stats.idle_share <= thresholds.pump_idle_share:
@@ -492,19 +497,64 @@ def _room_target_plausible(results: FindingsInput, thresholds: Thresholds) -> li
 
 
 
+def _daily_cop_points(samples) -> list[tuple[float, float]]:
+    points = []
+    for sample in samples:
+        if sample.heat_kwh is None or not sample.power_kwh or sample.outdoor_c is None:
+            continue
+        if sample.power_kwh < 1.0:
+            continue  # Tage fast ohne Lauf verzerren die Kennlinie
+        points.append((sample.outdoor_c, sample.heat_kwh / sample.power_kwh))
+    return points
+
+
+def expected_cop(samples, *, recent_days: int = 7, min_days: int = 10) -> tuple[float | None, int]:
+    """Erwarteter COP der letzten Tage nach der eigenen Kennlinie (COP über Außentemperatur).
+
+    Die Kennlinie wird aus den Tagen *vor* dem Prüfzeitraum gerechnet, damit ein
+    echter Einbruch sie nicht selbst nach unten zieht. Ergebnis: Mittel der
+    erwarteten Tages-COPs bei den tatsächlichen Außentemperaturen.
+    """
+    samples = list(samples)
+    base = _daily_cop_points(samples[:-recent_days])
+    recent = _daily_cop_points(samples[-recent_days:])
+    if len(base) < min_days or not recent:
+        return None, len(base)
+    n = len(base)
+    mx = sum(x for x, _ in base) / n
+    my = sum(y for _, y in base) / n
+    sxx = sum((x - mx) ** 2 for x, _ in base)
+    if sxx < 1e-6:
+        return my, n
+    slope = sum((x - mx) * (y - my) for x, y in base) / sxx
+    return sum(my + slope * (x - mx) for x, _ in recent) / len(recent), n
+
+
 def _cop_drop(results: FindingsInput, thresholds: Thresholds) -> list[Finding]:
-    if results.cop is None or results.cop_long is None or results.cop_days < 7:
+    """F18: COP deutlich unter dem, was bei diesem Wetter zu erwarten ist.
+
+    Früher gegen den 30-Tage-Wert verglichen – dann schlug jede Kältewelle an.
+    """
+    if results.cop is None or results.cop_days < 7:
         return []
-    drop = results.cop_long - results.cop
-    if drop < 0.5:
+    expected, base_days = expected_cop(results.samples)
+    if expected is None or expected <= 0:
+        return []
+    drop = expected - results.cop
+    if drop < 0.5 or drop / expected < 0.10:
         return []
     return [
         Finding(
             id="F18",
             severity=SEVERITY_WARNING if drop >= 1.0 else SEVERITY_INFO,
             key="cop_drop",
-            params={"cop": round(results.cop, 2), "cop_long": round(results.cop_long, 2), "drop": round(drop, 2)},
-            evidence={"cop_7d": round(results.cop, 2), "cop_30d": round(results.cop_long, 2)},
+            params={"cop": round(results.cop, 2), "cop_long": round(expected, 2), "drop": round(drop, 2)},
+            evidence={
+                "cop_7d": round(results.cop, 2),
+                "expected": round(expected, 2),
+                "outdoor_mean_c": round(results.outdoor_mean, 1) if results.outdoor_mean is not None else None,
+                "curve_days": base_days,
+            },
         )
     ]
 

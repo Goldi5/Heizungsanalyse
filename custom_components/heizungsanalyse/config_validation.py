@@ -43,6 +43,7 @@ from .const import (
     CONF_RETURN_ENTITY,
     CONF_ROOM_TYPE,
     CONF_ROOMS,
+    CONF_TARGET_ENTITY,
     CONF_TARGET_FLOW_ENTITY,
     CONF_TEMPERATURE_ENTITY,
     CONF_THRESHOLDS,
@@ -202,8 +203,9 @@ def _validate_circuits(hass: HomeAssistant, circuits: Any, errors: dict[str, str
             errors[f"{prefix}.{CONF_TYPE}"] = "required"
         elif circuit.get(CONF_TYPE) not in CIRCUIT_TYPES:
             errors[f"{prefix}.{CONF_TYPE}"] = "option"
-        for key in (CONF_TEMPERATURE_ENTITY, CONF_PUMP_ENTITY, CONF_MIXER_OPEN_ENTITY, CONF_MIXER_CLOSE_ENTITY):
-            reason = _check_entity(hass, circuit.get(key), TEMPERATURE_UNITS if key == CONF_TEMPERATURE_ENTITY else None)
+        for key in (CONF_TEMPERATURE_ENTITY, CONF_TARGET_ENTITY, CONF_PUMP_ENTITY, CONF_MIXER_OPEN_ENTITY, CONF_MIXER_CLOSE_ENTITY):
+            temperature = key in (CONF_TEMPERATURE_ENTITY, CONF_TARGET_ENTITY)
+            reason = _check_entity(hass, circuit.get(key), TEMPERATURE_UNITS if temperature else None)
             if reason:
                 errors[f"{prefix}.{key}"] = reason
     return ids

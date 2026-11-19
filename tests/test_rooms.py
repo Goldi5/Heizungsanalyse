@@ -109,3 +109,29 @@ def test_circuit_ranking_groups_rooms() -> None:
 
     assert ranked["hk2"] == {"median": -1.0, "rooms": 2, "samples": 20}
     assert ranked["hk3"] == {"median": 0.5, "rooms": 1, "samples": 10}
+
+
+def test_heating_up_ignoriert_kleines_nachstellen() -> None:
+    """Soll +0,5 K bei einem Raum, der schon fast warm ist, ist keine Aufheizung."""
+    readings = [
+        _reading(0, 19.8, target=19.5),
+        _reading(5, 19.8, target=20.0),
+        _reading(10, 19.9, target=20.0),
+    ]
+
+    assert heating_up_times(readings) == []
+
+
+def test_climate_values_raumklima_und_trv() -> None:
+    from hz.analysis.rooms import climate_values
+
+    # Normales Thermostat
+    assert climate_values("heat", {"current_temperature": 17.4, "temperature": 20.0}) == (17.4, 20.0, None)
+    assert climate_values("off", {"current_temperature": 17.4, "temperature": 20.0}) is None
+    # Raumklima: echter Raumfühler, Ventil in Prozent
+    rk = {"plan_reason": "normal", "current_temperature": 18.6, "temperature": 20.0, "valve_position": 38.0}
+    assert climate_values("heat", rk) == (18.6, 20.0, 38.0)
+    # Raumklima im Beobachtungsmodus (Fußboden ohne Thermostat): Komfort als Soll
+    monitor = {"plan_reason": "monitor", "monitor": True, "current_temperature": 21.9, "comfort_temperature": 20.0}
+    assert climate_values("unknown", monitor) == (21.9, 20.0, None)
+    assert climate_values("unknown", {"current_temperature": 21.9}) is None

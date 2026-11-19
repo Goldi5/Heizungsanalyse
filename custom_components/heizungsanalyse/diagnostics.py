@@ -80,6 +80,11 @@ def _iso(value: Any) -> str | None:
     return None
 
 
+async def source_checks(hass: HomeAssistant, coordinator: Any) -> list[dict[str, Any]]:
+    """Quellen-Check für alle zugeordneten Quellen (Entity → erwartete Art)."""
+    return await _source_checks(hass, coordinator.source_kinds())
+
+
 async def _source_checks(hass: HomeAssistant, entities: dict[str, str]) -> list[dict[str, Any]]:
     """Je Quelle: Zustand, Einheit, Statistikmenge, Format und Bewertung."""
     rows_daily = await async_read_raw(
@@ -197,7 +202,6 @@ async def async_build_diagnostics(hass: HomeAssistant, entry: ConfigEntry) -> di
 
     sources = {key: entry.data.get(key) for key in MANDATORY_SOURCES}
     sources |= {key: entry.options.get(key) for key in OPTIONAL_SOURCES}
-    entities = {key: value for key, value in sources.items() if value}
 
     def _to_day(value):
         parsed = dt_util.parse_datetime(value)
@@ -247,7 +251,7 @@ async def async_build_diagnostics(hass: HomeAssistant, entry: ConfigEntry) -> di
             "thresholds": thresholds,
         },
         "sources": {key: _domain(value) for key, value in sources.items() if value},
-        "source_checks": await _source_checks(hass, entities),
+        "source_checks": await source_checks(hass, runtime.coordinator),
         "counts": {
             "circuits": len(entry.options.get(CONF_CIRCUITS) or []),
             "rooms": len(entry.options.get(CONF_ROOMS) or []),

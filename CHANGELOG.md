@@ -1,3 +1,43 @@
+## 0.7.1b1 – 2026-11-19 (Beta)
+
+### Behoben
+- **Aufheizzeit stand überall auf 5 Minuten.** Gezählt wurde jede kleine
+  Soll-Anhebung, auch wenn der Raum schon warm war (z. B. Vorheizen um 0,5 K).
+  Jetzt zählt eine Aufheizung nur, wenn der Raum mindestens 1 K unter dem
+  neuen Soll lag, und angezeigt wird der Median erst ab drei Fällen.
+- **F18 „COP-Einbruch“ schlug bei jeder Kältewelle an.** Verglichen wird jetzt
+  mit dem COP, den die eigene Kennlinie bei der tatsächlichen
+  Außentemperatur erwarten lässt (gerechnet aus den Tagen davor), nicht mit
+  dem 30-Tage-Wert.
+- **Protokoll voller „Neuer Hinweis F05“.** Jede Wertänderung eines aktiven
+  Hinweises wurde als neuer Hinweis eingetragen, und ein Raum, der um die
+  Schwelle pendelt, erzeugte alle fünf Minuten zwei Einträge. Hinweise sind
+  jetzt entprellt: neu beim ersten Auftreten, erledigt erst nach zwei Stunden
+  Abwesenheit, dazwischen nur ein Eintrag beim Wechsel Hinweis ↔ Warnung.
+- **„Pumpe ohne Verdichter“ bei Pufferanlagen.** Hinter einem Puffer ist das
+  gewollt; der Wert war nur der Anteil Verdichter-aus. Bei Pufferanlagen
+  entfällt F03, angezeigt wird der Laufanteil der Pumpe.
+- **Quellen-Check zeigte 0/0 Zeilen.** Der Status-Befehl hatte feste Nullen,
+  die Diagnose vertauschte Schlüssel und Entity. Beide nutzen jetzt dieselbe
+  echte Prüfung.
+- „dhw_operation_entity“ stand als Rohname in der Quellenliste.
+
+### Neu
+- **Raumklima-Räume** als Quelle: echter Raumfühler statt Thermostat-Fühler,
+  wirksames Soll, Ventilöffnung. Räume im Beobachtungsmodus (Fußboden ohne
+  Thermostat) zählen mit ihrer Komforttemperatur.
+- **Vorlauf je Heizkreis**: Ist gegen Soll, live und als Median über 7 Tage.
+  Neues Feld „Soll-Temperatur des Kreises“; bei Stiebel Eltron wird es zur
+  Ist-Temperatur automatisch gefunden.
+- **Warmwasserspeicher**: Ist, Soll, Ladepumpe, Ladungen pro Tag, Ladedauer
+  und Abkühlung in K/h (neue optionale Quellen).
+- **Kosten und Wasser** aus dem Energie-Dashboard: Strom Heizen und
+  Warmwasser Stunde für Stunde mit dem jeweils gültigen Preis (auch
+  dynamisch), Wärmepreis in ct/kWh, Wasserverbrauch und -kosten. Lesefehler
+  des Wasserzählers werden übersprungen.
+- **Konfigurieren** kann Heizkreise und Räume jetzt auch bearbeiten, nicht
+  nur hinzufügen und entfernen.
+
 ## 0.7.0b5 – 2026-11-18
 
 ### Neu

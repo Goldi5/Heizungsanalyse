@@ -134,6 +134,68 @@ async def async_read_hourly(
     return {entity_id: parse_hourly_rows(rows) for entity_id, rows in rows_by_id.items()}
 
 
+async def async_read_hourly_change(
+    hass: HomeAssistant,
+    entity_ids: Iterable[str],
+    start: datetime,
+) -> dict[str, dict[datetime, float]]:
+    """Stündliche Zuwächse von Zählern (kWh, m³) ab ``start`` je Entity."""
+    rows_by_id = await _read(hass, entity_ids, start=start, period="hour", types={"change"})
+    result: dict[str, dict[datetime, float]] = {}
+    for entity_id, rows in rows_by_id.items():
+        values: dict[datetime, float] = {}
+        for row in rows:
+            at = _start(row.get("start"))
+            change = _number(row.get("change"))
+            if at is not None and change is not None:
+                values[at] = change
+        result[entity_id] = values
+    return result
+
+
+async def async_read_energy_prefs(hass: HomeAssistant) -> dict[str, Any]:
+    """Preise und Wasserzähler aus dem Energie-Dashboard (nur lesend).
+
+    Liefert ``grid_price_entity`` / ``grid_price`` (€/kWh), ``water_entity`` und
+    ``water_price`` (€/m³). Fehlt das Energie-Dashboard, bleibt das Ergebnis leer.
+    """
+    try:
+        from homeassistant.components.energy.data import async_get_manager
+
+        manager = await async_get_manager(hass)
+    except Exception as err:  # noqa: BLE001 - Energie-Dashboard ist optional
+        _LOGGER.debug("Energie-Dashboard nicht lesbar: %s", err)
+        return {}
+    data = getattr(manager, "data", None) or {}
+    result: dict[str, Any] = {}
+    for source in data.get("energy_sources") or []:
+        kind = source.get("type")
+        if kind == "grid" and "grid_price_entity" not in result and "grid_price" not in result:
+            # Ältere Versionen: flow_from-Liste; neuere: Felder direkt an der Quelle
+            flows = source.get("flow_from") or [source]
+            for flow in flows:
+                if flow.get("entity_energy_price"):
+                    result["grid_price_entity"] = flow["entity_energy_price"]
+                    break
+                if flow.get("number_energy_price") is not None:
+                    result["grid_price"] = float(flow["number_energy_price"])
+                    break
+            export = source.get("number_energy_price_export")
+            if export is None:
+                for flow in source.get("flow_to") or []:
+                    export = flow.get("number_energy_price")
+                    break
+            if export is not None:
+                result["feed_in_price"] = float(export)
+        elif kind == "water" and "water_entity" not in result:
+            result["water_entity"] = source.get("stat_energy_from")
+            if source.get("entity_energy_price"):
+                result["water_price_entity"] = source["entity_energy_price"]
+            if source.get("number_energy_price") is not None:
+                result["water_price"] = float(source["number_energy_price"])
+    return result
+
+
 async def async_read_raw(
     hass: HomeAssistant,
     entity_ids: Iterable[str],

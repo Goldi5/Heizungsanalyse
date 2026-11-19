@@ -122,6 +122,14 @@ const HELP = {
     de: "Welche Sensoren zugeordnet sind. Fehlende optionale Sensoren schalten Auswertungen nicht frei – ergänzen lässt sich das unter Konfigurieren.",
     en: "Which sensors are mapped. Missing optional sensors leave analyses locked – add them under Configure.",
   },
+  costs: {
+    de: "Kosten des laufenden Monats. Jede Stunde wird mit dem Preis gerechnet, der in dieser Stunde galt – bei dynamischen Tarifen ist das genauer als „Monatsverbrauch × aktueller Preis“. Preise und Wasserzähler kommen aus dem Energie-Dashboard von Home Assistant. „Wärme kostet“ teilt die Stromkosten durch die erzeugte Wärme.",
+    en: "Costs of the current month. Every hour is priced with the price valid in that hour – with dynamic tariffs that is more accurate than “monthly usage × current price”. Prices and the water meter come from the Home Assistant energy dashboard. “Heat costs” divides power costs by the heat produced.",
+  },
+  dhw_tank: {
+    de: "Warmwasserspeicher: aktuelle Temperatur und Soll, Ladungen pro Tag und deren Dauer aus dem Warmwasserbetrieb, Abkühlung in Kelvin pro Stunde in Stunden ohne Ladung. Die Abkühlung enthält auch gezapftes Wasser; nachts zeigt sie vor allem den Wärmeverlust des Speichers.",
+    en: "Hot water tank: current temperature and target, charges per day and their duration from hot-water mode, cooling in kelvin per hour in hours without charging. Cooling includes drawn water; at night it mostly shows the tank's heat loss.",
+  },
   dhw: {
     de: "Anteil der Warmwasser-Wärme an der gesamten Wärme. Warmwasser braucht höhere Temperaturen und senkt deshalb den COP – ein hoher Anteil erklärt einen niedrigeren Gesamt-COP.",
     en: "Share of hot-water heat in total heat. Hot water needs higher temperatures and therefore lowers COP – a high share explains a lower overall COP.",

@@ -69,6 +69,13 @@ def test_f03_pump_idle() -> None:
     assert findings[0].params["circuit"] == "Oben"
 
 
+def test_f03_nicht_bei_pufferanlage() -> None:
+    """Hinter dem Puffer läuft die Pumpe gewollt ohne Verdichter."""
+    stats = {"hk2": CircuitStats(pump_minutes=100.0, idle_minutes=60.0, idle_share=0.6, samples=20)}
+
+    assert evaluate(_base(circuit_stats=stats, buffer_system=True)) == []
+
+
 def test_f04_and_f05_room_deviation() -> None:
     stats = {
         "kalt": RoomDeviation(median=-1.6, p90=0.0, under_share=0.8, over_share=0.0, samples=200),
@@ -164,3 +171,36 @@ def test_room_needs_twelve_hours_of_samples() -> None:
     """Eine einzelne Messung reicht nicht für eine Raumwarnung."""
     stats = {"kalt": RoomDeviation(median=-1.6, p90=0.0, under_share=1.0, over_share=0.0, samples=1)}
     assert _ids(evaluate(_base(room_stats=stats))) == []
+
+
+def _curve_days(n: int, *, start_temp: float, step: float, cop_at, power: float = 15.0) -> list[DaySample]:
+    days = []
+    for i in range(n):
+        t = start_temp + step * i
+        days.append(DaySample(day=date(2026, 10, 1 + i), heat_kwh=cop_at(t) * power, power_kwh=power, outdoor_c=t))
+    return days
+
+
+def test_f18_kaelte_ist_kein_einbruch() -> None:
+    """Kältewelle: COP sinkt genau wie die eigene Kennlinie es erwarten lässt -> kein F18."""
+    def curve(t):
+        return 2.43 + 0.31 * t
+
+    warm = _curve_days(25, start_temp=12.0, step=-0.2, cop_at=curve)
+    cold = _curve_days(7, start_temp=5.0, step=0.1, cop_at=curve)
+    cold = [DaySample(day=date(2026, 11, 1 + i), heat_kwh=s.heat_kwh, power_kwh=s.power_kwh, outdoor_c=s.outdoor_c) for i, s in enumerate(cold)]
+    samples = warm + cold
+    cop7 = sum(s.heat_kwh for s in cold) / sum(s.power_kwh for s in cold)
+    findings = evaluate(_base(cop=cop7, cop_long=4.7, cop_days=7, samples=samples))
+    assert "F18" not in _ids(findings)
+
+
+def test_f18_echter_einbruch_bei_gleichem_wetter() -> None:
+    def curve(t):
+        return 2.43 + 0.31 * t
+
+    base = _curve_days(25, start_temp=10.0, step=-0.1, cop_at=curve)
+    bad = [DaySample(day=date(2026, 11, 1 + i), heat_kwh=3.0 * 15, power_kwh=15.0, outdoor_c=8.0) for i in range(7)]
+    findings = evaluate(_base(cop=3.0, cop_days=7, samples=base + bad))
+    f18 = [f for f in findings if f.id == "F18"]
+    assert f18 and f18[0].evidence["expected"] > 4.5

@@ -33,7 +33,7 @@ Bilder mit Beispieldaten. Details: [Dashboard](docs/dashboard.md).
 
 ## Status
 
-Version 0.7.0. Alle Analysestufen sind vorhanden: Repo-Gerüst (M0),
+Version 0.7.1 (Beta). Alle Analysestufen sind vorhanden: Repo-Gerüst (M0),
 Einrichtung (M1), Kennzahlen (M2), Inventar und Dienste (M3), Raum- und
 Kreisanalyse (M4), Findings (M5), Doku (M6), die dokumentierte Schnittstelle
 zu raumklima-2 (M7), das selbst angelegte Dashboard (M8–M12) sowie
@@ -60,6 +60,8 @@ HACS-Validierung und Dashboard-Tests (Node).
 | M13 | Hydraulik: Spreizung, Wärmeleistung, COP jetzt, Puffer-Ladung, COP mit Warmwasser | erledigt (0.4.0) |
 | M13 | Ereignisprotokoll, Diagnose, Debug-Spur, Reiter „Protokoll“ | erledigt (0.3.0) |
 | M14 | Bedienung 0.7.0: Inventar und Einstellungen ohne JSON, Vergleichsformular, gemeinsame Bausteine | erledigt (0.7.0) |
+| M15 | Datenkorrekturen: Aufheizzeit, F18 wetterbereinigt, entprellte Hinweise, Pufferanlagen, Raumklima-Räume, Kreis-Vorlauf, Warmwasserspeicher, Kosten und Wasser | Beta (0.7.1) |
+| M16 | Neue Optik: sieben Tabs mit Kernsatz, Fließbild, Betrieb, Geräte | geplant (0.8.0) |
 
 ## Voraussetzungen
 
@@ -87,13 +89,22 @@ Ohne HACS: Ordner `custom_components/heizungsanalyse` nach
    werden geprüft; unpassende Entities werden abgelehnt.
 2. **Optionen** (*Konfigurieren*): Ersatzstromquelle, Warmwasserwärme,
    Vorlauf/Soll-Vorlauf, Rücklauf, Puffer, Abtauung, Heizstab,
-   Verdichterstarts und -laufzeit.
-3. **Heizkreise** anlegen: Name, Typ, optional Ist-Temperatur, Pumpe, Mischer.
-4. **Räume** anlegen: Name, Kreis, optional Climate-Entity und Ventilposition.
+   Verdichterstarts und -laufzeit, Warmwasserspeicher (Ist, Soll, Ladepumpe).
+3. **Heizkreise** anlegen oder bearbeiten: Name, Typ, optional Ist- und
+   Soll-Temperatur des Kreises, Pumpe, Mischer. Bei Stiebel Eltron wird das
+   Soll zur Ist-Temperatur automatisch gefunden.
+4. **Räume** anlegen oder bearbeiten: Name, Kreis, optional Climate-Entity und
+   Ventilposition. Am besten das Klima-Entity von **Raumklima**: Es liefert
+   den echten Raumfühler, das wirksame Soll und die Ventilöffnung; Räume im
+   Beobachtungsmodus (Fußboden ohne Thermostat) zählen mit ihrer
+   Komforttemperatur.
    Die Zuordnung Kreis zu Raum bestätigt immer der Nutzer; die Integration
    rät sie nie aus Entity-Namen. Räume ohne Regelung (Heizung dauerhaft aus)
    werden ohne Climate-Entity angelegt und lösen keine Raumhinweise aus.
 5. **Schwellen** der Hinweise prüfen (*Konfigurieren, Schwellen der Hinweise*).
+6. **Kosten und Wasser** brauchen keine eigene Einstellung: Strompreis
+   (auch dynamisch) und Wasserzähler mit Preis kommen aus dem
+   Energie-Dashboard von Home Assistant. Gerechnet wird Stunde für Stunde.
 
 Die Zuordnung der Pflichtquellen lässt sich über *Neu konfigurieren*
 ändern.
@@ -123,6 +134,9 @@ Die Zuordnung der Pflichtquellen lässt sich über *Neu konfigurieren*
 - An/Aus-Sensoren (Verdichter, Abtauung, Heizstab) haben keine
   Langzeitstatistik; sie werden aus dem Zustandsverlauf ausgewertet. Der reicht
   so weit zurück, wie der Recorder ihn aufbewahrt (Standard zehn Tage).
+- Bei Anlagen mit Puffer laufen die Heizkreispumpen gewollt, während der
+  Verdichter steht. Dort zeigt die Analyse den Laufanteil der Pumpe statt
+  „Pumpe ohne Verdichter“, und Hinweis F03 entfällt.
 - Livisi-Thermostate liefern keine Ventilposition. Raumkennzahlen nutzen dann
   nur Soll und Ist; ein hydraulischer Abgleich lässt sich damit nicht
   nachweisen.

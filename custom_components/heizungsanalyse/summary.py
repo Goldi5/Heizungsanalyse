@@ -353,6 +353,9 @@ def build_summary(
                 "pump": pump.as_dict() if pump is not None else None,
                 "mixer": mixer.as_dict() if mixer is not None else None,
                 "rooms": [r["name"] for r in room_rows if str(r["circuit"]) == circuit_id],
+                # Hinter einem Puffer ist Pumpenlauf ohne Verdichter normal – dann zählt der Laufanteil
+                "decoupled": bool(getattr(snapshot, "buffer_system", False)),
+                "flow": ((getattr(snapshot, "hydraulics", None) or {}).get("circuits") or {}).get(circuit_id),
             }
         )
 
@@ -388,6 +391,8 @@ def build_summary(
             "cop_total_short": cop_with_dhw(snapshot.samples, 7),
             "cop_total_long": cop_with_dhw(snapshot.samples, 30),
             "hydraulics": dict(getattr(snapshot, "hydraulics", {}) or {}),
+            "costs": dict(getattr(snapshot, "costs", {}) or {}),
+            "plant": {"buffer_system": bool(getattr(snapshot, "buffer_system", False))},
             "days_with_data": snapshot.days_with_data,
             "power_source": snapshot.power_source,
         },

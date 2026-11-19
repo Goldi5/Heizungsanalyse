@@ -1,10 +1,35 @@
-/* Heizungsanalyse 0.7.0b5 - gebaut aus frontend/src (npm run build). Nicht von Hand bearbeiten. */
+/* Heizungsanalyse 0.7.1b1 - gebaut aus frontend/src (npm run build). Nicht von Hand bearbeiten. */
 (() => {
   // src/version.js
-  var HA_VERSION = "0.7.0b5";
+  var HA_VERSION = "0.7.1b1";
 
   // src/i18n.js
   var EN = {
+    "Strom Heizen": "Power heating",
+    "Strom Warmwasser": "Power hot water",
+    "Wärme kostet": "Heat costs",
+    "Strompreis ÷ COP": "power price ÷ COP",
+    "Wasser": "Water",
+    "{m} m³ · heute {d} m³": "{m} m³ · today {d} m³",
+    "Preis jetzt {p} €/kWh": "price now {p} €/kWh",
+    "Kosten diesen Monat": "Costs this month",
+    "Stunde für Stunde mit dem Preis aus deinem Energie-Dashboard gerechnet.": "Calculated hour by hour with the price from your energy dashboard.",
+    "lädt": "charging",
+    "lädt nicht": "not charging",
+    "Warmwasserspeicher": "Hot water tank",
+    "Ist / Soll": "Actual / target",
+    "Ladungen / Tag": "Charges / day",
+    "Ladedauer": "Charging time",
+    "Abkühlung": "Cooling",
+    "Ventil {v} %": "Valve {v} %",
+    "Hinter dem Puffer: Laufen ohne Verdichter ist normal.": "Behind the buffer: running without the compressor is normal.",
+    "Pumpe läuft": "Pump running",
+    "Vorlauf Ist / Soll": "Flow actual / target",
+    "Median 7 Tage {m} K": "Median 7 days {m} K",
+    "Warmwasserbetrieb": "Hot water mode",
+    "Speicher Ist": "Tank actual",
+    "Speicher Soll": "Tank target",
+    "Warmwasser-Ladepumpe": "Hot water charging pump",
     "WP-Rücklauf": "HP return",
     "Warmwasser-Strom": "Hot water power",
     "Leistung jetzt": "Power now",
@@ -1159,6 +1184,14 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
       de: "Welche Sensoren zugeordnet sind. Fehlende optionale Sensoren schalten Auswertungen nicht frei – ergänzen lässt sich das unter Konfigurieren.",
       en: "Which sensors are mapped. Missing optional sensors leave analyses locked – add them under Configure."
     },
+    costs: {
+      de: "Kosten des laufenden Monats. Jede Stunde wird mit dem Preis gerechnet, der in dieser Stunde galt – bei dynamischen Tarifen ist das genauer als „Monatsverbrauch × aktueller Preis“. Preise und Wasserzähler kommen aus dem Energie-Dashboard von Home Assistant. „Wärme kostet“ teilt die Stromkosten durch die erzeugte Wärme.",
+      en: "Costs of the current month. Every hour is priced with the price valid in that hour – with dynamic tariffs that is more accurate than “monthly usage × current price”. Prices and the water meter come from the Home Assistant energy dashboard. “Heat costs” divides power costs by the heat produced."
+    },
+    dhw_tank: {
+      de: "Warmwasserspeicher: aktuelle Temperatur und Soll, Ladungen pro Tag und deren Dauer aus dem Warmwasserbetrieb, Abkühlung in Kelvin pro Stunde in Stunden ohne Ladung. Die Abkühlung enthält auch gezapftes Wasser; nachts zeigt sie vor allem den Wärmeverlust des Speichers.",
+      en: "Hot water tank: current temperature and target, charges per day and their duration from hot-water mode, cooling in kelvin per hour in hours without charging. Cooling includes drawn water; at night it mostly shows the tank's heat loss."
+    },
     dhw: {
       de: "Anteil der Warmwasser-Wärme an der gesamten Wärme. Warmwasser braucht höhere Temperaturen und senkt deshalb den COP – ein hoher Anteil erklärt einen niedrigeren Gesamt-COP.",
       en: "Share of hot-water heat in total heat. Hot water needs higher temperatures and therefore lowers COP – a high share explains a lower overall COP."
@@ -1357,10 +1390,42 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     const energy = energyCard(d, ui, 30);
     const missing = missingCard(d);
     const liveCard = liveNow(d, ui);
+    const extra = [costsCard(d, ui), dhwCard(d, ui), missing].filter(Boolean);
     return `<div class="grid hero">${scoreCard}${kpis}</div>
     <div class="grid g2"><div>${findings}</div>${curve}</div>
-    <div class="grid g2">${energy}${liveCard || missing || ""}</div>
-    ${liveCard && missing ? `<div class="grid g2">${missing}</div>` : ""}`;
+    <div class="grid g2">${energy}${liveCard || extra.shift() || ""}</div>
+    ${extra.length ? `<div class="grid g2">${extra.join("")}</div>` : ""}`;
+  }
+  function costsCard(d, ui) {
+    const c = d.kpis && d.kpis.costs || {};
+    const m = c.month;
+    const w = c.water;
+    if (!m && !w) return "";
+    const eur = (v) => v == null ? "–" : fmt(v, v >= 100 ? 0 : 2);
+    const tile = (label, value, unit, sub) => `<div class="lv"><div class="muted">${esc(t(label))}</div><div class="big">${value}<small>${esc(unit)}</small></div>${sub ? `<div class="fd">${esc(sub)}</div>` : ""}</div>`;
+    const tiles = [];
+    if (m) {
+      tiles.push(tile("Strom Heizen", eur(m.heating && m.heating.eur), "€", `${fmt(m.heating && m.heating.kwh, 0)} kWh`));
+      if (m.dhw) tiles.push(tile("Strom Warmwasser", eur(m.dhw.eur), "€", `${fmt(m.dhw.kwh, 0)} kWh`));
+      if (m.heat_price_ct != null) tiles.push(tile("Wärme kostet", fmt(m.heat_price_ct, 1), "ct/kWh", t("Strompreis ÷ COP")));
+    }
+    if (w) tiles.push(tile("Wasser", eur(w.month_eur), "€", t("{m} m³ · heute {d} m³", { m: fmt(w.month_m3, 2), d: fmt(w.today_m3, 2) })));
+    const price = c.price_now != null ? t("Preis jetzt {p} €/kWh", { p: fmt(c.price_now, 3) }) : "";
+    return `<div class="c">${head(t("Kosten diesen Monat"), "costs", ui, esc(price))}<div class="lvgrid">${tiles.join("")}</div>
+    <div class="fd mt8">${esc(t("Stunde für Stunde mit dem Preis aus deinem Energie-Dashboard gerechnet."))}</div></div>`;
+  }
+  function dhwCard(d, ui) {
+    const w = d.kpis && d.kpis.hydraulics && d.kpis.hydraulics.dhw || null;
+    if (!w || w.temperature == null) return "";
+    const state = w.charging ? statusPill("warn", t("lädt")) : statusPill("mut", t("lädt nicht"));
+    const tile = (label, value, unit) => `<div class="lv"><div class="muted">${esc(t(label))}</div><div class="big">${value}<small>${esc(unit)}</small></div></div>`;
+    return `<div class="c">${head(t("Warmwasserspeicher"), "dhw_tank", ui)}<div class="row mt6">${state}</div>
+    <div class="lvgrid">
+      ${tile("Ist / Soll", `${fmt(w.temperature, 1)}`, w.target != null ? `/ ${fmt(w.target, 1)} °C` : "°C")}
+      ${tile("Ladungen / Tag", fmt(w.charges_per_day, 1), "")}
+      ${tile("Ladedauer", fmt(w.charge_minutes, 0), "min")}
+      ${tile("Abkühlung", fmt(w.cooling_k_per_h, 2), "K/h")}
+    </div></div>`;
   }
   function liveNow(d, ui) {
     const h = d.kpis && d.kpis.hydraulics || {};
@@ -1451,7 +1516,7 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     <div class="legend"><span><i class="sw-cool"></i>${esc(t("Abtauen"))}</span><span><i class="sw-bad"></i>${esc(t("Heizstab"))}</span></div></div>`;
     const heat = rows.reduce((s, r) => s + (r.heat || 0), 0);
     const dhw = rows.reduce((s, r) => s + (r.dhw || 0), 0);
-    const dhwCard = rows.some((r) => r.dhw != null) ? `<div class="c">${head(t("Warmwasseranteil"), "dhw", ui)}<div class="big">${fmt(heat ? dhw / heat * 100 : null, 0)}<small>%</small></div><div class="meter"><i style="width:${heat ? Math.min(100, dhw / heat * 100) : 0}%;background:var(--hz-vio)"></i></div><div class="muted mt8">${fmt(dhw, 0)} / ${fmt(heat, 0)} kWh</div></div>` : "";
+    const dhwCard2 = rows.some((r) => r.dhw != null) ? `<div class="c">${head(t("Warmwasseranteil"), "dhw", ui)}<div class="big">${fmt(heat ? dhw / heat * 100 : null, 0)}<small>%</small></div><div class="meter"><i style="width:${heat ? Math.min(100, dhw / heat * 100) : 0}%;background:var(--hz-vio)"></i></div><div class="muted mt8">${fmt(dhw, 0)} / ${fmt(heat, 0)} kWh</div></div>` : "";
     const hy = d.kpis && d.kpis.hydraulics || {};
     const dailyRows = (map, key) => Object.entries(map || {}).map(([day, v]) => ({ day, [key]: v }));
     const spreadRows = dailyRows(hy.spread_daily, "spread");
@@ -1463,7 +1528,7 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     return `<div class="row">${seg}</div>
     <div class="grid g2">${copLine}${curve}</div>
     ${spreadCard || overCard ? `<div class="grid g2">${spreadCard}${overCard}</div>` : ""}
-    <div class="grid g3">${cycling}${cycle}${defrost}${dhwCard}</div>
+    <div class="grid g3">${cycling}${cycle}${defrost}${dhwCard2}</div>
     <div class="grid g2">${energyCard(d, ui, days)}</div>`;
   }
   function viewRaeume(d, ui, live = {}) {
@@ -1484,7 +1549,7 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
         dv?.under_share != null && dv.under_share > 0.05 ? statusPill("cool", t("zu kalt {p} %", { p: fmt(dv.under_share * 100, 0) })) : "",
         dv?.over_share != null && dv.over_share > 0.05 ? statusPill("warn", t("zu warm {p} %", { p: fmt(dv.over_share * 100, 0) })) : "",
         r.heating_up_min != null ? statusPill("mut", `${t("Aufheizzeit")} ${fmt(r.heating_up_min, 0)} min`) : "",
-        !r.valve_available ? statusPill("mut", t("ohne Ventilwert")) : "",
+        lv && lv.valve != null ? statusPill("mut", t("Ventil {v} %", { v: fmt(lv.valve, 0) })) : !r.valve_available ? statusPill("mut", t("ohne Ventilwert")) : "",
         dv && !dv.samples ? statusPill("mut", t("noch keine Stichproben")) : ""
       ].filter(Boolean).join("");
       return `<div class="room"><div class="nm">${esc(r.name)}<small>${esc(r.circuit_name || "")}${now ? ` · ${now}` : ""}</small></div>
@@ -1498,9 +1563,13 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
       const idle = c.pump?.idle_share;
       const idleTone = idle == null ? "mut" : kpiTone(idle, th.pump_idle_share);
       const pulses = c.mixer?.pulses_per_day;
+      const run = c.pump?.run_share;
+      const fl = c.flow || {};
+      const pumpBlock = !c.has_pump ? `<div class="fd">${esc(t("keine Pumpe zugeordnet"))}</div>` : c.decoupled ? `<div class="big">${fmt(run == null ? null : run * 100, 0)}<small>%</small></div><div class="meter"><i style="width:${run == null ? 0 : Math.min(100, run * 100)}%;background:var(--hz-cool)"></i></div><div class="fd mt6">${esc(t("Hinter dem Puffer: Laufen ohne Verdichter ist normal."))}</div>` : `<div class="big">${fmt(idle == null ? null : idle * 100, 0)}<small>%</small></div><div class="meter"><i style="width:${idle == null ? 0 : Math.min(100, idle * 100)}%;background:var(--hz-${idleTone === "mut" ? "cool" : idleTone})"></i></div>`;
+      const flowBlock = fl.actual != null ? `<div><div class="muted">${esc(t("Vorlauf Ist / Soll"))}</div><div class="big">${fmt(fl.actual, 1)}<small>/ ${fmt(fl.target, 1)} °C</small></div>${fl.deviation && fl.deviation.median != null ? `<div class="fd">${esc(t("Median 7 Tage {m} K", { m: signed(fl.deviation.median) }))}</div>` : ""}</div>` : "";
       return `<div class="cblock"><div class="ct">${esc(c.name)} <span class="muted">${esc(c.rooms.join(", "))}</span></div>
-        <div class="circ"><div><div class="muted">${esc(t("Pumpe ohne Verdichter"))}</div>
-        ${c.has_pump ? `<div class="big">${fmt(idle == null ? null : idle * 100, 0)}<small>%</small></div><div class="meter"><i style="width:${idle == null ? 0 : Math.min(100, idle * 100)}%;background:var(--hz-${idleTone === "mut" ? "cool" : idleTone})"></i></div>` : `<div class="fd">${esc(t("keine Pumpe zugeordnet"))}</div>`}</div>
+        <div class="circ"><div><div class="muted">${esc(t(c.decoupled ? "Pumpe läuft" : "Pumpe ohne Verdichter"))}</div>
+        ${pumpBlock}</div>${flowBlock}
         <div><div class="muted">${esc(t("Mischer-Impulse"))}</div>${c.has_mixer ? `<div class="big">${fmt(pulses, 0)}<small>${esc(t("/Tag"))}</small></div>` : `<div class="fd">${esc(t("kein Mischer zugeordnet"))}</div>`}</div></div></div>`;
     }).join("");
     return `<div class="grid g2">${roomsCard}${circuits ? `<div class="c">${head(t("Heizkreise"), "circuits", ui)}${circuits}</div>` : ""}</div>`;
@@ -1717,7 +1786,11 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
       hp_flow_entity: "WP-Vorlauf",
       volume_flow_entity: "Volumenstrom",
       power_now_entity: "Leistung jetzt",
-      dhw_power_entity: "Warmwasser-Strom"
+      dhw_power_entity: "Warmwasser-Strom",
+      dhw_operation_entity: "Warmwasserbetrieb",
+      dhw_temp_entity: "Speicher Ist",
+      dhw_target_entity: "Speicher Soll",
+      dhw_pump_entity: "Warmwasser-Ladepumpe"
     };
     return Object.entries(d.sources || {}).map(([key, ok]) => `<div class="src"><span>${esc(labels[key] ? t(labels[key]) : key)}</span>${statusPill(ok ? "ok" : "mut", ok ? t("verbunden") : t("fehlt"))}</div>`).join("");
   }
@@ -2024,7 +2097,8 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
     }
     const circuitBoxes = circuits.map((c) => {
       const rs = byCircuit[c.id] || [];
-      const idle = c.pump && c.pump.idle_share != null ? (c.pump.idle_share * 100).toFixed(0) + " %" : "–";
+      const share = c.decoupled ? c.pump && c.pump.run_share : c.pump && c.pump.idle_share;
+      const idle = share != null ? (share * 100).toFixed(0) + " %" : "–";
       const roomBoxes = rs.map((r) => {
         const lv = live[r.climate_entity] || {};
         const cur = lv.current != null ? lv.current : "–";
@@ -2376,7 +2450,10 @@ table.kv td { border-bottom:1px solid var(--hz-line); }
       const out = {};
       for (const r of this._data && this._data.rooms || []) {
         const st = r.climate_entity && this._hass.states[r.climate_entity];
-        if (st) out[r.climate_entity] = { current: st.attributes.current_temperature, target: st.attributes.temperature };
+        if (!st) continue;
+        const a = st.attributes;
+        const target = a.temperature ?? a.effective_target ?? (a.monitor ? a.comfort_temperature : void 0);
+        out[r.climate_entity] = { current: a.current_temperature, target, valve: a.valve_position ?? null };
       }
       return out;
     }

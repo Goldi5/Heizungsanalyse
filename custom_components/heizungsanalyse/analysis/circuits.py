@@ -30,6 +30,8 @@ class CircuitStats:
     idle_minutes: float
     idle_share: float | None
     samples: int
+    run_share: float | None = None  # Anteil der Zeit, in der die Pumpe läuft
+    total_samples: int = 0
 
     def as_dict(self) -> dict[str, float | int | None]:
         return {
@@ -37,6 +39,8 @@ class CircuitStats:
             "idle_minutes": self.idle_minutes,
             "idle_share": self.idle_share,
             "samples": self.samples,
+            "run_share": self.run_share,
+            "total_samples": self.total_samples,
         }
 
 
@@ -47,14 +51,18 @@ def pump_idle(samples: Sequence[CircuitSample], *, interval_minutes: float = 5.0
     kein Leerlauf, sondern Ruhe.
     """
     running = [sample for sample in samples if sample.pump_on]
+    total = len(samples)
+    run_share = round(len(running) / total, 3) if total else None
     if not running:
-        return CircuitStats(0.0, 0.0, None, 0)
+        return CircuitStats(0.0, 0.0, None, 0, run_share, total)
     idle = sum(1 for sample in running if not sample.compressor_on)
     return CircuitStats(
         pump_minutes=round(len(running) * interval_minutes, 1),
         idle_minutes=round(idle * interval_minutes, 1),
         idle_share=round(idle / len(running), 3),
         samples=len(running),
+        run_share=run_share,
+        total_samples=total,
     )
 
 

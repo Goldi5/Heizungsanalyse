@@ -49,7 +49,10 @@
           "remove_circuit": "Remove heating circuit",
           "add_room": "Add room",
           "remove_room": "Remove room",
-          "save": "Save"
+          "save": "Save",
+          "edit_circuit": "Edit heating circuit",
+          "edit_room": "Edit room",
+          "thresholds": "Thresholds"
         },
         "description": "Change sources, heating circuits, rooms or thresholds."
       },
@@ -72,7 +75,10 @@
           "volume_flow_entity": "Heat pump volume flow",
           "power_now_entity": "Electrical power now (W/kW)",
           "dhw_power_entity": "Hot water electricity (kWh)",
-          "dhw_operation_entity": "DHW operation (binary)"
+          "dhw_operation_entity": "DHW operation (binary)",
+          "dhw_temp_entity": "Hot water tank temperature",
+          "dhw_target_entity": "Hot water tank target",
+          "dhw_pump_entity": "Hot water charging pump"
         },
         "data_description": {
           "compressor_runtime_extra_entity": "Added to the first runtime when the system counts heating and hot water separately.",
@@ -81,7 +87,8 @@
           "power_now_entity": "Current power draw; with the heat output this gives the COP now.",
           "dhw_power_entity": "For the COP including hot water and for cross-checking a total meter as fallback source.",
           "return_entity": "Heat pump inlet. Together with the heat pump flow this gives the spread.",
-          "dhw_operation_entity": "Active while the heat pump charges domestic hot water. Used to exclude DHW charging from buffer overshoot."
+          "dhw_operation_entity": "Active while the heat pump charges domestic hot water. Used to exclude DHW charging from buffer overshoot.",
+          "dhw_temp_entity": "For charges per day, charging time and tank cooling."
         }
       },
       "add_circuit": {
@@ -92,10 +99,12 @@
           "temperature_entity": "Circuit actual temperature",
           "pump_entity": "Circuit pump",
           "mixer_open_entity": "Mixer opening",
-          "mixer_close_entity": "Mixer closing"
+          "mixer_close_entity": "Mixer closing",
+          "target_entity": "Circuit target temperature"
         },
         "data_description": {
-          "type": "Buffer, radiators, underfloor heating or hot water. The assignment comes from the user, never from entity names."
+          "type": "Buffer, radiators, underfloor heating or hot water. The assignment comes from the user, never from entity names.",
+          "target_entity": "Optional. With actual and target the analysis shows whether the mixer keeps the circuit on target."
         }
       },
       "remove_circuit": {
@@ -113,7 +122,7 @@
           "valve_position_entity": "Valve position"
         },
         "data_description": {
-          "climate_entity": "Optional. Without a thermostat the room is tracked without control and triggers no comfort findings.",
+          "climate_entity": "Optional. Best is the room's Raumklima climate: it provides the real room sensor, the effective target and the valve opening. Without a thermostat the room is listed without control.",
           "valve_position_entity": "Optional. Livisi thermostats do not report a valve position."
         }
       },
@@ -140,6 +149,47 @@
           "spread_min_k": "Spread at least (K)",
           "spread_max_k": "Spread at most (K)",
           "return_temp_max_c": "Return max. (°C)"
+        }
+      },
+      "edit_circuit": {
+        "title": "Edit heating circuit",
+        "data": {
+          "circuit": "Heating circuit"
+        }
+      },
+      "edit_circuit_details": {
+        "title": "Edit {name}",
+        "data": {
+          "name": "Name",
+          "type": "Type",
+          "temperature_entity": "Circuit actual temperature",
+          "pump_entity": "Circuit pump",
+          "mixer_open_entity": "Mixer opening",
+          "mixer_close_entity": "Mixer closing",
+          "target_entity": "Circuit target temperature"
+        },
+        "data_description": {
+          "type": "Buffer, radiators, underfloor heating or hot water. The assignment comes from the user, never from entity names.",
+          "target_entity": "Optional. With actual and target the analysis shows whether the mixer keeps the circuit on target."
+        }
+      },
+      "edit_room": {
+        "title": "Edit room",
+        "data": {
+          "id": "Room"
+        }
+      },
+      "edit_room_details": {
+        "title": "Edit {name}",
+        "data": {
+          "name": "Name",
+          "circuit": "Heating circuit",
+          "climate_entity": "Thermostat (climate)",
+          "valve_position_entity": "Valve position"
+        },
+        "data_description": {
+          "climate_entity": "Optional. Best is the room's Raumklima climate: it provides the real room sensor, the effective target and the valve opening. Without a thermostat the room is listed without control.",
+          "valve_position_entity": "Optional. Livisi thermostats do not report a valve position."
         }
       }
     },

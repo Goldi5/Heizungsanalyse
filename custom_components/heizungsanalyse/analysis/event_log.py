@@ -190,6 +190,44 @@ def finding_diff(previous: dict[str, str], current: dict[str, str]) -> list[tupl
     return sorted(changes)
 
 
+class FindingDebouncer:
+    """Entprellt Hinweise fürs Protokoll.
+
+    Ein Hinweis gilt als neu, wenn er auftaucht und nicht schon aktiv ist. Er gilt
+    erst als erledigt, wenn er ``resolve_after`` lang durchgehend fehlt – so
+    erzeugt ein Raum, der um die Schwelle pendelt, nicht alle fünf Minuten zwei
+    Einträge. Geänderte Messwerte allein sind keine Meldung, nur ein Wechsel der
+    Stufe (Hinweis ↔ Warnung).
+    """
+
+    def __init__(self, resolve_after: timedelta = timedelta(hours=2)) -> None:
+        self.resolve_after = resolve_after
+        self._active: dict[str, str] = {}
+        self._missing_since: dict[str, datetime] = {}
+
+    @property
+    def active(self) -> dict[str, str]:
+        return dict(self._active)
+
+    def update(self, now: datetime, current: dict[str, str]) -> list[tuple[str, str, str, str]]:
+        """``current``: Hinweis-ID → Stufe. Liefert (id, Art, alt, neu) mit Art new/severity/resolved."""
+        events: list[tuple[str, str, str, str]] = []
+        for finding_id, severity in sorted(current.items()):
+            self._missing_since.pop(finding_id, None)
+            old = self._active.get(finding_id)
+            if old is None:
+                events.append((finding_id, "new", "", severity))
+            elif old != severity:
+                events.append((finding_id, "severity", old, severity))
+            self._active[finding_id] = severity
+        for finding_id in sorted(set(self._active) - set(current)):
+            since = self._missing_since.setdefault(finding_id, now)
+            if now - since >= self.resolve_after:
+                events.append((finding_id, "resolved", self._active.pop(finding_id), ""))
+                self._missing_since.pop(finding_id, None)
+        return events
+
+
 def config_snapshot(data: dict[str, Any], options: dict[str, Any]) -> dict[str, Any]:
     """Vergleichsstand der Konfiguration (Daten, Optionen, Kreise, Räume)."""
     return {

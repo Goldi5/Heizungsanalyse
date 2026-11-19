@@ -155,11 +155,48 @@ export function viewAnlage(d, ui) {
   const energy = energyCard(d, ui, 30);
   const missing = missingCard(d);
   const liveCard = liveNow(d, ui);
+  const extra = [costsCard(d, ui), dhwCard(d, ui), missing].filter(Boolean);
 
   return `<div class="grid hero">${scoreCard}${kpis}</div>
     <div class="grid g2"><div>${findings}</div>${curve}</div>
-    <div class="grid g2">${energy}${liveCard || missing || ""}</div>
-    ${liveCard && missing ? `<div class="grid g2">${missing}</div>` : ""}`;
+    <div class="grid g2">${energy}${liveCard || extra.shift() || ""}</div>
+    ${extra.length ? `<div class="grid g2">${extra.join("")}</div>` : ""}`;
+}
+
+// Kosten aus Stundenverbrauch × Preis zur jeweiligen Stunde (Energie-Dashboard)
+function costsCard(d, ui) {
+  const c = (d.kpis && d.kpis.costs) || {};
+  const m = c.month;
+  const w = c.water;
+  if (!m && !w) return "";
+  const eur = (v) => (v == null ? "–" : fmt(v, v >= 100 ? 0 : 2));
+  const tile = (label, value, unit, sub) =>
+    `<div class="lv"><div class="muted">${esc(t(label))}</div><div class="big">${value}<small>${esc(unit)}</small></div>${sub ? `<div class="fd">${esc(sub)}</div>` : ""}</div>`;
+  const tiles = [];
+  if (m) {
+    tiles.push(tile("Strom Heizen", eur(m.heating && m.heating.eur), "€", `${fmt(m.heating && m.heating.kwh, 0)} kWh`));
+    if (m.dhw) tiles.push(tile("Strom Warmwasser", eur(m.dhw.eur), "€", `${fmt(m.dhw.kwh, 0)} kWh`));
+    if (m.heat_price_ct != null) tiles.push(tile("Wärme kostet", fmt(m.heat_price_ct, 1), "ct/kWh", t("Strompreis ÷ COP")));
+  }
+  if (w) tiles.push(tile("Wasser", eur(w.month_eur), "€", t("{m} m³ · heute {d} m³", { m: fmt(w.month_m3, 2), d: fmt(w.today_m3, 2) })));
+  const price = c.price_now != null ? t("Preis jetzt {p} €/kWh", { p: fmt(c.price_now, 3) }) : "";
+  return `<div class="c">${head(t("Kosten diesen Monat"), "costs", ui, esc(price))}<div class="lvgrid">${tiles.join("")}</div>
+    <div class="fd mt8">${esc(t("Stunde für Stunde mit dem Preis aus deinem Energie-Dashboard gerechnet."))}</div></div>`;
+}
+
+// Warmwasserspeicher
+function dhwCard(d, ui) {
+  const w = (d.kpis && d.kpis.hydraulics && d.kpis.hydraulics.dhw) || null;
+  if (!w || w.temperature == null) return "";
+  const state = w.charging ? pill("warn", t("lädt")) : pill("mut", t("lädt nicht"));
+  const tile = (label, value, unit) => `<div class="lv"><div class="muted">${esc(t(label))}</div><div class="big">${value}<small>${esc(unit)}</small></div></div>`;
+  return `<div class="c">${head(t("Warmwasserspeicher"), "dhw_tank", ui)}<div class="row mt6">${state}</div>
+    <div class="lvgrid">
+      ${tile("Ist / Soll", `${fmt(w.temperature, 1)}`, w.target != null ? `/ ${fmt(w.target, 1)} °C` : "°C")}
+      ${tile("Ladungen / Tag", fmt(w.charges_per_day, 1), "")}
+      ${tile("Ladedauer", fmt(w.charge_minutes, 0), "min")}
+      ${tile("Abkühlung", fmt(w.cooling_k_per_h, 2), "K/h")}
+    </div></div>`;
 }
 
 // Momentanwerte der Wärmepumpe (WP-Vorlauf/-Rücklauf, Volumenstrom, Leistung)
@@ -307,7 +344,7 @@ export function viewRaeume(d, ui, live = {}) {
             dv?.under_share != null && dv.under_share > 0.05 ? pill("cool", t("zu kalt {p} %", { p: fmt(dv.under_share * 100, 0) })) : "",
             dv?.over_share != null && dv.over_share > 0.05 ? pill("warn", t("zu warm {p} %", { p: fmt(dv.over_share * 100, 0) })) : "",
             r.heating_up_min != null ? pill("mut", `${t("Aufheizzeit")} ${fmt(r.heating_up_min, 0)} min`) : "",
-            !r.valve_available ? pill("mut", t("ohne Ventilwert")) : "",
+            lv && lv.valve != null ? pill("mut", t("Ventil {v} %", { v: fmt(lv.valve, 0) })) : !r.valve_available ? pill("mut", t("ohne Ventilwert")) : "",
             dv && !dv.samples ? pill("mut", t("noch keine Stichproben")) : "",
           ].filter(Boolean).join("");
           return `<div class="room"><div class="nm">${esc(r.name)}<small>${esc(r.circuit_name || "")}${now ? ` · ${now}` : ""}</small></div>
@@ -325,9 +362,19 @@ export function viewRaeume(d, ui, live = {}) {
       const idle = c.pump?.idle_share;
       const idleTone = idle == null ? "mut" : kpiTone(idle, th.pump_idle_share);
       const pulses = c.mixer?.pulses_per_day;
+      const run = c.pump?.run_share;
+      const fl = c.flow || {};
+      const pumpBlock = !c.has_pump
+        ? `<div class="fd">${esc(t("keine Pumpe zugeordnet"))}</div>`
+        : c.decoupled
+          ? `<div class="big">${fmt(run == null ? null : run * 100, 0)}<small>%</small></div><div class="meter"><i style="width:${run == null ? 0 : Math.min(100, run * 100)}%;background:var(--hz-cool)"></i></div><div class="fd mt6">${esc(t("Hinter dem Puffer: Laufen ohne Verdichter ist normal."))}</div>`
+          : `<div class="big">${fmt(idle == null ? null : idle * 100, 0)}<small>%</small></div><div class="meter"><i style="width:${idle == null ? 0 : Math.min(100, idle * 100)}%;background:var(--hz-${idleTone === "mut" ? "cool" : idleTone})"></i></div>`;
+      const flowBlock = fl.actual != null
+        ? `<div><div class="muted">${esc(t("Vorlauf Ist / Soll"))}</div><div class="big">${fmt(fl.actual, 1)}<small>/ ${fmt(fl.target, 1)} °C</small></div>${fl.deviation && fl.deviation.median != null ? `<div class="fd">${esc(t("Median 7 Tage {m} K", { m: signed(fl.deviation.median) }))}</div>` : ""}</div>`
+        : "";
       return `<div class="cblock"><div class="ct">${esc(c.name)} <span class="muted">${esc(c.rooms.join(", "))}</span></div>
-        <div class="circ"><div><div class="muted">${esc(t("Pumpe ohne Verdichter"))}</div>
-        ${c.has_pump ? `<div class="big">${fmt(idle == null ? null : idle * 100, 0)}<small>%</small></div><div class="meter"><i style="width:${idle == null ? 0 : Math.min(100, idle * 100)}%;background:var(--hz-${idleTone === "mut" ? "cool" : idleTone})"></i></div>` : `<div class="fd">${esc(t("keine Pumpe zugeordnet"))}</div>`}</div>
+        <div class="circ"><div><div class="muted">${esc(t(c.decoupled ? "Pumpe läuft" : "Pumpe ohne Verdichter"))}</div>
+        ${pumpBlock}</div>${flowBlock}
         <div><div class="muted">${esc(t("Mischer-Impulse"))}</div>${c.has_mixer ? `<div class="big">${fmt(pulses, 0)}<small>${esc(t("/Tag"))}</small></div>` : `<div class="fd">${esc(t("kein Mischer zugeordnet"))}</div>`}</div></div></div>`;
     })
     .join("");
@@ -591,6 +638,10 @@ function sourceList(d) {
     volume_flow_entity: "Volumenstrom",
     power_now_entity: "Leistung jetzt",
     dhw_power_entity: "Warmwasser-Strom",
+    dhw_operation_entity: "Warmwasserbetrieb",
+    dhw_temp_entity: "Speicher Ist",
+    dhw_target_entity: "Speicher Soll",
+    dhw_pump_entity: "Warmwasser-Ladepumpe",
   };
   return Object.entries(d.sources || {})
     .map(([key, ok]) => `<div class="src"><span>${esc(labels[key] ? t(labels[key]) : key)}</span>${pill(ok ? "ok" : "mut", ok ? t("verbunden") : t("fehlt"))}</div>`)
@@ -925,7 +976,8 @@ export function viewSchema(d, ui, live) {
   }
   const circuitBoxes = circuits.map((c) => {
     const rs = byCircuit[c.id] || [];
-    const idle = c.pump && c.pump.idle_share != null ? (c.pump.idle_share * 100).toFixed(0) + " %" : "–";
+    const share = c.decoupled ? c.pump && c.pump.run_share : c.pump && c.pump.idle_share;
+    const idle = share != null ? (share * 100).toFixed(0) + " %" : "–";
     const roomBoxes = rs.map((r) => {
       const lv = live[r.climate_entity] || {};
       const cur = lv.current != null ? lv.current : "–";

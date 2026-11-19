@@ -31,6 +31,9 @@ from .const import (
     CONF_DHW_HEAT_ENTITY,
     CONF_DHW_OPERATION_ENTITY,
     CONF_DHW_POWER_ENTITY,
+    CONF_DHW_PUMP_ENTITY,
+    CONF_DHW_TARGET_ENTITY,
+    CONF_DHW_TEMP_ENTITY,
     CONF_FLOW_ENTITY,
     CONF_HEAT_ENTITY,
     CONF_HP_FLOW_ENTITY,
@@ -45,6 +48,7 @@ from .const import (
     CONF_PUMP_ENTITY,
     CONF_RETURN_ENTITY,
     CONF_ROOMS,
+    CONF_TARGET_ENTITY,
     CONF_TARGET_FLOW_ENTITY,
     CONF_TEMPERATURE_ENTITY,
     CONF_THRESHOLDS,
@@ -144,7 +148,15 @@ def _validate_sources(hass, data: dict[str, Any]) -> dict[str, str]:
             continue
         if key in (CONF_POWER_FALLBACK_ENTITY, CONF_DHW_HEAT_ENTITY, CONF_DHW_POWER_ENTITY):
             error = validate_energy(hass, value)
-        elif key in (CONF_FLOW_ENTITY, CONF_TARGET_FLOW_ENTITY, CONF_RETURN_ENTITY, CONF_BUFFER_ENTITY, CONF_HP_FLOW_ENTITY):
+        elif key in (
+            CONF_FLOW_ENTITY,
+            CONF_TARGET_FLOW_ENTITY,
+            CONF_RETURN_ENTITY,
+            CONF_BUFFER_ENTITY,
+            CONF_HP_FLOW_ENTITY,
+            CONF_DHW_TEMP_ENTITY,
+            CONF_DHW_TARGET_ENTITY,
+        ):
             error = validate_temperature(hass, value)
         else:
             error = validate_status(hass, value)
@@ -227,11 +239,11 @@ class HeizungsanalyseOptionsFlow(OptionsFlowWithReload):
         return list(self._draft().get(CONF_ROOMS) or [])
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        menu_options = ["sources", "add_circuit", "thresholds"]
+        menu_options = ["sources", "thresholds", "add_circuit"]
         if self._circuits():
-            menu_options.extend(["remove_circuit", "add_room"])
+            menu_options.extend(["edit_circuit", "remove_circuit", "add_room"])
         if self._rooms():
-            menu_options.append("remove_room")
+            menu_options.extend(["edit_room", "remove_room"])
         menu_options.append("save")
         return self.async_show_menu(step_id="init", menu_options=menu_options)
 
@@ -265,6 +277,9 @@ class HeizungsanalyseOptionsFlow(OptionsFlowWithReload):
             (CONF_POWER_NOW_ENTITY, _entity(SENSOR_DOMAIN, SensorDeviceClass.POWER)),
             (CONF_DHW_POWER_ENTITY, _energy()),
             (CONF_DHW_OPERATION_ENTITY, _status()),
+            (CONF_DHW_TEMP_ENTITY, _temperature()),
+            (CONF_DHW_TARGET_ENTITY, _temperature()),
+            (CONF_DHW_PUMP_ENTITY, _status()),
         ):
             marker, option_selector = _optional(key, current, option_selector)
             fields[marker] = option_selector
@@ -289,46 +304,85 @@ class HeizungsanalyseOptionsFlow(OptionsFlowWithReload):
             )
         return self.async_show_form(step_id="thresholds", data_schema=vol.Schema(fields))
 
+    def _circuit_schema(self, current: dict[str, Any]) -> vol.Schema:
+        fields: dict = {
+            vol.Required(CONF_NAME, default=current.get(CONF_NAME, "")): _text(),
+            vol.Required(CONF_TYPE, default=current.get(CONF_TYPE) or "radiators"): _circuit_type(),
+        }
+        for key, field_selector in (
+            (CONF_TEMPERATURE_ENTITY, _temperature()),
+            (CONF_TARGET_ENTITY, _temperature()),
+            (CONF_PUMP_ENTITY, _status()),
+            (CONF_MIXER_OPEN_ENTITY, _status()),
+            (CONF_MIXER_CLOSE_ENTITY, _status()),
+        ):
+            marker, value = _optional(key, current, field_selector)
+            fields[marker] = value
+        return vol.Schema(fields)
+
+    @staticmethod
+    def _circuit_from(identifier: str, user_input: dict[str, Any]) -> dict[str, Any]:
+        return HeatingCircuit(
+            id=identifier,
+            name=user_input[CONF_NAME].strip(),
+            type=user_input[CONF_TYPE],
+            temperature_entity=user_input.get(CONF_TEMPERATURE_ENTITY) or None,
+            target_entity=user_input.get(CONF_TARGET_ENTITY) or None,
+            pump_entity=user_input.get(CONF_PUMP_ENTITY) or None,
+            mixer_open_entity=user_input.get(CONF_MIXER_OPEN_ENTITY) or None,
+            mixer_close_entity=user_input.get(CONF_MIXER_CLOSE_ENTITY) or None,
+        ).as_dict()
+
     async def async_step_add_circuit(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         errors: dict[str, str] = {}
         if user_input is not None:
             errors = self._validate_circuit(user_input)
             if not errors:
                 circuits = self._circuits()
-                circuit = HeatingCircuit(
-                    id=unique_id([item["id"] for item in circuits], user_input[CONF_NAME]),
-                    name=user_input[CONF_NAME].strip(),
-                    type=user_input[CONF_TYPE],
-                    temperature_entity=user_input.get(CONF_TEMPERATURE_ENTITY) or None,
-                    pump_entity=user_input.get(CONF_PUMP_ENTITY) or None,
-                    mixer_open_entity=user_input.get(CONF_MIXER_OPEN_ENTITY) or None,
-                    mixer_close_entity=user_input.get(CONF_MIXER_CLOSE_ENTITY) or None,
-                )
-                self._draft()[CONF_CIRCUITS] = [*circuits, circuit.as_dict()]
+                identifier = unique_id([item["id"] for item in circuits], user_input[CONF_NAME])
+                self._draft()[CONF_CIRCUITS] = [*circuits, self._circuit_from(identifier, user_input)]
                 return await self.async_step_init()
+        return self.async_show_form(step_id="add_circuit", data_schema=self._circuit_schema(user_input or {}), errors=errors)
 
-        schema = vol.Schema(
-            {
-                vol.Required(CONF_NAME): _text(),
-                vol.Required(CONF_TYPE, default="radiators"): _circuit_type(),
-                vol.Optional(CONF_TEMPERATURE_ENTITY): _temperature(),
-                vol.Optional(CONF_PUMP_ENTITY): _status(),
-                vol.Optional(CONF_MIXER_OPEN_ENTITY): _status(),
-                vol.Optional(CONF_MIXER_CLOSE_ENTITY): _status(),
-            }
+    async def async_step_edit_circuit(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        if user_input is not None:
+            self._editing = user_input[CONF_CIRCUIT]
+            return await self.async_step_edit_circuit_details()
+        return self.async_show_form(
+            step_id="edit_circuit",
+            data_schema=vol.Schema({vol.Required(CONF_CIRCUIT): _circuit_choice(self._circuits())}),
         )
-        return self.async_show_form(step_id="add_circuit", data_schema=schema, errors=errors)
 
-    def _validate_circuit(self, data: dict[str, Any]) -> dict[str, str]:
+    async def async_step_edit_circuit_details(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        identifier = getattr(self, "_editing", None)
+        current = next((item for item in self._circuits() if item["id"] == identifier), None)
+        if current is None:
+            return await self.async_step_init()
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            errors = self._validate_circuit(user_input, exclude=identifier)
+            if not errors:
+                updated = self._circuit_from(identifier, user_input)
+                self._draft()[CONF_CIRCUITS] = [updated if item["id"] == identifier else item for item in self._circuits()]
+                return await self.async_step_init()
+        return self.async_show_form(
+            step_id="edit_circuit_details",
+            data_schema=self._circuit_schema(user_input or current),
+            errors=errors,
+            description_placeholders={"name": str(current.get(CONF_NAME, identifier))},
+        )
+
+    def _validate_circuit(self, data: dict[str, Any], exclude: str | None = None) -> dict[str, str]:
         errors: dict[str, str] = {}
         name = (data.get(CONF_NAME) or "").strip()
         if not name:
             errors[CONF_NAME] = "invalid_name"
-        elif any(item["name"].lower() == name.lower() for item in self._circuits()):
+        elif any(item["name"].lower() == name.lower() and item["id"] != exclude for item in self._circuits()):
             errors[CONF_NAME] = "duplicate_name"
 
         checks = (
             (CONF_TEMPERATURE_ENTITY, validate_temperature),
+            (CONF_TARGET_ENTITY, validate_temperature),
             (CONF_PUMP_ENTITY, validate_status),
             (CONF_MIXER_OPEN_ENTITY, validate_status),
             (CONF_MIXER_CLOSE_ENTITY, validate_status),
@@ -358,6 +412,29 @@ class HeizungsanalyseOptionsFlow(OptionsFlowWithReload):
             errors=errors,
         )
 
+    def _room_schema(self, current: dict[str, Any]) -> vol.Schema:
+        fields: dict = {
+            vol.Required(CONF_NAME, default=current.get(CONF_NAME, "")): _text(),
+        }
+        if current.get(CONF_CIRCUIT):
+            fields[vol.Required(CONF_CIRCUIT, default=current[CONF_CIRCUIT])] = _circuit_choice(self._circuits())
+        else:
+            fields[vol.Required(CONF_CIRCUIT)] = _circuit_choice(self._circuits())
+        for key, field_selector in ((CONF_CLIMATE_ENTITY, _climate()), (CONF_VALVE_POSITION_ENTITY, _entity(SENSOR_DOMAIN))):
+            marker, value = _optional(key, current, field_selector)
+            fields[marker] = value
+        return vol.Schema(fields)
+
+    @staticmethod
+    def _room_from(identifier: str, user_input: dict[str, Any]) -> dict[str, Any]:
+        return Room(
+            id=identifier,
+            name=user_input[CONF_NAME].strip(),
+            circuit=user_input[CONF_CIRCUIT],
+            climate_entity=user_input.get(CONF_CLIMATE_ENTITY) or None,
+            valve_position_entity=user_input.get(CONF_VALVE_POSITION_ENTITY) or None,
+        ).as_dict()
+
     async def async_step_add_room(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if not self._circuits():
             return self.async_abort(reason="no_circuits")
@@ -367,32 +444,45 @@ class HeizungsanalyseOptionsFlow(OptionsFlowWithReload):
             errors = self._validate_room(user_input)
             if not errors:
                 rooms = self._rooms()
-                room = Room(
-                    id=unique_id([item["id"] for item in rooms], user_input[CONF_NAME]),
-                    name=user_input[CONF_NAME].strip(),
-                    circuit=user_input[CONF_CIRCUIT],
-                    climate_entity=user_input.get(CONF_CLIMATE_ENTITY) or None,
-                    valve_position_entity=user_input.get(CONF_VALVE_POSITION_ENTITY) or None,
-                )
-                self._draft()[CONF_ROOMS] = [*rooms, room.as_dict()]
+                identifier = unique_id([item["id"] for item in rooms], user_input[CONF_NAME])
+                self._draft()[CONF_ROOMS] = [*rooms, self._room_from(identifier, user_input)]
                 return await self.async_step_init()
+        return self.async_show_form(step_id="add_room", data_schema=self._room_schema(user_input or {}), errors=errors)
 
-        schema = vol.Schema(
-            {
-                vol.Required(CONF_NAME): _text(),
-                vol.Required(CONF_CIRCUIT): _circuit_choice(self._circuits()),
-                vol.Optional(CONF_CLIMATE_ENTITY): _climate(),
-                vol.Optional(CONF_VALVE_POSITION_ENTITY): _entity(SENSOR_DOMAIN),
-            }
+    async def async_step_edit_room(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        if user_input is not None:
+            self._editing = user_input[CONF_ID]
+            return await self.async_step_edit_room_details()
+        return self.async_show_form(
+            step_id="edit_room",
+            data_schema=vol.Schema({vol.Required(CONF_ID): _room_choice(self._rooms())}),
         )
-        return self.async_show_form(step_id="add_room", data_schema=schema, errors=errors)
 
-    def _validate_room(self, data: dict[str, Any]) -> dict[str, str]:
+    async def async_step_edit_room_details(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        identifier = getattr(self, "_editing", None)
+        current = next((item for item in self._rooms() if item["id"] == identifier), None)
+        if current is None:
+            return await self.async_step_init()
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            errors = self._validate_room(user_input, exclude=identifier)
+            if not errors:
+                updated = self._room_from(identifier, user_input)
+                self._draft()[CONF_ROOMS] = [updated if item["id"] == identifier else item for item in self._rooms()]
+                return await self.async_step_init()
+        return self.async_show_form(
+            step_id="edit_room_details",
+            data_schema=self._room_schema(user_input or current),
+            errors=errors,
+            description_placeholders={"name": str(current.get(CONF_NAME, identifier))},
+        )
+
+    def _validate_room(self, data: dict[str, Any], exclude: str | None = None) -> dict[str, str]:
         errors: dict[str, str] = {}
         name = (data.get(CONF_NAME) or "").strip()
         if not name:
             errors[CONF_NAME] = "invalid_name"
-        elif any(item["name"].lower() == name.lower() for item in self._rooms()):
+        elif any(item["name"].lower() == name.lower() and item["id"] != exclude for item in self._rooms()):
             errors[CONF_NAME] = "duplicate_name"
 
         circuit_id = data.get(CONF_CIRCUIT)

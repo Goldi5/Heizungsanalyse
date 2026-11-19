@@ -100,6 +100,11 @@ CONF_DHW_POWER_ENTITY: Final = "dhw_power_entity"
 CONF_DHW_OPERATION_ENTITY: Final = "dhw_operation_entity"
 CONF_COMPRESSOR_RUNTIME_EXTRA_ENTITY: Final = "compressor_runtime_extra_entity"
 
+# Warmwasserspeicher (0.7.1)
+CONF_DHW_TEMP_ENTITY: Final = "dhw_temp_entity"
+CONF_DHW_TARGET_ENTITY: Final = "dhw_target_entity"
+CONF_DHW_PUMP_ENTITY: Final = "dhw_pump_entity"
+
 OPTIONAL_SOURCES: Final = (
     CONF_POWER_FALLBACK_ENTITY,
     CONF_DHW_HEAT_ENTITY,
@@ -117,6 +122,9 @@ OPTIONAL_SOURCES: Final = (
     CONF_DHW_POWER_ENTITY,
     CONF_DHW_OPERATION_ENTITY,
     CONF_COMPRESSOR_RUNTIME_EXTRA_ENTITY,
+    CONF_DHW_TEMP_ENTITY,
+    CONF_DHW_TARGET_ENTITY,
+    CONF_DHW_PUMP_ENTITY,
 )
 
 # --- Heizkreise und Räume -------------------------------------------------------
@@ -127,6 +135,7 @@ CONF_NAME: Final = "name"
 CONF_ID: Final = "id"
 CONF_TYPE: Final = "type"
 CONF_TEMPERATURE_ENTITY: Final = "temperature_entity"
+CONF_TARGET_ENTITY: Final = "target_entity"  # Soll-Vorlauf eines Heizkreises
 CONF_ENERGY_PRICE: Final = "energy_price_eur_per_kwh"
 CONF_CO2_FACTOR: Final = "co2_kg_per_kwh"
 CONF_PUMP_ENTITY: Final = "pump_entity"

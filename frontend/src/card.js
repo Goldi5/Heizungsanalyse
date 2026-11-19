@@ -303,7 +303,11 @@ export class HeizungsanalyseCard extends HTMLElement {
     const out = {};
     for (const r of (this._data && this._data.rooms) || []) {
       const st = r.climate_entity && this._hass.states[r.climate_entity];
-      if (st) out[r.climate_entity] = { current: st.attributes.current_temperature, target: st.attributes.temperature };
+      if (!st) continue;
+      const a = st.attributes;
+      // Raumklima: echter Raumfühler, wirksames Soll (im Beobachtungsmodus die Komforttemperatur), Ventil
+      const target = a.temperature ?? a.effective_target ?? (a.monitor ? a.comfort_temperature : undefined);
+      out[r.climate_entity] = { current: a.current_temperature, target, valve: a.valve_position ?? null };
     }
     return out;
   }

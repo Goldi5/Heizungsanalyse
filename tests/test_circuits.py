@@ -88,3 +88,15 @@ def test_rank_circuits_most_idle_first() -> None:
     }
 
     assert rank_circuits(stats) == [("hk2", 0.5), ("hk3", 0.0)]
+
+
+def test_pump_idle_laufanteil() -> None:
+    from datetime import datetime, timedelta
+
+    from hz.analysis.circuits import CircuitSample, pump_idle
+
+    t = datetime(2026, 11, 19, 0, 0)
+    samples = [CircuitSample(at=t + timedelta(minutes=5 * i), circuit_id="hk2", pump_on=i < 3, compressor_on=i == 0) for i in range(4)]
+    stats = pump_idle(samples)
+    assert stats.run_share == 0.75
+    assert stats.total_samples == 4

@@ -93,8 +93,8 @@ TEXTS: dict[str, dict[str, dict[str, str]]] = {
             "suggestion": "Zieltemperatur und Ventilstellung prüfen; bei dauerhafter Abweichung Soll anpassen.",
         },
         "cop_drop": {
-            "text": "COP der letzten 7 Tage ({cop}) liegt {drop} unter dem 30-Tage-Wert ({cop_long}).",
-            "suggestion": "Verbrauch, Außentemperatur und Abtauvorgänge prüfen; plötzlicher Einbruch deutet auf Störung.",
+            "text": "COP der letzten 7 Tage ({cop}) liegt {drop} unter dem, was deine Anlage bei diesem Wetter sonst schafft ({cop_long}).",
+            "suggestion": "Abtauen, Heizstab, Warmwasser-Ladungen und Vorlauf prüfen – das Wetter ist schon herausgerechnet.",
         },
         "flow_spike": {
             "text": "Vorlauf-Spitzen (p90 {p90} K) überschreiten das Doppelte der Schwelle ({threshold} K).",

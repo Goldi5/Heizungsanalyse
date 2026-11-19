@@ -493,20 +493,9 @@ async def ws_status(hass: HomeAssistant, connection: websocket_api.ActiveConnect
     storage = runtime.coordinator.runtime_diagnostics()
     rollups = await runtime.store.async_rollups()
     log_entries = await runtime.log.async_last_hours(48)
-    source_checks = []
-    for value in {**{k: runtime.entry.data.get(k) for k in MANDATORY_SOURCES},
-                  **{k: runtime.entry.options.get(k) for k in OPTIONAL_SOURCES}}.values():
-        if not value:
-            continue
-        st = hass.states.get(value)
-        status = "not_found" if st is None else ("unavailable" if st.state in ("unavailable", "unknown") else "ok")
-        source_checks.append({
-            "entity": value, "kind": "source", "state": None if st is None else st.state,
-            "unit": None if st is None else st.attributes.get("unit_of_measurement"),
-            "state_class": None if st is None else st.attributes.get("state_class"),
-            "daily_rows": 0, "hourly_rows": 0, "daily_last": None, "status": status,
-            "advice": "" if status == "ok" else "Quelle prüfen.",
-        })
+    from .diagnostics import source_checks as _checks
+
+    source_checks = await _checks(hass, runtime.coordinator)
     connection.send_result(
         msg["id"],
         {

@@ -46,7 +46,9 @@ class RoomTracker:
     def stats(self, tolerance: float) -> dict[str, RoomDeviation]:
         return {room_id: deviation_stats(room_readings, tolerance=tolerance) for room_id, room_readings in self._readings.items()}
 
-    def heating_up(self, *, trigger: float, tolerance: float, max_minutes: float) -> dict[str, float | None]:
+    def heating_up(
+        self, *, trigger: float, tolerance: float, max_minutes: float, min_gap: float = 1.0, min_episodes: int = 3
+    ) -> dict[str, float | None]:
         result: dict[str, float | None] = {}
         for room_id, room_readings in self._readings.items():
             minutes = heating_up_times(
@@ -54,8 +56,9 @@ class RoomTracker:
                 trigger=trigger,
                 tolerance=tolerance,
                 max_minutes=max_minutes,
+                min_gap=min_gap,
             )
-            result[room_id] = median_heating_up(minutes)
+            result[room_id] = median_heating_up(minutes) if len(minutes) >= min_episodes else None
         return result
 
 
