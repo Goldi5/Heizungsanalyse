@@ -22,6 +22,7 @@ from .analysis.circuits import CircuitSample, CircuitStats, MixerSample, MixerSt
 from .analysis.cop import CopBin, CopResult, cop_curve, cop_window
 from .analysis.costs import (
     clean_water_days,
+    cooling_split,
     dhw_stats,
     heat_price_ct,
     month_start,
@@ -72,6 +73,7 @@ from .const import (
     CONF_COMPRESSOR_RUNTIME_EXTRA_ENTITY,
     CONF_COMPRESSOR_STARTS_ENTITY,
     CONF_DEFROST_ENTITY,
+    CONF_DHW_CIRC_ENTITY,
     CONF_DHW_HEAT_ENTITY,
     CONF_DHW_OPERATION_ENTITY,
     CONF_DHW_POWER_ENTITY,
@@ -161,6 +163,7 @@ SOURCE_KINDS: dict[str, str] = {
     CONF_DHW_TEMP_ENTITY: "temperature",
     CONF_DHW_TARGET_ENTITY: "temperature",
     CONF_DHW_PUMP_ENTITY: "binary",
+    CONF_DHW_CIRC_ENTITY: "binary",
 }
 
 
@@ -657,6 +660,7 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
             "dhw": self._entity(CONF_DHW_OPERATION_ENTITY),
             "defrost": self._entity(CONF_DEFROST_ENTITY),
             "aux": self._entity(CONF_AUX_HEATER_ENTITY),
+            "circulation": self._entity(CONF_DHW_CIRC_ENTITY),
         }
         lanes = {kind: timeline(spans.get(entity_id, []), since) for kind, entity_id in kinds.items() if entity_id and entity_id in spans}
         compressor = spans.get(kinds["compressor"] or "", [])
@@ -1015,6 +1019,7 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
             self._entity(CONF_AUX_HEATER_ENTITY),
             self._entity(CONF_DHW_OPERATION_ENTITY),
             self._entity(CONF_DHW_PUMP_ENTITY),
+            self._entity(CONF_DHW_CIRC_ENTITY),
         }
         for circuit in self._circuits_config():
             ids |= {circuit.get(CONF_PUMP_ENTITY), circuit.get(CONF_MIXER_OPEN_ENTITY), circuit.get(CONF_MIXER_CLOSE_ENTITY)}
@@ -1268,6 +1273,11 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
         spans = (self._spans or {}).get(op_id or pump_id or "", [])
         charging = share_per_hour(spans, temps.keys()) if spans else {}
         stats = dhw_stats(spans, temps, charging, window_start=window_start, now=now)
+        circ_id = self._entity(CONF_DHW_CIRC_ENTITY)
+        circ_spans = (self._spans or {}).get(circ_id or "", [])
+        circ_share = share_per_hour(circ_spans, temps.keys()) if circ_spans else {}
+        cooling_circ, cooling_idle = cooling_split(temps, charging, circ_share) if circ_id else (None, None)
+        circ_hours = sum(circ_share.values()) / max(1, stats.days) if circ_share else None
 
         def now_value(entity_id: str | None) -> float | None:
             state = self.hass.states.get(entity_id) if entity_id else None
@@ -1280,6 +1290,10 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
             "target": now_value(target_id),
             "pump_on": self._on_off(pump_id),
             "charging": self._on_off(op_id) if op_id else self._on_off(pump_id),
+            "circulation_on": self._on_off(circ_id) if circ_id else None,
+            "circulation_hours_per_day": round(circ_hours, 1) if circ_hours is not None else None,
+            "cooling_circulation_k_per_h": cooling_circ,
+            "cooling_idle_k_per_h": cooling_idle,
             **stats.as_dict(),
         }
 

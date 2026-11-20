@@ -58,3 +58,18 @@ def test_katalog() -> None:
     assert {c["value"] for c in choices("heat_pump")} == set(HEAT_PUMPS)
     assert [c["value"] for c in choices("buffer")] == ["stiebel-sbp-400-e"]
     assert WPL07["min_flow_lpm"] == pytest.approx(10.7, abs=0.1)
+
+
+def test_abkuehlung_mit_und_ohne_zirkulation() -> None:
+    from datetime import UTC, datetime, timedelta
+
+    from hz.analysis.costs import cooling_split
+
+    t0 = datetime(2026, 11, 19, 20, 0, tzinfo=UTC)
+    hours = [t0 + timedelta(hours=i) for i in range(8)]
+    # 20–23 Uhr ohne Zirkulation (−0,1 K/h), 23–02 Uhr mit Zirkulation (−1,3 K/h)
+    temps = dict(zip(hours, [50.0, 49.9, 49.8, 49.7, 48.4, 47.1, 45.8, 45.7], strict=True))
+    circ = {h: (1.0 if 4 <= i <= 6 else 0.0) for i, h in enumerate(hours)}
+    with_circ, idle = cooling_split(temps, {}, circ)
+    assert with_circ == 1.3
+    assert idle == 0.1

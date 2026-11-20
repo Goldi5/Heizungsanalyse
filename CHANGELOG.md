@@ -1,3 +1,16 @@
+## 0.8.0b3 – 2026-11-20 (Beta)
+
+### Neu: Zirkulation
+- Neue optionale Quelle **Zirkulationspumpe Warmwasser** (Status) unter
+  *Konfigurieren → Optionale Quellen*.
+- **Hydraulik:** Zirkulationsring vom Speicher durchs Haus zurück, mit Pumpe
+  und Live-Zustand.
+- **Betrieb:** eigene Spur „Zirkulation“ im Zeitstreifen.
+- **Warmwasserspeicher:** Abkühlung getrennt mit und ohne laufende
+  Zirkulation, Laufzeit der Zirkulation in Stunden pro Tag; der Vergleich mit
+  dem Datenblatt nutzt den Wert ohne Zirkulation.
+- **Geräte:** Zirkulationspumpe in der Pumpenliste.
+
 ## 0.8.0b2 – 2026-11-20 (Beta)
 
 ### Neu: Herstellerdaten

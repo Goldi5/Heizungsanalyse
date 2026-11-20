@@ -15,6 +15,7 @@ from homeassistant.helpers import device_registry as dr, entity_registry as er
 from .const import (
     CONF_CIRCUITS,
     CONF_COMPRESSOR_ENTITY,
+    CONF_DHW_CIRC_ENTITY,
     CONF_DHW_PUMP_ENTITY,
     CONF_POWER_ENTITY,
     CONF_PUMP_ENTITY,
@@ -77,6 +78,19 @@ def build_devices(hass: HomeAssistant, data: dict[str, Any], options: dict[str, 
                 "entity": dhw_pump,
                 "on": None if state is None else state.state == "on",
                 "device": _device_of(hass, dhw_pump),
+            }
+        )
+
+    circ = options.get(CONF_DHW_CIRC_ENTITY)
+    if circ:
+        state = hass.states.get(circ)
+        pumps.append(
+            {
+                "circuit": "circulation",
+                "name": "Zirkulation",
+                "entity": circ,
+                "on": None if state is None else state.state == "on",
+                "device": _device_of(hass, circ),
             }
         )
 

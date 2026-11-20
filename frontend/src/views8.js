@@ -151,6 +151,8 @@ export function liveValues(d, states) {
     dhwTarget: num(s(e.dhw_target)),
     dhwCharging: onOff(s(e.dhw_op)) ?? onOff(s(e.dhw_pump)),
     dhwPump: onOff(s(e.dhw_pump)),
+    hasCirc: Boolean(e.dhw_circ),
+    dhwCirc: onOff(s(e.dhw_circ)),
     defrost: onOff(s(e.defrost)),
     aux: onOff(s(e.aux)),
     circuits,
@@ -310,7 +312,7 @@ export function costStrip(d, ui) {
 }
 
 // ---------------------------------------------------------------- Betrieb
-const LANE_COLORS = { compressor: "var(--hz-heat)", dhw: "var(--hz-vio)", defrost: "var(--hz-cool)", aux: "var(--hz-bad)" };
+const LANE_COLORS = { compressor: "var(--hz-heat)", dhw: "var(--hz-vio)", defrost: "var(--hz-cool)", aux: "var(--hz-bad)", circulation: "var(--hz-ok)" };
 
 function lanes(op) {
   const tl = (op && op.timeline) || {};
@@ -324,7 +326,7 @@ function lanes(op) {
     days.push(start);
   }
   const fmtDay = (dt) => dt.toLocaleDateString(getLang() === "de" ? "de-DE" : "en-GB", { weekday: "short" });
-  const order = ["compressor", "dhw", "defrost", "aux"];
+  const order = ["compressor", "dhw", "defrost", "aux", "circulation"];
   const rows = days
     .map((dayStart) => {
       const a = dayStart.getTime() / 1000;
@@ -335,7 +337,7 @@ function lanes(op) {
           if (e <= a || s >= b) continue;
           const left = ((Math.max(s, a) - a) / 86400) * 100;
           const width = Math.max(0.35, ((Math.min(e, b) - Math.max(s, a)) / 86400) * 100);
-          const top = kind === "compressor" ? "" : " thin";
+          const top = kind === "compressor" ? "" : kind === "circulation" ? " low" : " thin";
           bars += `<i class="${kind}${top}" style="left:${left.toFixed(2)}%;width:${width.toFixed(2)}%;background:${LANE_COLORS[kind]}"></i>`;
         }
       }
@@ -344,7 +346,7 @@ function lanes(op) {
     .join("");
   const legend = order
     .filter((kind) => tl[kind])
-    .map((kind) => `<span><i style="background:${LANE_COLORS[kind]}"></i>${esc(t({ compressor: "Verdichter", dhw: "Warmwasser", defrost: "Abtauen", aux: "Heizstab" }[kind]))}</span>`)
+    .map((kind) => `<span><i style="background:${LANE_COLORS[kind]}"></i>${esc(t({ compressor: "Verdichter", dhw: "Warmwasser", defrost: "Abtauen", aux: "Heizstab", circulation: "Zirkulation" }[kind]))}</span>`)
     .join("");
   return `<div class="lanes">${rows}<div class="lane ax"><span></span><div><span>0</span><span>6</span><span>12</span><span>18</span><span>24</span></div></div></div><div class="legend">${legend}</div>`;
 }
@@ -400,6 +402,17 @@ export function viewBetrieb(d, ui) {
 function tankNote(d) {
   const tank = d.datasheet && d.datasheet.dhw_tank;
   if (!tank || tank.cooling_expected == null) return "";
+  const hy = (d.kpis && d.kpis.hydraulics && d.kpis.hydraulics.dhw) || {};
+  if (hy.cooling_circulation_k_per_h != null && hy.cooling_idle_k_per_h != null) {
+    return `<div class="fd">${esc(
+      t("{s}: laut Datenblatt ohne Zapfen etwa {e} K/h, gemessen ohne Zirkulation {i} K/h. Läuft die Zirkulation, sind es {c} K/h – der Unterschied geht in der Zirkulationsleitung verloren.", {
+        s: tank.model,
+        e: fmt(tank.cooling_expected, 2),
+        i: fmt(hy.cooling_idle_k_per_h, 2),
+        c: fmt(hy.cooling_circulation_k_per_h, 2),
+      }),
+    )}</div>`;
+  }
   const m = tank.cooling_measured;
   const extra = m != null && m > tank.cooling_expected * 1.5;
   return `<div class="fd">${esc(
@@ -413,7 +426,7 @@ export function dhwTankCard(d, ui) {
   if (!w || w.temperature == null) return "";
   const cell = (label, value, unit) => `<div><small>${esc(t(label))}</small><b>${value}<i>${esc(unit)}</i></b></div>`;
   return `<section class="c"><div class="h"><span>${esc(t("Warmwasserspeicher"))}</span><span class="grow"></span>${w.charging ? pill("warn", t("lädt")) : pill("mut", t("lädt nicht"))}${q("dhw_tank", ui)}</div>${hb("dhw_tank", ui)}
-    <div class="strip">${cell("Ist / Soll", fmt(w.temperature, 1), w.target != null ? `/ ${fmt(w.target, 1)} °C` : "°C")}${cell("Ladungen / Tag", fmt(w.charges_per_day, 1), "")}${cell("Ladedauer", fmt(w.charge_minutes, 0), "min")}${cell("Abkühlung", fmt(w.cooling_k_per_h, 2), "K/h")}</div>${tankNote(d)}</section>`;
+    <div class="strip">${cell("Ist / Soll", fmt(w.temperature, 1), w.target != null ? `/ ${fmt(w.target, 1)} °C` : "°C")}${cell("Ladungen / Tag", fmt(w.charges_per_day, 1), "")}${cell("Ladedauer", fmt(w.charge_minutes, 0), "min")}${cell("Abkühlung", fmt(w.cooling_k_per_h, 2), "K/h")}${w.cooling_circulation_k_per_h != null || w.cooling_idle_k_per_h != null ? cell("mit / ohne Zirkulation", fmt(w.cooling_circulation_k_per_h, 2), `/ ${fmt(w.cooling_idle_k_per_h, 2)} K/h`) : ""}${w.circulation_hours_per_day != null ? cell("Zirkulation", fmt(w.circulation_hours_per_day, 1), t("h/Tag")) : ""}</div>${tankNote(d)}</section>`;
 }
 
 // ---------------------------------------------------------------- Räume
@@ -537,6 +550,13 @@ export function viewHydraulik(d, ui, live) {
   <text x="385" y="${dhwY + 118}" class="v3" text-anchor="middle">${esc(t("Soll {s}", { s: fmt(lv.dhwTarget, 1) }))}</text>
   <path d="M450 ${dhwY + 60} H515" class="pipe thin" style="stroke:${pipeColor(lv.dhw)}"/><text x="458" y="${dhwY + 50}" class="v3">${esc(t("Zapfung"))}</text>
   <path d="M515 ${dhwY + 160} H450" class="pipe thin" style="stroke:${pipeColor(12)}"/><text x="458" y="${dhwY + 178}" class="v3">${esc(t("Kaltwasser"))}</text>`;
+  if (lv.hasCirc) {
+    // Zirkulation: Zapfleitung → Ring durchs Haus → zurück in den Speicher
+    const cc = lv.dhwCirc ? pipeColor(lv.dhw != null ? lv.dhw - 6 : null) : "var(--hz-line)";
+    svg += `<path d="M515 ${dhwY + 60} H572 V${dhwY + 120} H450" class="pipe thin" style="stroke:${cc}"/><path d="M515 ${dhwY + 60} H572 V${dhwY + 120} H450" class="dash ${flowCls(lv.dhwCirc)}"/>
+  <circle cx="520" cy="${dhwY + 120}" r="11" class="pumpc"/><path class="${pumpOn(lv.dhwCirc)}" d="M520 ${dhwY + 112} L526 ${dhwY + 125} L514 ${dhwY + 125} Z" style="fill:${lv.dhwCirc ? cc : "var(--hz-mut)"}"/>
+  <text x="482" y="${dhwY + 100}" class="v3">${esc(t("Zirkulation"))} · ${esc(lv.dhwCirc ? t("an") : lv.dhwCirc === false ? t("aus") : "–")}</text>`;
+  }
   // Heizkreise
   circuits.forEach((c, i) => {
     const y = cardY(i);

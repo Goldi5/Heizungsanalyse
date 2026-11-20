@@ -98,7 +98,8 @@ Ohne HACS: Ordner `custom_components/heizungsanalyse` nach
    werden geprüft; unpassende Entities werden abgelehnt.
 2. **Optionen** (*Konfigurieren*): Ersatzstromquelle, Warmwasserwärme,
    Vorlauf/Soll-Vorlauf, Rücklauf, Puffer, Abtauung, Heizstab,
-   Verdichterstarts und -laufzeit, Warmwasserspeicher (Ist, Soll, Ladepumpe).
+   Verdichterstarts und -laufzeit, Warmwasserspeicher (Ist, Soll, Ladepumpe,
+   Zirkulationspumpe – trennt die Speicherverluste mit und ohne Zirkulation).
 3. **Heizkreise** anlegen oder bearbeiten: Name, Typ, optional Ist- und
    Soll-Temperatur des Kreises, Pumpe, Mischer. Bei Stiebel Eltron wird das
    Soll zur Ist-Temperatur automatisch gefunden.

@@ -337,6 +337,7 @@ em.bad { color:color-mix(in srgb, var(--hz-bad) 80%, var(--hz-ink)); }
 .lane .bar { position:relative; height:22px; background:var(--hz-soft); border-radius:6px; overflow:hidden; }
 .lane .bar i { position:absolute; top:0; bottom:0; border-radius:3px; }
 .lane .bar i.thin { top:30%; bottom:30%; }
+.lane .bar i.low { top:82%; bottom:0; border-radius:0; }
 .lane.ax > div { display:flex; justify-content:space-between; color:var(--hz-mut); font-size:.68rem; }
 
 /* Räume */

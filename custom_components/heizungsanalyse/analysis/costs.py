@@ -158,6 +158,36 @@ def dhw_stats(
     return DhwStats(charges_per_day, charge_minutes, round(cooling, 2) if cooling is not None else None, days)
 
 
+def cooling_split(
+    temperatures: Mapping[datetime, float],
+    charging_share: Mapping[datetime, float],
+    circulation_share: Mapping[datetime, float],
+) -> tuple[float | None, float | None]:
+    """Abkühlung des Speichers mit und ohne laufende Zirkulation (Median, K/h).
+
+    Gezählt werden Stundenpaare ohne Ladung. „Mit“: Zirkulation lief in der
+    zweiten Stunde mindestens zur Hälfte; „ohne“: in beiden Stunden gar nicht.
+    """
+    with_circ: list[float] = []
+    without: list[float] = []
+    hours = sorted(temperatures)
+    for previous, current in zip(hours, hours[1:], strict=False):
+        if current - previous != timedelta(hours=1):
+            continue
+        if charging_share.get(previous, 0.0) > 0 or charging_share.get(current, 0.0) > 0:
+            continue
+        delta = temperatures[current] - temperatures[previous]
+        if delta > 0:
+            continue
+        share = circulation_share.get(current, 0.0)
+        if share >= 0.5:
+            with_circ.append(-delta)
+        elif share == 0 and circulation_share.get(previous, 0.0) == 0:
+            without.append(-delta)
+    a, b = _median(with_circ), _median(without)
+    return (round(a, 2) if a is not None else None, round(b, 2) if b is not None else None)
+
+
 def daily_sum(usage: Mapping[datetime, float], tz: tzinfo) -> dict[date, float]:
     out: dict[date, float] = {}
     for hour, value in usage.items():

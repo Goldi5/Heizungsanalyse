@@ -489,6 +489,10 @@ export const EN = {
   "Einsatzgrenzen": "Operating limits",
   "Mindest-Volumenstrom": "Minimum flow rate",
   "Kältemittel": "Refrigerant",
+  "Zirkulation": "Circulation",
+  "an": "on",
+  "mit / ohne Zirkulation": "with / without circulation",
+  "{s}: laut Datenblatt ohne Zapfen etwa {e} K/h, gemessen ohne Zirkulation {i} K/h. Läuft die Zirkulation, sind es {c} K/h – der Unterschied geht in der Zirkulationsleitung verloren.": "{s}: about {e} K/h without draw-off per datasheet, measured {i} K/h without circulation. With circulation running it is {c} K/h – the difference is lost in the circulation loop.",
 };
 
 let lang = "de";

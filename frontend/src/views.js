@@ -656,6 +656,7 @@ function sourceList(d) {
     dhw_temp_entity: "Speicher Ist",
     dhw_target_entity: "Speicher Soll",
     dhw_pump_entity: "Warmwasser-Ladepumpe",
+    dhw_circulation_entity: "Zirkulation",
   };
   return Object.entries(d.sources || {})
     .map(([key, ok]) => `<div class="src"><span>${esc(labels[key] ? t(labels[key]) : key)}</span>${pill(ok ? "ok" : "mut", ok ? t("verbunden") : t("fehlt"))}</div>`)

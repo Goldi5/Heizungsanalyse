@@ -79,7 +79,8 @@
           "dhw_operation_entity": "DHW operation (binary)",
           "dhw_temp_entity": "Hot water tank temperature",
           "dhw_target_entity": "Hot water tank target",
-          "dhw_pump_entity": "Hot water charging pump"
+          "dhw_pump_entity": "Hot water charging pump",
+          "dhw_circulation_entity": "Hot water circulation pump (status)"
         },
         "data_description": {
           "compressor_runtime_extra_entity": "Added to the first runtime when the system counts heating and hot water separately.",
@@ -89,7 +90,8 @@
           "dhw_power_entity": "For the COP including hot water and for cross-checking a total meter as fallback source.",
           "return_entity": "Heat pump inlet. Together with the heat pump flow this gives the spread.",
           "dhw_operation_entity": "Active while the heat pump charges domestic hot water. Used to exclude DHW charging from buffer overshoot.",
-          "dhw_temp_entity": "For charges per day, charging time and tank cooling."
+          "dhw_temp_entity": "For charges per day, charging time and tank cooling.",
+          "dhw_circulation_entity": "When the circulation runs. Shown in the flow diagram and operation, and splits tank losses with and without circulation."
         }
       },
       "add_circuit": {

@@ -159,6 +159,7 @@ def _live_entities(coordinator: Any, entry: Any) -> dict[str, Any]:
         "dhw_target": options.get("dhw_target_entity"),
         "dhw_op": options.get("dhw_operation_entity"),
         "dhw_pump": options.get("dhw_pump_entity"),
+        "dhw_circ": options.get("dhw_circulation_entity"),
         "defrost": options.get("defrost_entity"),
         "aux": options.get("aux_heater_entity"),
         "circuits": circuits,

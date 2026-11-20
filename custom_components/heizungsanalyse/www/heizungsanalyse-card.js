@@ -1,7 +1,7 @@
-/* Heizungsanalyse 0.8.0b2 - gebaut aus frontend/src (npm run build). Nicht von Hand bearbeiten. */
+/* Heizungsanalyse 0.8.0b3 - gebaut aus frontend/src (npm run build). Nicht von Hand bearbeiten. */
 (() => {
   // src/version.js
-  var HA_VERSION = "0.8.0b2";
+  var HA_VERSION = "0.8.0b3";
 
   // src/i18n.js
   var EN = {
@@ -492,7 +492,11 @@
     "Leistung bei W35": "Output at W35",
     "Einsatzgrenzen": "Operating limits",
     "Mindest-Volumenstrom": "Minimum flow rate",
-    "Kältemittel": "Refrigerant"
+    "Kältemittel": "Refrigerant",
+    "Zirkulation": "Circulation",
+    "an": "on",
+    "mit / ohne Zirkulation": "with / without circulation",
+    "{s}: laut Datenblatt ohne Zapfen etwa {e} K/h, gemessen ohne Zirkulation {i} K/h. Läuft die Zirkulation, sind es {c} K/h – der Unterschied geht in der Zirkulationsleitung verloren.": "{s}: about {e} K/h without draw-off per datasheet, measured {i} K/h without circulation. With circulation running it is {c} K/h – the difference is lost in the circulation loop."
   };
   var lang = "de";
   function setLang(hass) {
@@ -922,6 +926,7 @@ em.bad { color:color-mix(in srgb, var(--hz-bad) 80%, var(--hz-ink)); }
 .lane .bar { position:relative; height:22px; background:var(--hz-soft); border-radius:6px; overflow:hidden; }
 .lane .bar i { position:absolute; top:0; bottom:0; border-radius:3px; }
 .lane .bar i.thin { top:30%; bottom:30%; }
+.lane .bar i.low { top:82%; bottom:0; border-radius:0; }
 .lane.ax > div { display:flex; justify-content:space-between; color:var(--hz-mut); font-size:.68rem; }
 
 /* Räume */
@@ -1639,6 +1644,8 @@ table.tbl td { white-space:nowrap; }
       dhwTarget: num(s(e.dhw_target)),
       dhwCharging: onOff(s(e.dhw_op)) ?? onOff(s(e.dhw_pump)),
       dhwPump: onOff(s(e.dhw_pump)),
+      hasCirc: Boolean(e.dhw_circ),
+      dhwCirc: onOff(s(e.dhw_circ)),
       defrost: onOff(s(e.defrost)),
       aux: onOff(s(e.aux)),
       circuits
@@ -1777,7 +1784,7 @@ table.tbl td { white-space:nowrap; }
     <div class="strip">${cells.join("")}</div>
     <div class="fd">${esc(t("Stunde für Stunde mit dem Preis aus deinem Energie-Dashboard gerechnet."))}</div></section>`;
   }
-  var LANE_COLORS = { compressor: "var(--hz-heat)", dhw: "var(--hz-vio)", defrost: "var(--hz-cool)", aux: "var(--hz-bad)" };
+  var LANE_COLORS = { compressor: "var(--hz-heat)", dhw: "var(--hz-vio)", defrost: "var(--hz-cool)", aux: "var(--hz-bad)", circulation: "var(--hz-ok)" };
   function lanes(op) {
     const tl = op && op.timeline || {};
     if (!tl.compressor && !tl.dhw) return "";
@@ -1790,7 +1797,7 @@ table.tbl td { white-space:nowrap; }
       days.push(start);
     }
     const fmtDay = (dt) => dt.toLocaleDateString(getLang() === "de" ? "de-DE" : "en-GB", { weekday: "short" });
-    const order = ["compressor", "dhw", "defrost", "aux"];
+    const order = ["compressor", "dhw", "defrost", "aux", "circulation"];
     const rows = days.map((dayStart) => {
       const a = dayStart.getTime() / 1e3;
       const b = a + 86400;
@@ -1800,13 +1807,13 @@ table.tbl td { white-space:nowrap; }
           if (e <= a || s >= b) continue;
           const left = (Math.max(s, a) - a) / 86400 * 100;
           const width = Math.max(0.35, (Math.min(e, b) - Math.max(s, a)) / 86400 * 100);
-          const top = kind === "compressor" ? "" : " thin";
+          const top = kind === "compressor" ? "" : kind === "circulation" ? " low" : " thin";
           bars += `<i class="${kind}${top}" style="left:${left.toFixed(2)}%;width:${width.toFixed(2)}%;background:${LANE_COLORS[kind]}"></i>`;
         }
       }
       return `<div class="lane"><span>${esc(fmtDay(dayStart))}</span><div class="bar">${bars}</div></div>`;
     }).join("");
-    const legend = order.filter((kind) => tl[kind]).map((kind) => `<span><i style="background:${LANE_COLORS[kind]}"></i>${esc(t({ compressor: "Verdichter", dhw: "Warmwasser", defrost: "Abtauen", aux: "Heizstab" }[kind]))}</span>`).join("");
+    const legend = order.filter((kind) => tl[kind]).map((kind) => `<span><i style="background:${LANE_COLORS[kind]}"></i>${esc(t({ compressor: "Verdichter", dhw: "Warmwasser", defrost: "Abtauen", aux: "Heizstab", circulation: "Zirkulation" }[kind]))}</span>`).join("");
     return `<div class="lanes">${rows}<div class="lane ax"><span></span><div><span>0</span><span>6</span><span>12</span><span>18</span><span>24</span></div></div></div><div class="legend">${legend}</div>`;
   }
   function cycleBars(op, ui) {
@@ -1848,6 +1855,17 @@ table.tbl td { white-space:nowrap; }
   function tankNote(d) {
     const tank = d.datasheet && d.datasheet.dhw_tank;
     if (!tank || tank.cooling_expected == null) return "";
+    const hy = d.kpis && d.kpis.hydraulics && d.kpis.hydraulics.dhw || {};
+    if (hy.cooling_circulation_k_per_h != null && hy.cooling_idle_k_per_h != null) {
+      return `<div class="fd">${esc(
+        t("{s}: laut Datenblatt ohne Zapfen etwa {e} K/h, gemessen ohne Zirkulation {i} K/h. Läuft die Zirkulation, sind es {c} K/h – der Unterschied geht in der Zirkulationsleitung verloren.", {
+          s: tank.model,
+          e: fmt(tank.cooling_expected, 2),
+          i: fmt(hy.cooling_idle_k_per_h, 2),
+          c: fmt(hy.cooling_circulation_k_per_h, 2)
+        })
+      )}</div>`;
+    }
     const m = tank.cooling_measured;
     const extra = m != null && m > tank.cooling_expected * 1.5;
     return `<div class="fd">${esc(
@@ -1859,7 +1877,7 @@ table.tbl td { white-space:nowrap; }
     if (!w || w.temperature == null) return "";
     const cell = (label, value, unit) => `<div><small>${esc(t(label))}</small><b>${value}<i>${esc(unit)}</i></b></div>`;
     return `<section class="c"><div class="h"><span>${esc(t("Warmwasserspeicher"))}</span><span class="grow"></span>${w.charging ? statusPill("warn", t("lädt")) : statusPill("mut", t("lädt nicht"))}${q("dhw_tank", ui)}</div>${hb("dhw_tank", ui)}
-    <div class="strip">${cell("Ist / Soll", fmt(w.temperature, 1), w.target != null ? `/ ${fmt(w.target, 1)} °C` : "°C")}${cell("Ladungen / Tag", fmt(w.charges_per_day, 1), "")}${cell("Ladedauer", fmt(w.charge_minutes, 0), "min")}${cell("Abkühlung", fmt(w.cooling_k_per_h, 2), "K/h")}</div>${tankNote(d)}</section>`;
+    <div class="strip">${cell("Ist / Soll", fmt(w.temperature, 1), w.target != null ? `/ ${fmt(w.target, 1)} °C` : "°C")}${cell("Ladungen / Tag", fmt(w.charges_per_day, 1), "")}${cell("Ladedauer", fmt(w.charge_minutes, 0), "min")}${cell("Abkühlung", fmt(w.cooling_k_per_h, 2), "K/h")}${w.cooling_circulation_k_per_h != null || w.cooling_idle_k_per_h != null ? cell("mit / ohne Zirkulation", fmt(w.cooling_circulation_k_per_h, 2), `/ ${fmt(w.cooling_idle_k_per_h, 2)} K/h`) : ""}${w.circulation_hours_per_day != null ? cell("Zirkulation", fmt(w.circulation_hours_per_day, 1), t("h/Tag")) : ""}</div>${tankNote(d)}</section>`;
   }
   function viewRaeume8(d, ui, liveRooms) {
     const rooms = d.rooms || [];
@@ -1964,6 +1982,12 @@ table.tbl td { white-space:nowrap; }
   <text x="385" y="${dhwY + 118}" class="v3" text-anchor="middle">${esc(t("Soll {s}", { s: fmt(lv.dhwTarget, 1) }))}</text>
   <path d="M450 ${dhwY + 60} H515" class="pipe thin" style="stroke:${pipeColor(lv.dhw)}"/><text x="458" y="${dhwY + 50}" class="v3">${esc(t("Zapfung"))}</text>
   <path d="M515 ${dhwY + 160} H450" class="pipe thin" style="stroke:${pipeColor(12)}"/><text x="458" y="${dhwY + 178}" class="v3">${esc(t("Kaltwasser"))}</text>`;
+    if (lv.hasCirc) {
+      const cc = lv.dhwCirc ? pipeColor(lv.dhw != null ? lv.dhw - 6 : null) : "var(--hz-line)";
+      svg += `<path d="M515 ${dhwY + 60} H572 V${dhwY + 120} H450" class="pipe thin" style="stroke:${cc}"/><path d="M515 ${dhwY + 60} H572 V${dhwY + 120} H450" class="dash ${flowCls(lv.dhwCirc)}"/>
+  <circle cx="520" cy="${dhwY + 120}" r="11" class="pumpc"/><path class="${pumpOn(lv.dhwCirc)}" d="M520 ${dhwY + 112} L526 ${dhwY + 125} L514 ${dhwY + 125} Z" style="fill:${lv.dhwCirc ? cc : "var(--hz-mut)"}"/>
+  <text x="482" y="${dhwY + 100}" class="v3">${esc(t("Zirkulation"))} · ${esc(lv.dhwCirc ? t("an") : lv.dhwCirc === false ? t("aus") : "–")}</text>`;
+    }
     circuits.forEach((c, i) => {
       const y = cardY(i);
       const cv = lc[c.id] || {};
@@ -2390,7 +2414,8 @@ table.tbl td { white-space:nowrap; }
       dhw_operation_entity: "Warmwasserbetrieb",
       dhw_temp_entity: "Speicher Ist",
       dhw_target_entity: "Speicher Soll",
-      dhw_pump_entity: "Warmwasser-Ladepumpe"
+      dhw_pump_entity: "Warmwasser-Ladepumpe",
+      dhw_circulation_entity: "Zirkulation"
     };
     return Object.entries(d.sources || {}).map(([key, ok]) => `<div class="src"><span>${esc(labels[key] ? t(labels[key]) : key)}</span>${statusPill(ok ? "ok" : "mut", ok ? t("verbunden") : t("fehlt"))}</div>`).join("");
   }

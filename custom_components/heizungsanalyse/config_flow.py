@@ -29,6 +29,7 @@ from .const import (
     CONF_COMPRESSOR_RUNTIME_EXTRA_ENTITY,
     CONF_COMPRESSOR_STARTS_ENTITY,
     CONF_DEFROST_ENTITY,
+    CONF_DHW_CIRC_ENTITY,
     CONF_DHW_HEAT_ENTITY,
     CONF_DHW_OPERATION_ENTITY,
     CONF_DHW_POWER_ENTITY,
@@ -285,6 +286,7 @@ class HeizungsanalyseOptionsFlow(OptionsFlowWithReload):
             (CONF_DHW_TEMP_ENTITY, _temperature()),
             (CONF_DHW_TARGET_ENTITY, _temperature()),
             (CONF_DHW_PUMP_ENTITY, _status()),
+            (CONF_DHW_CIRC_ENTITY, _status()),
         ):
             marker, option_selector = _optional(key, current, option_selector)
             fields[marker] = option_selector

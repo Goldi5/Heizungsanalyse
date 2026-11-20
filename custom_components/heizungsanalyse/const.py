@@ -104,6 +104,7 @@ CONF_COMPRESSOR_RUNTIME_EXTRA_ENTITY: Final = "compressor_runtime_extra_entity"
 CONF_DHW_TEMP_ENTITY: Final = "dhw_temp_entity"
 CONF_DHW_TARGET_ENTITY: Final = "dhw_target_entity"
 CONF_DHW_PUMP_ENTITY: Final = "dhw_pump_entity"
+CONF_DHW_CIRC_ENTITY: Final = "dhw_circulation_entity"
 
 # Herstellerdaten (0.8.0b2)
 CONF_HEAT_PUMP_MODEL: Final = "heat_pump_model"
@@ -131,6 +132,7 @@ OPTIONAL_SOURCES: Final = (
     CONF_DHW_TEMP_ENTITY,
     CONF_DHW_TARGET_ENTITY,
     CONF_DHW_PUMP_ENTITY,
+    CONF_DHW_CIRC_ENTITY,
 )
 
 # --- Heizkreise und Räume -------------------------------------------------------
