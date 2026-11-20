@@ -11,7 +11,16 @@ export function loadSummary(hass, { force = false } = {}) {
   if (!force && fresh) return cache.promise;
   const promise = hass.callWS({ type: "heizungsanalyse/summary", language: lang });
   cache = { at: Date.now(), promise, lang };
-  promise.then((data) => listeners.forEach((fn) => fn(data))).catch(() => { cache = null; });
+  promise
+    .then((data) => {
+      // Während die Integration nach dem Speichern neu lädt, kommt kurz „nicht eingerichtet“ –
+      // das nicht fünf Minuten lang zwischenspeichern.
+      if (!data || data.configured === false) cache = null;
+      listeners.forEach((fn) => fn(data));
+    })
+    .catch(() => {
+      cache = null;
+    });
   return promise;
 }
 

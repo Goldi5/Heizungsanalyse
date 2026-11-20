@@ -328,7 +328,11 @@ export class HeizungsanalyseCard extends HTMLElement {
     if (this._error) return this._paint(`<div class="c">${esc(t("Fehler: {e}", { e: this._error }))}</div>`);
     const d = this._data;
     if (!d) return;
-    if (!d.configured) return this._paint(`<div class="c empty">${esc(t("Die Heizungsanalyse ist noch nicht eingerichtet."))}</div>`);
+    if (!d.configured) {
+      // Nach einem Neuladen der Integration nach kurzer Zeit erneut fragen
+      if (!this._retry) this._retry = setTimeout(() => ((this._retry = null), this._load(true)), 15000);
+      return this._paint(`<div class="c empty">${esc(t("Die Heizungsanalyse ist noch nicht eingerichtet."))}</div>`);
+    }
     const view = this._config.view;
     this._ui.hass = this._hass;
     let data = d;

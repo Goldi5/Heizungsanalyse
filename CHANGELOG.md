@@ -1,3 +1,10 @@
+## 0.8.0b4 – 2026-11-20 (Beta)
+
+### Behoben
+- Nach dem Speichern der Optionen zeigte das Dashboard bis zu fünf Minuten
+  „noch nicht eingerichtet“, weil die kurze Antwort während des Neuladens
+  zwischengespeichert wurde. Jetzt fragt die Karte nach 15 Sekunden erneut.
+
 ## 0.8.0b3 – 2026-11-20 (Beta)
 
 ### Neu: Zirkulation

@@ -1,7 +1,7 @@
-/* Heizungsanalyse 0.8.0b3 - gebaut aus frontend/src (npm run build). Nicht von Hand bearbeiten. */
+/* Heizungsanalyse 0.8.0b4 - gebaut aus frontend/src (npm run build). Nicht von Hand bearbeiten. */
 (() => {
   // src/version.js
-  var HA_VERSION = "0.8.0b3";
+  var HA_VERSION = "0.8.0b4";
 
   // src/i18n.js
   var EN = {
@@ -1007,7 +1007,10 @@ table.tbl td { white-space:nowrap; }
     if (!force && fresh) return cache.promise;
     const promise = hass.callWS({ type: "heizungsanalyse/summary", language: lang2 });
     cache = { at: Date.now(), promise, lang: lang2 };
-    promise.then((data) => listeners.forEach((fn) => fn(data))).catch(() => {
+    promise.then((data) => {
+      if (!data || data.configured === false) cache = null;
+      listeners.forEach((fn) => fn(data));
+    }).catch(() => {
       cache = null;
     });
     return promise;
@@ -2916,7 +2919,10 @@ table.tbl td { white-space:nowrap; }
       if (this._error) return this._paint(`<div class="c">${esc(t("Fehler: {e}", { e: this._error }))}</div>`);
       const d = this._data;
       if (!d) return;
-      if (!d.configured) return this._paint(`<div class="c empty">${esc(t("Die Heizungsanalyse ist noch nicht eingerichtet."))}</div>`);
+      if (!d.configured) {
+        if (!this._retry) this._retry = setTimeout(() => (this._retry = null, this._load(true)), 15e3);
+        return this._paint(`<div class="c empty">${esc(t("Die Heizungsanalyse ist noch nicht eingerichtet."))}</div>`);
+      }
       const view = this._config.view;
       this._ui.hass = this._hass;
       let data = d;
