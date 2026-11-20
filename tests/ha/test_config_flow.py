@@ -278,3 +278,24 @@ async def test_options_flow_sets_thresholds(hass: HomeAssistant) -> None:
 
     assert entry.options[CONF_THRESHOLDS]["flow_deviation_k"] == 3.0
     assert entry.options[CONF_THRESHOLDS]["mixer_pulses_per_day"] == 12.0
+
+
+async def test_options_flow_sets_plant_models(hass: HomeAssistant) -> None:
+    """Wärmepumpe und Speicher lassen sich aus dem Herstellerkatalog wählen."""
+    _seed_sources(hass)
+    entry = MockConfigEntry(domain=DOMAIN, data=MANDATORY, unique_id=DOMAIN)
+    entry.add_to_hass(hass)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert "plant" in result["menu_options"]
+    result = await hass.config_entries.options.async_configure(result["flow_id"], user_input={"next_step_id": "plant"})
+    assert result["step_id"] == "plant"
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        user_input={"heat_pump_model": "stiebel-wpl-a-07-hk-230-premium", "buffer_model": "stiebel-sbp-400-e"},
+    )
+    assert result["type"] is data_entry_flow.FlowResultType.MENU
+    result = await hass.config_entries.options.async_configure(result["flow_id"], user_input={"next_step_id": "save"})
+    assert entry.options["heat_pump_model"] == "stiebel-wpl-a-07-hk-230-premium"
+    assert entry.options["buffer_model"] == "stiebel-sbp-400-e"
+    assert "dhw_tank_model" not in entry.options

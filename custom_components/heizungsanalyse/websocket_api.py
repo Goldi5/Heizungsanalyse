@@ -34,6 +34,7 @@ from .devices import build_devices
 from .diagnostics import async_build_diagnostics
 from .inventory_io import export_csv, parse_csv, validate_import
 from .inventory_schema import build_schema, completeness, validate_values
+from .plant import build_datasheet
 from .services import async_apply_inventory, async_remove_inventory
 from .summary import build_summary, local_day
 
@@ -123,6 +124,12 @@ async def ws_summary(hass: HomeAssistant, connection: websocket_api.ActiveConnec
         result["entities"] = _live_entities(runtime.coordinator, entry)
     except Exception as err:  # noqa: BLE001 - Zusatzdaten dürfen die Übersicht nie verhindern
         _LOGGER.debug("Betrieb/Geräte nicht lesbar: %s", err)
+    try:
+        result["datasheet"] = build_datasheet(
+            hass, dict(entry.data), dict(entry.options), result["series"], result["kpis"].get("hydraulics") or {}
+        )
+    except Exception as err:  # noqa: BLE001 - Herstellerdaten sind Zusatz
+        _LOGGER.debug("Herstellerdaten nicht verknüpfbar: %s", err)
     connection.send_result(msg["id"], result)
 
 

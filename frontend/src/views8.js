@@ -172,6 +172,27 @@ export function expectation(d) {
   return { fit, outdoor, expected, cop, rel: cop != null ? cop / expected - 1 : null };
 }
 
+// Datenblatt-Kennlinie: COP laut Hersteller bei Außentemperatur und Vorlauf des Tages
+function datasheetLine(d, lo, hi) {
+  const ref = (d.series || []).filter((r) => r.cop_ref != null && r.outdoor != null).map((r) => ({ x: r.outdoor, y: r.cop_ref }));
+  const fit = ref.length >= 3 ? linearFit(ref) : null;
+  return fit ? [{ x: lo, y: fit.at(lo) }, { x: hi, y: fit.at(hi) }] : null;
+}
+
+function datasheetSay(hp) {
+  const w = hp && hp.week;
+  if (!w || w.share == null) return "";
+  const p = w.share * 100;
+  const tone = p >= 80 ? "ok" : p >= 70 ? "warn" : "bad";
+  return `<div class="dsline"><span>${esc(t("Datenblatt bei deinem Wetter und Vorlauf"))}</span><b>${fmt(w.cop_ref, 1)}</b><span>${esc(t("gemessen"))}</span><b>${fmt(w.cop, 1)}</b>${pill(tone, `${fmt(p, 0)} %`)}</div><div class="fd">${esc(t("Prüfstandswerte (EN 14511) enthalten kein Abtauen und keine Pumpen – 80–95 % davon sind im Betrieb gut."))}</div>`;
+}
+
+function startsSub(d) {
+  const w = d.datasheet && d.datasheet.heat_pump && d.datasheet.heat_pump.week;
+  if (!w || w.demand_kw == null || w.min_kw == null) return t("Schwelle aus den Einstellungen");
+  return t("Bedarf {b} kW · kleinste Stufe {m} kW", { b: fmt(w.demand_kw, 1), m: fmt(w.min_kw, 1) });
+}
+
 // ---------------------------------------------------------------- Übersicht
 export function viewUebersicht(d, ui, live) {
   const k = d.kpis || {};
@@ -192,6 +213,7 @@ export function viewUebersicht(d, ui, live) {
   }
   const tail = findings.length === 0 ? t("Kein Handlungsbedarf.") : warn ? t("{n} Punkte brauchen Aufmerksamkeit.", { n: findings.length }) : t("{n} Punkte zum Ansehen.", { n: findings.length });
 
+  const dsHp = d.datasheet && d.datasheet.heat_pump;
   // Kennlinie mit Erwartungsband
   const rows = (d.series || []).filter((r) => r.cop != null && r.outdoor != null && r.cop < 12);
   const today = rows[rows.length - 1];
@@ -205,11 +227,12 @@ export function viewUebersicht(d, ui, live) {
     const line = [{ x: lo, y: fit.at(lo) }, { x: hi, y: fit.at(hi) }];
     const band = { upper: line.map((p) => ({ x: p.x, y: p.y + w })), lower: line.map((p) => ({ x: p.x, y: p.y - w })) };
     const pts = rows.map((r, i) => ({ x: r.outdoor, y: r.cop, opacity: 0.25 + 0.55 * (i / Math.max(1, rows.length - 1)), title: `${dayLabel(r.day)}: COP ${fmt(r.cop)} · ${fmt(r.outdoor)} °C` }));
+    const refLine = datasheetLine(d, lo, hi);
     chart = box(ui, "ov-curve", () =>
       scatterChart(pts, {
         h: 200,
         unitY: "COP",
-        lines: [{ color: "var(--hz-ok)", dash: "5 4", width: 1.8, points: line }],
+        lines: [{ color: "var(--hz-ok)", dash: "5 4", width: 1.8, points: line }].concat(refLine ? [{ color: "var(--hz-cool)", dash: "2 4", width: 1.8, points: refLine }] : []),
         band,
         highlight: today ? { x: today.outdoor, y: today.cop, label: t("heute {c} · erwartet {e}", { c: fmt(today.cop), e: fmt(fit.at(today.outdoor)) }) } : null,
       }),
@@ -223,7 +246,8 @@ export function viewUebersicht(d, ui, live) {
       <div class="h"><span>${esc(t("Diese Woche"))}</span><span class="grow"></span>${pill(scoreTone, `${t(scoreLabel)} · ${score.value ?? "–"}`)}</div>
       <p class="big-say">${sentence} ${esc(tail)}</p>
       ${chart}
-      <div class="fd">${esc(t("Punkte: Tages-COP · Band: deine eigene Kennlinie ± Streuung"))}</div>
+      <div class="fd">${esc(dsHp ? t("Punkte: Tages-COP · Band: deine eigene Kennlinie ± Streuung · blau gepunktet: Datenblatt {m} bei deinem Vorlauf", { m: dsHp.model }) : t("Punkte: Tages-COP · Band: deine eigene Kennlinie ± Streuung"))}</div>
+      ${datasheetSay(dsHp)}
     </section>`;
 
   // Was ist zu tun
@@ -256,7 +280,7 @@ export function viewUebersicht(d, ui, live) {
     `<div class="c kpi"><div class="h"><span>${esc(title)}</span><span class="grow"></span>${pill(tone, tag)}</div><div class="num" style="color:${tone === "mut" ? "inherit" : "inherit"}">${value}<i>${esc(unit)}</i></div><div class="fd">${esc(sub)}</div>${spark}</div>`;
   const kpis = `<div class="k4">
     ${tile(t("COP 7 Tage"), fmt(k.cop_short && k.cop_short.value, 1), "", ex ? t("erwartet bei {o} °C: {e} · 30 Tage {l}", { o: fmt(ex.outdoor, 1), e: fmt(ex.expected, 1), l: fmt(k.cop_long && k.cop_long.value, 1) }) : t("30 Tage {l}", { l: fmt(k.cop_long && k.cop_long.value, 1) }), copTone, copTone === "warn" ? t("unter Erwartung") : t("wie erwartet"), sparkline(last30.map((r) => r.cop), col(copTone)))}
-    ${tile(t("Starts / Tag"), fmt(k.starts_per_day, 1), th.starts_per_day ? t("von {v}", { v: fmt(th.starts_per_day, 0) }) : "", t("Schwelle aus den Einstellungen"), startsTone, startsTone === "ok" ? t("im Rahmen") : startsTone === "warn" ? t("an der Grenze") : t("zu viele"), sparkline(last30.map((r) => r.starts), col(startsTone), { kind: "bar" }))}
+    ${tile(t("Starts / Tag"), fmt(k.starts_per_day, 1), th.starts_per_day ? t("von {v}", { v: fmt(th.starts_per_day, 0) }) : "", startsSub(d), startsTone, startsTone === "ok" ? t("im Rahmen") : startsTone === "warn" ? t("an der Grenze") : t("zu viele"), sparkline(last30.map((r) => r.starts), col(startsTone), { kind: "bar" }))}
     ${tile(t("Zyklus"), fmt(k.runtime_per_cycle, 0), "min", t("Ziel über {v} min", { v: fmt(th.runtime_minutes || 20, 0) }), runTone, runTone === "ok" ? t("lang") : t("zu kurz"), sparkline(last30.map((r) => r.cycle_min), col(runTone)))}
     ${tile(t("Vorlauf Ist − Soll"), signed(flow), "K", t("Zielband ±1 K"), flowTone, flowTone === "ok" ? t("passt") : flow > 0 ? t("zu warm") : t("zu kalt"), sparkline(last30.map((r) => (r.flow != null && r.target_flow != null ? r.flow - r.target_flow : null)), col(flowTone), { ref: 0 }))}
   </div>`;
@@ -373,12 +397,23 @@ export function viewBetrieb(d, ui) {
     ${defrost ? `<div class="grid g2">${defrost}${dhwTankCard(d, ui)}</div>` : dhwTankCard(d, ui)}`;
 }
 
+function tankNote(d) {
+  const tank = d.datasheet && d.datasheet.dhw_tank;
+  if (!tank || tank.cooling_expected == null) return "";
+  const m = tank.cooling_measured;
+  const extra = m != null && m > tank.cooling_expected * 1.5;
+  return `<div class="fd">${esc(
+    t("{s}: ohne Zapfen laut Datenblatt etwa {e} K/h.", { s: tank.model, e: fmt(tank.cooling_expected, 2) }) +
+      (extra ? " " + t("Gemessen wird mehr – das sind Zapfungen, eine Zirkulation oder Wärme, die über die Leitungen abwandert.") : ""),
+  )}</div>`;
+}
+
 export function dhwTankCard(d, ui) {
   const w = (d.kpis && d.kpis.hydraulics && d.kpis.hydraulics.dhw) || null;
   if (!w || w.temperature == null) return "";
   const cell = (label, value, unit) => `<div><small>${esc(t(label))}</small><b>${value}<i>${esc(unit)}</i></b></div>`;
   return `<section class="c"><div class="h"><span>${esc(t("Warmwasserspeicher"))}</span><span class="grow"></span>${w.charging ? pill("warn", t("lädt")) : pill("mut", t("lädt nicht"))}${q("dhw_tank", ui)}</div>${hb("dhw_tank", ui)}
-    <div class="strip">${cell("Ist / Soll", fmt(w.temperature, 1), w.target != null ? `/ ${fmt(w.target, 1)} °C` : "°C")}${cell("Ladungen / Tag", fmt(w.charges_per_day, 1), "")}${cell("Ladedauer", fmt(w.charge_minutes, 0), "min")}${cell("Abkühlung", fmt(w.cooling_k_per_h, 2), "K/h")}</div></section>`;
+    <div class="strip">${cell("Ist / Soll", fmt(w.temperature, 1), w.target != null ? `/ ${fmt(w.target, 1)} °C` : "°C")}${cell("Ladungen / Tag", fmt(w.charges_per_day, 1), "")}${cell("Ladedauer", fmt(w.charge_minutes, 0), "min")}${cell("Abkühlung", fmt(w.cooling_k_per_h, 2), "K/h")}</div>${tankNote(d)}</section>`;
 }
 
 // ---------------------------------------------------------------- Räume
@@ -564,8 +599,30 @@ export function devicesBlock(d) {
   const dv = d.devices || {};
   const hp = dv.heat_pump;
   const label = (x) => (x ? [x.manufacturer, x.model].filter(Boolean).join(" · ") || x.name || "" : "");
-  const hpCard = `<div class="c dcard"><div class="top"><b>${esc(t("Wärmepumpe"))}</b>${hp ? pill("ok", t("erkannt")) : pill("mut", t("nicht im Register"))}</div>
-    <div class="md">${esc(label(hp) || "–")}</div>${hp && hp.sw_version ? `<div class="row2"><span>${esc(t("Firmware"))}</span><span>${esc(hp.sw_version)}</span></div>` : ""}</div>`;
+  const ds = (d.datasheet && d.datasheet.heat_pump) || null;
+  const r2 = (a, b) => `<div class="row2"><span>${esc(t(a))}</span><span>${b}</span></div>`;
+  const hpCard = ds
+    ? `<div class="c dcard"><div class="top"><b>${esc(t("Wärmepumpe"))}</b>${pill("ok", t("Datenblatt"))}</div>
+    <div class="md">${esc(`${ds.manufacturer} ${ds.model}`)}</div>
+    ${r2("Regler", esc(label(hp) || "–"))}
+    ${r2("SCOP (EN 14825)", fmt(ds.scop, 2))}
+    ${r2("COP A7 · A2 · A−7 (W35)", (ds.points || []).filter((p) => p.flow === 35 && [7, 2, -7].includes(p.outdoor)).map((p) => fmt(p.cop, 2)).join(" · "))}
+    ${r2("Leistung bei W35", (ds.range || []).map((r) => `A${r.outdoor}: ${fmt(r.min_kw, 1)}–${fmt(r.max_kw, 1)} kW`).join(" · "))}
+    ${r2("Einsatzgrenzen", esc(t("{a} bis {b} °C außen · Vorlauf bis {f} °C", { a: fmt(ds.limits.outdoor_min_c, 0), b: fmt(ds.limits.outdoor_max_c, 0), f: fmt(ds.limits.flow_max_c, 0) })))}
+    ${r2("Mindest-Volumenstrom", `${fmt(ds.min_flow_lpm, 1)} l/min`)}
+    ${r2("Kältemittel", `${esc(ds.refrigerant)} · ${fmt(ds.refrigerant_kg, 1)} kg`)}
+    ${r2("Heizstab", `${fmt(ds.aux_heater_kw, 1)} kW`)}
+    <div class="fd"><a href="${esc(ds.source)}" target="_blank" rel="noopener">${esc(t("Datenblatt"))}</a> · <a href="${esc(ds.manual)}" target="_blank" rel="noopener">${esc(t("Regler-Anleitung"))}</a></div></div>`
+    : `<div class="c dcard"><div class="top"><b>${esc(t("Wärmepumpe"))}</b>${hp ? pill("ok", t("erkannt")) : pill("mut", t("nicht im Register"))}</div>
+    <div class="md">${esc(label(hp) || "–")}</div>${hp && hp.sw_version ? `<div class="row2"><span>${esc(t("Firmware"))}</span><span>${esc(hp.sw_version)}</span></div>` : ""}
+    <div class="fd">${esc(t("Modell unter Konfigurieren → Wärmepumpe und Speicher wählen – dann vergleicht die Analyse mit dem Datenblatt."))}</div></div>`;
+  const tanks = [d.datasheet && d.datasheet.buffer, d.datasheet && d.datasheet.dhw_tank].filter(Boolean);
+  const tankCard = tanks.length
+    ? `<div class="c dcard"><div class="top"><b>${esc(t("Speicher"))}</b></div>${tanks
+        .map((s) => r2(s.kind === "buffer" ? "Puffer" : "Warmwasser", `${esc(s.model)} · ${fmt(s.volume_l, 0)} l · ${fmt(s.kwh_per_k, 2)} kWh/K`))
+        .join("")}<div class="fd">${esc(t("kWh/K: so viel Wärme nimmt der Speicher je Kelvin auf."))}</div></div>`
+    : "";
+  const curves = curveCard(d);
   const pumps = (dv.pumps || [])
     .map((p) => `<div class="row2"><span>${esc(p.name)}</span><span>${p.on == null ? "–" : p.on ? esc(t("läuft")) : esc(t("aus"))}</span></div>`)
     .join("");
@@ -580,5 +637,29 @@ export function devicesBlock(d) {
   const thCard = `<div class="c dcard wide"><div class="top"><b>${esc(t("Thermostate und Räume"))}</b></div>
     <div class="tscroll"><table class="tbl"><tr><th>${esc(t("Raum"))}</th><th>${esc(t("Thermostat"))}</th><th>${esc(t("Ventil"))}</th><th>${esc(t("Batterie"))}</th><th>${esc(t("Aufheizen 2 K"))}</th></tr>${ths}</table></div>
     <div class="fd">${esc(t("Aus dem Geräteregister und aus Raumklima. Nichts davon muss von Hand eingetragen werden."))}</div></div>`;
-  return `<div class="grid g2">${hpCard}${pumpCard}</div><div class="grid">${thCard}</div>`;
+  const extra = tankCard || curves ? `<div class="grid g2">${curves}${tankCard}</div>` : "";
+  return `<div class="grid g2">${hpCard}${pumpCard}</div>${extra}<div class="grid">${thCard}</div>`;
+}
+
+// Heizkurve, wie der Stiebel-WPM sie aus Steilheit und Raum-Soll rechnet
+export function curveCard(d) {
+  const curves = (d.datasheet && d.datasheet.curves) || [];
+  if (!curves.length) return "";
+  const colors = ["var(--hz-heat)", "var(--hz-cool)", "var(--hz-vio)", "var(--hz-ok)"];
+  const color = (i) => colors[i % colors.length];
+  const lines = curves.map((c, i) => ({ color: color(i), width: 2, points: c.points }));
+  const pts = curves.flatMap((c) => c.points.map((p) => ({ x: p.x, y: p.y, r: 0.01, opacity: 0 })));
+  const now = (d.datasheet.heat_pump && d.datasheet.heat_pump.now) || {};
+  curves.forEach((c, i) => {
+    if (now.outdoor != null && c.target_now != null) pts.push({ x: now.outdoor, y: c.target_now, color: color(i), opacity: 0.95, r: 5, title: `${c.name}: ${t("Regler-Soll")} ${fmt(c.target_now, 1)} °C` });
+  });
+  const rows = curves
+    .map((c, i) => {
+      const flat = c.room_night != null && c.room_day != null && c.room_night >= c.room_day;
+      return `<div class="row2"><span><i class="dot" style="background:${color(i)}"></i>${esc(c.name)} · HK${c.number}</span><span>${esc(t("Steilheit {s} · Raum {r} °C", { s: fmt(c.slope, 2), r: fmt(c.room, 1) }))}${flat ? ` · ${esc(t("ohne Absenkung"))}` : ""}</span></div>`;
+    })
+    .join("");
+  const diff = curves.filter((c) => c.difference != null);
+  const note = diff.length ? t("Regler-Soll jetzt gegen Kurve: {v}", { v: diff.map((c) => `${c.name} ${signed(c.difference)} K`).join(" · ") }) : "";
+  return `<div class="c dcard"><div class="top"><b>${esc(t("Heizkurven laut Regler"))}</b></div>${scatterChart(pts, { h: 180, unitY: "°C", lines })}${rows}<div class="fd">${esc(note)}</div><div class="fd">${esc(t("Linie: Raum-Soll + Steilheit × (Raum-Soll − außen). Punkt: was der Regler gerade fordert."))}</div></div>`;
 }

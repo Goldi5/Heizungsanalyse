@@ -105,6 +105,12 @@ CONF_DHW_TEMP_ENTITY: Final = "dhw_temp_entity"
 CONF_DHW_TARGET_ENTITY: Final = "dhw_target_entity"
 CONF_DHW_PUMP_ENTITY: Final = "dhw_pump_entity"
 
+# Herstellerdaten (0.8.0b2)
+CONF_HEAT_PUMP_MODEL: Final = "heat_pump_model"
+CONF_DHW_TANK_MODEL: Final = "dhw_tank_model"
+CONF_BUFFER_MODEL: Final = "buffer_model"
+PLANT_MODELS: Final = (CONF_HEAT_PUMP_MODEL, CONF_DHW_TANK_MODEL, CONF_BUFFER_MODEL)
+
 OPTIONAL_SOURCES: Final = (
     CONF_POWER_FALLBACK_ENTITY,
     CONF_DHW_HEAT_ENTITY,

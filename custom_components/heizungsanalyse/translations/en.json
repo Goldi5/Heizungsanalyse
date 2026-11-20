@@ -52,7 +52,8 @@
           "save": "Save",
           "edit_circuit": "Edit heating circuit",
           "edit_room": "Edit room",
-          "thresholds": "Thresholds"
+          "thresholds": "Thresholds",
+          "plant": "Heat pump and storage (datasheet)"
         },
         "description": "Change sources, heating circuits, rooms or thresholds."
       },
@@ -190,6 +191,15 @@
         "data_description": {
           "climate_entity": "Optional. Best is the room's Raumklima climate: it provides the real room sensor, the effective target and the valve opening. Without a thermostat the room is listed without control.",
           "valve_position_entity": "Optional. Livisi thermostats do not report a valve position."
+        }
+      },
+      "plant": {
+        "title": "Heat pump and storage",
+        "description": "Pick the model from the manufacturer catalogue. The analysis then compares against the datasheet: COP at the same weather and flow temperature, minimum output (cycling), the controller's heating curve and storage losses. Leave empty if the device is not listed.",
+        "data": {
+          "heat_pump_model": "Heat pump",
+          "dhw_tank_model": "Hot water tank",
+          "buffer_model": "Buffer tank"
         }
       }
     },

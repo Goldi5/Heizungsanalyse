@@ -52,7 +52,8 @@
           "save": "Speichern",
           "edit_circuit": "Heizkreis bearbeiten",
           "edit_room": "Raum bearbeiten",
-          "thresholds": "Schwellen"
+          "thresholds": "Schwellen",
+          "plant": "Wärmepumpe und Speicher (Herstellerdaten)"
         },
         "description": "Quellen, Heizkreise, Räume oder Schwellen ändern."
       },
@@ -190,6 +191,15 @@
         "data_description": {
           "climate_entity": "Optional. Am besten das Raumklima-Klima des Raums: Es liefert den echten Raumfühler, das wirksame Soll und die Ventilöffnung. Ohne Thermostat wird der Raum ohne Regelung geführt.",
           "valve_position_entity": "Optional. Livisi-Thermostate liefern keine Ventilposition."
+        }
+      },
+      "plant": {
+        "title": "Wärmepumpe und Speicher",
+        "description": "Modell aus dem Herstellerkatalog wählen. Die Analyse vergleicht dann mit dem Datenblatt: COP bei gleichem Wetter und Vorlauf, kleinste Leistung (Takten), Heizkurve des Reglers und Speicherverluste. Leer lassen, wenn das Gerät nicht in der Liste ist.",
+        "data": {
+          "heat_pump_model": "Wärmepumpe",
+          "dhw_tank_model": "Warmwasserspeicher",
+          "buffer_model": "Pufferspeicher"
         }
       }
     },

@@ -401,4 +401,8 @@ table.tbl td { white-space:nowrap; }
   .verdict .big-say { font-size:1.12rem; }
   .kpi .num { font-size:1.6rem; }
 }
+.dsline { display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; margin-top:10px; font-size:.82rem; color:var(--hz-mut); }
+.dsline b { color:var(--hz-ink); font-size:1rem; }
+.row2 .dot { display:inline-block; margin-right:6px; vertical-align:middle; }
+.dcard a { color:var(--hz-cool); }
 `;

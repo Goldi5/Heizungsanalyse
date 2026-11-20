@@ -20,6 +20,7 @@ from .const import (
     CIRCUIT_TYPES,
     CONF_AUX_HEATER_ENTITY,
     CONF_BUFFER_ENTITY,
+    CONF_BUFFER_MODEL,
     CONF_CIRCUIT,
     CONF_CIRCUITS,
     CONF_CLIMATE_ENTITY,
@@ -32,10 +33,12 @@ from .const import (
     CONF_DHW_OPERATION_ENTITY,
     CONF_DHW_POWER_ENTITY,
     CONF_DHW_PUMP_ENTITY,
+    CONF_DHW_TANK_MODEL,
     CONF_DHW_TARGET_ENTITY,
     CONF_DHW_TEMP_ENTITY,
     CONF_FLOW_ENTITY,
     CONF_HEAT_ENTITY,
+    CONF_HEAT_PUMP_MODEL,
     CONF_HP_FLOW_ENTITY,
     CONF_ID,
     CONF_MIXER_CLOSE_ENTITY,
@@ -58,7 +61,9 @@ from .const import (
     DOMAIN,
     NAME,
     OPTIONAL_SOURCES,
+    PLANT_MODELS,
 )
+from .heat_pump_catalog import choices as catalog_choices
 from .models import HeatingCircuit, Room, unique_id
 from .validation import validate_climate, validate_energy, validate_status, validate_temperature
 
@@ -239,7 +244,7 @@ class HeizungsanalyseOptionsFlow(OptionsFlowWithReload):
         return list(self._draft().get(CONF_ROOMS) or [])
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        menu_options = ["sources", "thresholds", "add_circuit"]
+        menu_options = ["sources", "plant", "thresholds", "add_circuit"]
         if self._circuits():
             menu_options.extend(["edit_circuit", "remove_circuit", "add_room"])
         if self._rooms():
@@ -285,6 +290,28 @@ class HeizungsanalyseOptionsFlow(OptionsFlowWithReload):
             fields[marker] = option_selector
 
         return self.async_show_form(step_id="sources", data_schema=vol.Schema(fields), errors=errors)
+
+    async def async_step_plant(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Wärmepumpe und Speicher aus dem Herstellerkatalog wählen."""
+        if user_input is not None:
+            draft = self._draft()
+            for key in PLANT_MODELS:
+                draft.pop(key, None)
+            draft.update({key: value for key, value in user_input.items() if value})
+            return await self.async_step_init()
+
+        current = self._draft()
+        fields: dict[Any, Any] = {}
+        for key, kind in ((CONF_HEAT_PUMP_MODEL, "heat_pump"), (CONF_DHW_TANK_MODEL, "dhw"), (CONF_BUFFER_MODEL, "buffer")):
+            option_selector = selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=[selector.SelectOptionDict(value=c["value"], label=c["label"]) for c in catalog_choices(kind)],
+                    mode=selector.SelectSelectorMode.DROPDOWN,
+                )
+            )
+            marker, option_selector = _optional(key, current, option_selector)
+            fields[marker] = option_selector
+        return self.async_show_form(step_id="plant", data_schema=vol.Schema(fields))
 
     async def async_step_thresholds(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         current = Thresholds.from_options(self._draft().get(CONF_THRESHOLDS) or {}).as_dict()

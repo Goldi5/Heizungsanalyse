@@ -1,3 +1,23 @@
+## 0.8.0b2 – 2026-11-20 (Beta)
+
+### Neu: Herstellerdaten
+- **Wärmepumpe und Speicher wählen** (*Konfigurieren → Wärmepumpe und
+  Speicher*). Katalog mit Datenblattwerten: Stiebel Eltron WPL-A 05/07 HK 230
+  Premium, SBB 300-1 Plus, SBP 400 E.
+- **Übersicht:** zweite Linie im Kennlinien-Diagramm – COP laut Datenblatt bei
+  Außentemperatur und Vorlauf des jeweiligen Tages – und der Anteil, den die
+  Anlage davon erreicht (80–95 % sind im Betrieb gut, weil der Prüfstand
+  weder Abtauen noch Pumpen kennt).
+- **Starts/Tag:** zeigt den mittleren Wärmebedarf neben der kleinsten
+  Leistungsstufe der Wärmepumpe. Liegt der Bedarf darunter, ist Takten
+  physikalisch nicht zu vermeiden.
+- **Geräte:** Datenblatt der Wärmepumpe (SCOP, COP-Punkte, Leistungsbereich,
+  Einsatzgrenzen, Mindest-Volumenstrom, Kältemittel), Speicher mit Inhalt und
+  Wärme je Kelvin, **Heizkurven laut Regler** (Stiebel WPM: Steilheit und
+  Raum-Soll je Kreis, Regler-Soll gegen Kurve, Hinweis auf fehlende Absenkung).
+- **Warmwasserspeicher:** erwartete Abkühlung ohne Zapfen aus dem
+  Bereitschaftsverlust des Datenblatts neben der gemessenen.
+
 ## 0.8.0b1 – 2026-11-20 (Beta)
 
 ### Neue Optik

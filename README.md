@@ -110,8 +110,17 @@ Ohne HACS: Ordner `custom_components/heizungsanalyse` nach
    Die Zuordnung Kreis zu Raum bestätigt immer der Nutzer; die Integration
    rät sie nie aus Entity-Namen. Räume ohne Regelung (Heizung dauerhaft aus)
    werden ohne Climate-Entity angelegt und lösen keine Raumhinweise aus.
-5. **Schwellen** der Hinweise prüfen (*Konfigurieren, Schwellen der Hinweise*).
-6. **Kosten und Wasser** brauchen keine eigene Einstellung: Strompreis
+5. **Wärmepumpe und Speicher** (*Konfigurieren*, optional): Modell aus dem
+   Herstellerkatalog wählen. Dann vergleicht die Analyse mit dem Datenblatt:
+   COP bei gleichem Wetter und Vorlauf (Prüfstand nach EN 14511), kleinste
+   Leistungsstufe gegen den Wärmebedarf (ist Takten vermeidbar?), Abkühlung
+   des Warmwasserspeichers ohne Zapfen. Bei Stiebel-Eltron-Reglern (WPM)
+   zeigt *Geräte* zusätzlich die Heizkurve je Kreis aus Steilheit und
+   Raum-Soll. Im Katalog: Stiebel Eltron WPL-A 05/07 HK 230 Premium,
+   SBB 300-1 Plus, SBP 400 E – weitere Modelle gern per Issue mit Link zum
+   Datenblatt.
+6. **Schwellen** der Hinweise prüfen (*Konfigurieren, Schwellen der Hinweise*).
+7. **Kosten und Wasser** brauchen keine eigene Einstellung: Strompreis
    (auch dynamisch) und Wasserzähler mit Preis kommen aus dem
    Energie-Dashboard von Home Assistant. Gerechnet wird Stunde für Stunde.
 
