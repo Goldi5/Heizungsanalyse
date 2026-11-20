@@ -24,7 +24,7 @@ test("jeder Tab beginnt mit einer Einordnung", () => {
   setLang({ language: "de" });
   for (const v of VIEWS) {
     const html = renderView(v, de, { help: null, range: 90, form: v === "vergleich", widths: {}, cfgErrors: {} }, {});
-    assert.ok(html.includes('class="intro"'), `${v}: Einordnung fehlt`);
+    assert.ok(html.includes('class="say"'), `${v}: Kernsatz fehlt`);
   }
 });
 
@@ -41,8 +41,8 @@ test("englische Oberflaeche ohne deutsche Reste", () => {
 });
 
 test("jede Hilfe hat beide Sprachen und jeder ?-Schlüssel existiert", () => {
-  const src = readFileSync(new URL("../src/views.js", import.meta.url), "utf8");
-  const used = [...src.matchAll(/head\([^,]+,\s*"(\w+)"/g)].map((m) => m[1]);
+  const src = readFileSync(new URL("../src/views.js", import.meta.url), "utf8") + readFileSync(new URL("../src/views8.js", import.meta.url), "utf8");
+  const used = [...src.matchAll(/head\([^,]+,\s*"(\w+)"/g), ...src.matchAll(/\bq\("(\w+)"/g)].map((m) => m[1]);
   for (const k of used) assert.ok(HELP_KEYS.includes(k), `Hilfe fehlt: ${k}`);
   for (const k of HELP_KEYS) {
     setLang({ language: "de" });
@@ -54,13 +54,17 @@ test("jede Hilfe hat beide Sprachen und jeder ?-Schlüssel existiert", () => {
 });
 
 test("jeder t()-Text hat eine englische Übersetzung", () => {
-  const files = ["views.js", "card.js", "strategy.js", "logic.js"];
+  const files = ["views.js", "views8.js", "card.js", "strategy.js", "logic.js"];
   const missing = [];
   for (const f of files) {
     const src = readFileSync(new URL(`../src/${f}`, import.meta.url), "utf8");
     for (const m of src.matchAll(/\bt\("((?:[^"\\]|\\.)+)"/g)) if (!(m[1] in EN)) missing.push(m[1]);
   }
   assert.deepEqual([...new Set(missing)], []);
+});
+
+test("kein Einstellungs-Tab mehr – Einstellungen nur unter Konfigurieren", () => {
+  assert.ok(!VIEWS.includes("einstellungen"));
 });
 
 test("Strategie baut acht Ansichten mit der Karte", () => {

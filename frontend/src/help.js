@@ -122,6 +122,14 @@ const HELP = {
     de: "Welche Sensoren zugeordnet sind. Fehlende optionale Sensoren schalten Auswertungen nicht frei – ergänzen lässt sich das unter Konfigurieren.",
     en: "Which sensors are mapped. Missing optional sensors leave analyses locked – add them under Configure.",
   },
+  timeline: {
+    de: "Jede Zeile ist ein Tag von 0 bis 24 Uhr. Orange: Verdichter läuft. Violett: Warmwasser wird geladen. Blau: Abtauen. Rot: Heizstab. Viele kurze Striche heißt Takten; lange Blöcke sind gut. Grundlage ist der Zustandsverlauf von Home Assistant.",
+    en: "Each row is a day from 0 to 24 h. Orange: compressor running. Violet: hot water charging. Blue: defrost. Red: aux heater. Many short strokes mean cycling; long blocks are good. Based on the Home Assistant state history.",
+  },
+  schema: {
+    de: "Das Fließbild zeigt live, wohin die Wärme gerade geht: von der Wärmepumpe über die Umschaltung in den Puffer oder den Warmwasserspeicher, vom Puffer in die Heizkreise. Rohrfarbe ist die Temperatur, die Strichlinie läuft nur bei laufender Pumpe. Die Raum-Chips färben sich nach der Abweichung zum Soll über sieben Tage.",
+    en: "The flow diagram shows live where the heat goes: from the heat pump via the diverter into the buffer or the hot-water tank, from the buffer into the heating circuits. Pipe colour is the temperature; the dashed line moves only while the pump runs. Room chips are coloured by the deviation from target over seven days.",
+  },
   costs: {
     de: "Kosten des laufenden Monats. Jede Stunde wird mit dem Preis gerechnet, der in dieser Stunde galt – bei dynamischen Tarifen ist das genauer als „Monatsverbrauch × aktueller Preis“. Preise und Wasserzähler kommen aus dem Energie-Dashboard von Home Assistant. „Wärme kostet“ teilt die Stromkosten durch die erzeugte Wärme.",
     en: "Costs of the current month. Every hour is priced with the price valid in that hour – with dynamic tariffs that is more accurate than “monthly usage × current price”. Prices and the water meter come from the Home Assistant energy dashboard. “Heat costs” divides power costs by the heat produced.",

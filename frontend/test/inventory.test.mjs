@@ -71,26 +71,6 @@ test("Bearbeiten legt vorhandene Werte in die Felder", () => {
   assert.ok(!html.includes('name="selection"'), "Objekt ist beim Bearbeiten fix");
 });
 
-test("Einstellungen nutzen Formularfelder, kein JSON", () => {
-  setLang({ language: "de" });
-  const cfg = { data: {}, options: {}, circuits: [], rooms: [], thresholds: {} };
-  const ui = { help: null, range: 90, form: false, widths: {}, cfgErrors: {} };
-  const html = renderView("einstellungen", { ...d, config: cfg }, ui, {});
-  assert.ok(!html.includes("cfgjson"));
-  assert.ok(!html.includes("data-cfgjson"));
-  assert.ok(html.includes('data-cfg="data"'));
-  assert.ok(html.includes('data-thr="starts_per_day"'), "Schwelle als Feld");
-  assert.ok(html.includes('data-act="cfg-circ-add"'));
-});
-
-test("Einstellungen zeigen Feldfehler", () => {
-  setLang({ language: "de" });
-  const cfg = { data: {}, options: {}, circuits: [], rooms: [], thresholds: {} };
-  const ui = { help: null, range: 90, form: false, widths: {}, cfgErrors: { power_entity: "not_found" } };
-  const html = renderView("einstellungen", { ...d, config: cfg }, ui, {});
-  assert.ok(html.includes("Entity nicht gefunden"));
-});
-
 test("Vergleichsformular bietet Was und Einstellung als Auswahl", () => {
   setLang({ language: "de" });
   const ui = { help: null, range: 90, form: true, widths: {}, chgObject: "radiators.wohnen", chgField: "valve_preset" };

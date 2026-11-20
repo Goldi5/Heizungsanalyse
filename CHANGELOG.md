@@ -1,3 +1,36 @@
+## 0.8.0b1 – 2026-11-20 (Beta)
+
+### Neue Optik
+- **Acht Tabs, jeder mit einer Frage und einem Satz als Antwort:** Übersicht,
+  Effizienz, Betrieb (neu), Räume, Hydraulik, Änderungen, Geräte, System.
+  Navigation mit Symbolen, auf dem Handy in einer Zeile wischbar.
+- **Übersicht:** Kernsatz („läuft so effizient, wie es bei 6 °C zu erwarten
+  ist“), Kennlinie mit Erwartungsband, „Was ist zu tun“, Live-Werte, vier
+  Kennzahlen mit einheitlicher Farblogik, Kostenleiste.
+- **Betrieb (neu):** Zeitstreifen der letzten 7 Tage je Tag (Verdichter,
+  Warmwasser, Abtauen, Heizstab), Laufzeit je Start als Histogramm, Starts
+  nach Außentemperatur, Spreizung und Puffer-Ladung mit Zielband,
+  Warmwasserspeicher.
+- **Räume:** Heatmap Raum × Uhrzeit (Abweichung zum Soll, 7 Tage),
+  Raumkarten mit Ventilöffnung, gelernter Aufheizzeit aus Raumklima,
+  Thermostat-Modell und Batterie.
+- **Hydraulik:** animiertes Fließbild mit Live-Werten – Wärmepumpe,
+  Umschaltung Heizen/Warmwasser, Puffer, Warmwasserspeicher mit Zapfung,
+  Heizkreise mit Ist/Soll und Raum-Chips. Rohrfarbe = Temperatur, Bewegung nur
+  bei laufender Pumpe.
+- **Geräte:** Wärmepumpe, Pumpen und Thermostate automatisch aus dem
+  Geräteregister und aus Raumklima; das Inventar ergänzt nur noch, was Home
+  Assistant nicht weiß.
+- Einheitliche Diagramme mit Zielbändern statt Schwellenlinien.
+
+### Geändert
+- Der Tab **Einstellungen** entfällt. Eingerichtet wird nur noch unter
+  Einstellungen → Geräte & Dienste → Heizungsanalyse → Konfigurieren.
+- Heizkreise vom Typ **Puffer** gelten als Teil des Puffers: kein
+  Soll-Vergleich, im Fließbild am Puffer.
+- Raumklima-Räume im Beobachtungsmodus (Fußboden ohne Thermostat) lassen sich
+  unter Konfigurieren zuordnen.
+
 ## 0.7.1b1 – 2026-11-19 (Beta)
 
 ### Behoben

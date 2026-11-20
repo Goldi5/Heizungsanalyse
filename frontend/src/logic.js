@@ -63,7 +63,9 @@ export function linearFit(points) {
   }
   if (sxx < 1e-9) return null;
   const b = sxy / sxx;
-  return { a: my - b * mx, b, n, at: (x) => my - b * mx + b * x };
+  const res = pts.map((p) => p.y - (my - b * mx + b * p.x));
+  const sigma = Math.sqrt(res.reduce((acc, r) => acc + r * r, 0) / Math.max(1, n - 2));
+  return { a: my - b * mx, b, n, sigma, at: (x) => my - b * mx + b * x };
 }
 
 // Mittel der letzten n gegen die n davor -> Richtung

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from homeassistant.components import websocket_api
@@ -29,11 +30,14 @@ from .const import (
     OPTIONAL_SOURCES,
     VERSION,
 )
+from .devices import build_devices
 from .diagnostics import async_build_diagnostics
 from .inventory_io import export_csv, parse_csv, validate_import
 from .inventory_schema import build_schema, completeness, validate_values
 from .services import async_apply_inventory, async_remove_inventory
 from .summary import build_summary, local_day
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def _runtime(hass: HomeAssistant) -> Any:
@@ -113,7 +117,45 @@ async def ws_summary(hass: HomeAssistant, connection: websocket_api.ActiveConnec
     result["inventory_completeness"] = completeness(inventory)
     result["settings_schema"] = settings_schema()
     result["settings_coverage"] = coverage(entry.data, entry.options)
+    try:
+        result["operation"] = runtime.coordinator.operation_summary()
+        result["devices"] = build_devices(hass, dict(entry.data), dict(entry.options))
+        result["entities"] = _live_entities(runtime.coordinator, entry)
+    except Exception as err:  # noqa: BLE001 - Zusatzdaten dürfen die Übersicht nie verhindern
+        _LOGGER.debug("Betrieb/Geräte nicht lesbar: %s", err)
     connection.send_result(msg["id"], result)
+
+
+def _live_entities(coordinator: Any, entry: Any) -> dict[str, Any]:
+    """Welche Entities das Fließbild live liest (nur Namen, keine Werte)."""
+    options = entry.options
+    circuits = {}
+    for circuit in options.get(CONF_CIRCUITS) or []:
+        target, _inferred = coordinator.circuit_target(circuit)
+        circuits[str(circuit.get("id"))] = {
+            "temp": circuit.get("temperature_entity"),
+            "target": target,
+            "pump": circuit.get("pump_entity"),
+            "mixer_open": circuit.get("mixer_open_entity"),
+            "mixer_close": circuit.get("mixer_close_entity"),
+        }
+    return {
+        "compressor": entry.data.get("compressor_entity"),
+        "outdoor": entry.data.get("outdoor_entity"),
+        "hp_flow": options.get("hp_flow_entity"),
+        "hp_return": options.get("return_entity"),
+        "volume": options.get("volume_flow_entity"),
+        "power_now": options.get("power_now_entity"),
+        "buffer": options.get("buffer_entity") or options.get("flow_entity"),
+        "buffer_target": options.get("target_flow_entity"),
+        "dhw_temp": options.get("dhw_temp_entity"),
+        "dhw_target": options.get("dhw_target_entity"),
+        "dhw_op": options.get("dhw_operation_entity"),
+        "dhw_pump": options.get("dhw_pump_entity"),
+        "defrost": options.get("defrost_entity"),
+        "aux": options.get("aux_heater_entity"),
+        "circuits": circuits,
+    }
 
 
 @websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/dashboard/status"})

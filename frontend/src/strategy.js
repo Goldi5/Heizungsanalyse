@@ -2,14 +2,14 @@
 import { setLang, t } from "./i18n.js";
 
 const VIEW_DEFS = [
-  { view: "anlage", title: "Anlage", icon: "mdi:heat-pump" },
+  { view: "anlage", title: "Übersicht", icon: "mdi:view-dashboard-outline" },
   { view: "effizienz", title: "Effizienz", icon: "mdi:chart-bell-curve-cumulative" },
-  { view: "raeume", title: "Räume & Kreise", icon: "mdi:home-thermometer" },
-  { view: "vergleich", title: "Vorher / Nachher", icon: "mdi:compare-horizontal" },
-  { view: "inventar", title: "Inventar", icon: "mdi:clipboard-list-outline" },
-  { view: "protokoll", title: "Protokoll", icon: "mdi:text-box-search-outline" },
-  { view: "einstellungen", title: "Einstellungen", icon: "mdi:tune-variant" },
-  { view: "schema", title: "Schema", icon: "mdi:sitemap-outline" },
+  { view: "betrieb", title: "Betrieb", icon: "mdi:chart-timeline" },
+  { view: "raeume", title: "Räume", icon: "mdi:home-thermometer" },
+  { view: "schema", title: "Hydraulik", icon: "mdi:pipe" },
+  { view: "vergleich", title: "Änderungen", icon: "mdi:compare-horizontal" },
+  { view: "inventar", title: "Geräte", icon: "mdi:devices" },
+  { view: "protokoll", title: "System", icon: "mdi:heart-pulse" },
 ];
 
 export function buildDashboard(config = {}) {

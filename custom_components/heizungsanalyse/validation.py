@@ -71,7 +71,14 @@ def validate_status(hass, entity_id: str) -> str | None:
 
 
 def validate_climate(hass, entity_id: str) -> str | None:
-    """Klimaquelle: climate-Entity, verfügbar."""
+    """Klimaquelle: climate-Entity, verfügbar.
+
+    Raumklima-Räume im Beobachtungsmodus (Fußboden ohne Thermostat) melden den
+    Zustand „unknown“, liefern aber Raumtemperatur und Komfortziel – die gelten.
+    """
     if _domain(entity_id) != "climate":
         return ERROR_WRONG_DOMAIN
+    state = hass.states.get(entity_id)
+    if state is not None and state.state == STATE_UNKNOWN and state.attributes.get("monitor"):
+        return None
     return _availability(hass, entity_id)

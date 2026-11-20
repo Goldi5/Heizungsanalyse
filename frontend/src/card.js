@@ -6,10 +6,12 @@ import { STYLES } from "./styles.js";
 import { invalidate, loadSummary } from "./data.js";
 import { objectKey, sectionFields } from "./inventory.js";
 import { VIEWS, header, renderView } from "./views.js";
+import { liveValues } from "./views8.js";
 
 export class HeizungsanalyseCard extends HTMLElement {
   setConfig(config) {
     this._config = { view: "anlage", ...(config || {}) };
+    if (this._config.view === "einstellungen") this._config.view = "protokoll"; // Einstellungen: nur noch unter Konfigurieren
     if (!VIEWS.includes(this._config.view)) this._config.view = "anlage";
     this._ui = {
       help: null,
@@ -49,7 +51,7 @@ export class HeizungsanalyseCard extends HTMLElement {
     this._hass = hass;
     setLang(hass);
     if (first) this._load();
-    else if (this._data && this._config.view === "raeume") this._liveChanged() && this._render();
+    else if (this._data && ["raeume", "schema", "anlage"].includes(this._config.view)) this._liveChanged() && this._render();
   }
 
   getCardSize() { return 12; }
@@ -312,7 +314,11 @@ export class HeizungsanalyseCard extends HTMLElement {
     return out;
   }
   _liveChanged() {
-    const key = JSON.stringify(this._live());
+    // Fließbild und Übersicht höchstens alle 10 Sekunden neu zeichnen
+    const now = Date.now();
+    if (this._liveAt && now - this._liveAt < 10000) return false;
+    this._liveAt = now;
+    const key = JSON.stringify([this._live(), liveValues(this._data, this._hass.states)]);
     if (key === this._liveKey) return false;
     this._liveKey = key;
     return true;
@@ -328,7 +334,7 @@ export class HeizungsanalyseCard extends HTMLElement {
     let data = d;
     if (view === "protokoll") data = { ...d, diag: this._diag, log: { entries: this._log }, logError: this._logError };
     if (view === "einstellungen") data = { ...d, config: this._cfgData, configError: this._cfgError, suggestion: this._cfgSuggestion };
-    this._paint(`${header(d, view)}${renderView(view, data, this._ui, this._live())}`);
+    this._paint(`${header(d, view)}${renderView(view, data, this._ui, this._live(), this._hass ? this._hass.states : {})}`);
     if (!fromMeasure) requestAnimationFrame(() => this._measure());
   }
 

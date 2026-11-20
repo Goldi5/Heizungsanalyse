@@ -56,6 +56,7 @@ from .analysis.onoff import (
     starts_per_day as onoff_starts_per_day,
     value_at,
 )
+from .analysis.operation import cycle_histogram, hour_profile, timeline
 from .analysis.rooms import RoomDeviation, RoomReading, climate_values
 from .analysis.series import build_samples, counter_by_day, energy_by_day, mean_by_day
 from .analysis.types import DaySample, HourSample
@@ -645,6 +646,32 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
                     details={"entity": entity_id, "state_class": state_class},
                 )
 
+    def operation_summary(self) -> dict:
+        """Zeitstreifen der letzten 7 Tage, Zyklen und Raumprofile fürs Dashboard."""
+        now = dt_util.utcnow()
+        since = now - timedelta(days=7)
+        tz = dt_util.get_default_time_zone()
+        spans = self._spans or {}
+        kinds = {
+            "compressor": self.entry.data.get(CONF_COMPRESSOR_ENTITY),
+            "dhw": self._entity(CONF_DHW_OPERATION_ENTITY),
+            "defrost": self._entity(CONF_DEFROST_ENTITY),
+            "aux": self._entity(CONF_AUX_HEATER_ENTITY),
+        }
+        lanes = {kind: timeline(spans.get(entity_id, []), since) for kind, entity_id in kinds.items() if entity_id and entity_id in spans}
+        compressor = spans.get(kinds["compressor"] or "", [])
+        return {
+            "since": int(since.timestamp()),
+            "now": int(now.timestamp()),
+            "timeline": lanes,
+            "cycles": cycle_histogram(compressor, since, open_end=now - timedelta(minutes=1)),
+            "room_profiles": {
+                str(room[CONF_ID]): hour_profile(self._rooms.readings(str(room[CONF_ID])), tz)
+                for room in self._rooms_config()
+                if CONF_ID in room
+            },
+        }
+
     def source_kinds(self) -> dict[str, str]:
         """Alle zugeordneten Quellen (Entity → erwartete Art), auch die ohne erwartete Art."""
         kinds = dict(self._source_expectations())
@@ -1179,6 +1206,8 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
         target = circuit.get(CONF_TARGET_ENTITY)
         if target:
             return target, False
+        if str(circuit.get("type")) == "buffer":
+            return None, False  # Pufferkreis: das Kreis-Soll der Regelung ist kein Vorlauf-Soll
         actual = str(circuit.get(CONF_TEMPERATURE_ENTITY) or "")
         if "ist_temperatur" in actual:
             guess = actual.replace("ist_temperatur", "soll_temperatur", 1)

@@ -31,7 +31,7 @@ function axisY(scale, h, unit, side = "l", color = "var(--hz-mut)") {
  * Zeitreihe über Tage: Balken und Linien, optional zweite Achse.
  * series: [{ key, kind: "bar"|"line"|"area", color, axis: "l"|"r", stack }]
  */
-export function timeChart(rows, series, { h = 220, unitL = "", unitR = "", refL = null, markers = [] } = {}) {
+export function timeChart(rows, series, { h = 220, unitL = "", unitR = "", refL = null, markers = [], band = null } = {}) {
   if (!rows.length) return "";
   const inner = W - PAD.l - PAD.r;
   const step = inner / rows.length;
@@ -46,6 +46,7 @@ export function timeChart(rows, series, { h = 220, unitL = "", unitR = "", refL 
     });
     for (const s of series.filter((x) => x.axis === axis && !x.stack)) rows.forEach((r) => r[s.key] != null && out.push(r[s.key]));
     if (axis === "l" && refL != null) out.push(refL);
+    if (axis === "l" && band) out.push(band[0], band[1]);
     return out;
   };
   const scaleOf = (axis, zero) => {
@@ -59,6 +60,11 @@ export function timeChart(rows, series, { h = 220, unitL = "", unitR = "", refL 
   const yOf = (scale) => (v) => PAD.t + (1 - (v - scale.min) / (scale.max - scale.min)) * (h - PAD.t - PAD.b);
   let body = "";
   if (sl) body += axisY(sl, h, unitL, "l");
+  // Zielband (z. B. Spreizung 3–8 K) als ruhige Fläche hinter den Daten
+  if (band && sl) {
+    const y = yOf(sl);
+    body += `<rect x="${PAD.l}" y="${y(band[1])}" width="${W - PAD.l - PAD.r}" height="${Math.max(0, y(band[0]) - y(band[1]))}" class="band"/>`;
+  }
   if (sr) body += axisY(sr, h, unitR, "r", series.find((s) => s.axis === "r")?.color);
 
   // gestapelte Balken
@@ -134,16 +140,23 @@ export function timeChart(rows, series, { h = 220, unitL = "", unitR = "", refL 
 }
 
 /** Streudiagramm (z. B. COP gegen Außentemperatur) mit optionaler Linie. */
-export function scatterChart(points, { h = 240, unitX = "°C", unitY = "", lines = [], highlight = null, color = "var(--hz-ok)" } = {}) {
+export function scatterChart(points, { h = 240, unitX = "°C", unitY = "", lines = [], highlight = null, color = "var(--hz-ok)", band = null } = {}) {
   const pts = points.filter((p) => Number.isFinite(p.x) && Number.isFinite(p.y));
   if (pts.length < 2) return "";
-  const allY = pts.map((p) => p.y).concat(lines.flatMap((l) => l.points.map((p) => p.y)));
+  const allY = pts
+    .map((p) => p.y)
+    .concat(lines.flatMap((l) => l.points.map((p) => p.y)))
+    .concat(band ? band.upper.concat(band.lower).map((p) => p.y) : []);
   const sx = niceScale(Math.min(...pts.map((p) => p.x)), Math.max(...pts.map((p) => p.x)), 5);
   const sy = niceScale(Math.min(...allY), Math.max(...allY));
   const x = (v) => PAD.l + ((v - sx.min) / (sx.max - sx.min)) * (W - PAD.l - PAD.r);
   const y = (v) => PAD.t + (1 - (v - sy.min) / (sy.max - sy.min)) * (h - PAD.t - PAD.b);
   let body = axisY(sy, h, unitY, "l");
   for (const v of sx.ticks) body += `<text x="${x(v)}" y="${h - 6}" text-anchor="middle">${fmt(v, 0)}${esc(unitX)}</text>`;
+  if (band && band.upper.length > 1) {
+    const poly = band.upper.concat([...band.lower].reverse()).map((p, i) => `${i ? "L" : "M"}${x(p.x).toFixed(1)} ${y(p.y).toFixed(1)}`).join(" ");
+    body += `<path d="${poly} Z" class="band"/>`;
+  }
   for (const l of lines) {
     const d = l.points.map((p, i) => `${i ? "L" : "M"}${x(p.x).toFixed(1)} ${y(p.y).toFixed(1)}`).join(" ");
     body += `<path d="${d}" fill="none" stroke="${l.color}" stroke-width="${l.width || 2.6}" ${l.dash ? `stroke-dasharray="${l.dash}"` : ""} stroke-linecap="round"/>`;

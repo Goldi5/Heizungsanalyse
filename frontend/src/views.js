@@ -16,9 +16,10 @@ import {
   sectionTitle,
   targetChoices,
 } from "./inventory.js";
+import { devicesBlock, header8, liveValues, viewBetrieb, viewHydraulik, viewRaeume8, viewUebersicht } from "./views8.js";
 import { CHECK_NAMES, SCORE_LEVEL, binByOutdoor, dayLabel, esc, fmt, kpiTone, linearFit, rangeRows, signed, trend, weatherAdjusted } from "./logic.js";
 
-export const VIEWS = ["anlage", "effizienz", "raeume", "vergleich", "inventar", "protokoll", "einstellungen", "schema"];
+export const VIEWS = ["anlage", "effizienz", "betrieb", "raeume", "schema", "vergleich", "inventar", "protokoll"];
 
 // Diagramm in einem Messkasten: die Karte trägt die echte Breite in ui.widths ein
 function box(ui, id, fn) {
@@ -55,6 +56,10 @@ const NAV = [
 ];
 
 export function header(d, view) {
+  return header8(d, view);
+}
+
+export function headerLegacy(d, view) {
   const names = { anlage: "Anlage", effizienz: "Effizienz", raeume: "Räume & Kreise", vergleich: "Vorher / Nachher", inventar: "Inventar", protokoll: "Protokoll", einstellungen: "Einstellungen", schema: "Schema" };
   const at = d.generated ? new Date(d.generated) : null;
   const time = at ? at.toLocaleTimeString(getLang() === "de" ? "de-DE" : "en-GB", { hour: "2-digit", minute: "2-digit" }) : "";
@@ -316,11 +321,20 @@ export function viewEffizienz(d, ui) {
       <div class="legend"><span>${esc(t("Median {m} K über Puffer-Soll", { m: fmt(hy.overshoot && hy.overshoot.median, 1) }))}</span></div></div>`
     : "";
 
-  return `<div class="row">${seg}</div>
-    <div class="grid g2">${copLine}${curve}</div>
-    ${spreadCard || overCard ? `<div class="grid g2">${spreadCard}${overCard}</div>` : ""}
-    <div class="grid g3">${cycling}${cycle}${defrost}${dhwCard}</div>
-    <div class="grid g2">${energyCard(d, ui, days)}</div>`;
+  void spreadCard;
+  void overCard;
+  void cycling;
+  void cycle;
+  void defrost;
+  const cop = (d.kpis && d.kpis.cop_short && d.kpis.cop_short.value) ?? null;
+  const total = d.kpis && d.kpis.cop_total_short && d.kpis.cop_total_short.value;
+  const sentence = cop != null
+    ? t("COP <b>{c}</b> in den letzten 7 Tagen, mit Warmwasser {w}. Wo der Rest bleibt, zeigen Heizkurve, Warmwasseranteil und Kennlinie.", { c: fmt(cop, 1), w: fmt(total, 1) })
+    : esc(t("Noch keine Daten für die Effizienz."));
+  return `<div class="say"><p>${sentence}</p></div><div class="row">${seg}</div>
+    <div class="grid g2">${copLine}${copCurveCard(d, ui, copFit(d))}</div>
+    <div class="grid g2">${curve}${energyCard(d, ui, days)}</div>
+    ${dhwCard ? `<div class="grid g2">${dhwCard}${costsCard(d, ui)}</div>` : ""}`;
 }
 
 // ---------------------------------------------------------------- Räume & Kreise
@@ -1009,18 +1023,25 @@ export function viewSchema(d, ui, live) {
 }
 
 
-export function renderView(view, d, ui, live) {
-  let body;
+export function renderView(view, d, ui, live, states = {}) {
+  const plant = liveValues(d, states || {});
+  const say = (q) => `<div class="say"><p>${esc(t(q))}</p></div>`;
   switch (view) {
-    case "effizienz": body = viewEffizienz(d, ui); break;
-    case "raeume": body = viewRaeume(d, ui, live); break;
-    case "vergleich": body = viewVergleich(d, ui); break;
-    case "inventar": body = viewInventar(d, ui); break;
-    case "protokoll": body = viewProtokoll(d, ui); break;
-    case "einstellungen": body = viewEinstellungen(d, ui); break;
-    case "schema": body = viewSchema(d, ui, live); break;
-    default: body = viewAnlage(d, ui); break;
+    case "effizienz":
+      return viewEffizienz(d, ui);
+    case "betrieb":
+      return viewBetrieb(d, ui);
+    case "raeume":
+      return viewRaeume8(d, ui, live || {});
+    case "schema":
+      return viewHydraulik(d, ui, plant);
+    case "vergleich":
+      return say("Hat eine Einstellung etwas gebracht? Wetter ist herausgerechnet.") + viewVergleich(d, ui);
+    case "inventar":
+      return say("Was ist eingebaut – und fehlt etwas, das eine Auswertung braucht?") + devicesBlock(d) + viewInventar(d, ui);
+    case "protokoll":
+      return say("Liefern alle Quellen, und was ist passiert?") + viewProtokoll(d, ui);
+    default:
+      return viewUebersicht(d, ui, plant);
   }
-  const withVerdict = ["anlage", "effizienz", "raeume", "protokoll", "schema"];
-  return (withVerdict.includes(view) ? tabVerdict(d, view) : "") + body;
 }
