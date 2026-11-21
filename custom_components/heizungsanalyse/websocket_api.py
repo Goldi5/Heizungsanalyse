@@ -35,6 +35,7 @@ from .devices import build_devices
 from .diagnostics import async_build_diagnostics
 from .inventory_io import export_csv, parse_csv, validate_import
 from .inventory_schema import build_schema, completeness, validate_values
+from .analysis.curve_advice import advise as advise_curve
 from .plant import async_frost_preview, build_datasheet
 from .services import async_apply_inventory, async_remove_inventory
 from .summary import build_summary, local_day
@@ -140,6 +141,10 @@ async def ws_summary(hass: HomeAssistant, connection: websocket_api.ActiveConnec
         }
     except Exception as err:  # noqa: BLE001 - Bedienung ist Zusatz
         _LOGGER.debug("Reglerwerte nicht lesbar: %s", err)
+    try:
+        result["curve_advice"] = advise_curve(result.get("rooms") or [], (result.get("controls") or {}).get("items") or [])
+    except Exception as err:  # noqa: BLE001 - Vorschlag ist Zusatz
+        _LOGGER.debug("Heizkurven-Assistent nicht möglich: %s", err)
     try:
         result["datasheet"] = build_datasheet(
             hass, dict(entry.data), dict(entry.options), result["series"], result["kpis"].get("hydraulics") or {}

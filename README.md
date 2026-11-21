@@ -14,6 +14,12 @@ Stunden lang mit einem Klick zurücknehmen. Erkannt werden diese Werte heute
 für Stiebel-Eltron-Regler (WPM) über die ISG-Integration. Ein Test prüft den
 Quelltext darauf, dass nur diese Stelle schreibt.
 
+**Heizkurven-Assistent:** Aus den Raumabweichungen (Raumklima bzw.
+Thermostate) schlägt die Integration je Heizkreis vor, ob er 0,5 K kühler
+fahren kann, wärmer fahren muss – oder ob nur einzelne Räume am Heizkörper
+scheitern (Engpass). Der Vorschlag wird nur vorausgefüllt; übernommen wird
+erst nach der Rückfrage.
+
 ## Dashboard
 
 Nach der Einrichtung legt die Integration das Dashboard **Heizungsanalyse**

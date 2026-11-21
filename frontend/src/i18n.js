@@ -549,6 +549,15 @@ export const EN = {
   "wartet auf Regler": "waiting for controller",
   "nicht übernommen": "not applied",
   "Der Regler meldet wieder den alten Wert. Manche Werte lassen sich über die ISG nicht dauerhaft setzen – dann bitte direkt am Regler oder in der ISG-Weboberfläche ändern.": "The controller reports the old value again. Some values cannot be set permanently via the ISG – please change them on the controller or in the ISG web interface.",
+  "Alle {n} Räume halten ihr Ziel und liegen im Mittel {m} K darüber. Der Kreis kann 0,5 K kühler fahren – das spart Strom, ohne dass es kalt wird.": "All {n} rooms reach their target and sit {m} K above it on average. The circuit can run 0.5 K cooler – that saves power without getting cold.",
+  "Die Mehrheit der Räume bleibt oft unter dem Ziel ({r}). Der Kreis sollte 0,5 K wärmer fahren.": "Most rooms often stay below target ({r}). The circuit should run 0.5 K warmer.",
+  "Nur {r} bleibt oft unter dem Ziel – das liegt am Heizkörper oder an seiner Voreinstellung, nicht an der Heizkurve. Eine höhere Kurve würde alle anderen Räume mitheizen.": "Only {r} often stays below target – that is the radiator or its preset, not the heating curve. A higher curve would heat all the other rooms too.",
+  "Die Räume dieses Kreises passen zur Heizkurve.": "The rooms of this circuit match the heating curve.",
+  "Vorschlag eintragen": "Fill in suggestion",
+  "{c}: 0,5 K kühler möglich": "{c}: 0.5 K cooler possible",
+  "{c}: 0,5 K wärmer nötig": "{c}: 0.5 K warmer needed",
+  "Vorschlag unter Geräte → Regler einstellen": "Suggestion under Devices → Controller settings",
+  "Kurve": "Curve",
 };
 
 let lang = "de";

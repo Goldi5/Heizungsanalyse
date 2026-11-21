@@ -1,3 +1,20 @@
+## 0.9.0b3 – 2026-11-21 (Beta)
+
+### Neu: Heizkurven-Assistent
+- **Geräte → Regler einstellen** zeigt je Heizkreis einen Vorschlag, der aus
+  den Raumabweichungen der letzten Tage abgeleitet ist (Raumklima bzw.
+  Thermostate):
+  - **kühler möglich:** alle Räume halten ihr Ziel und liegen im Mittel
+    mindestens 0,3 K darüber → Raum-Soll 0,5 K tiefer.
+  - **wärmer nötig:** die Mehrheit der Räume bleibt oft (über 15 % der Zeit)
+    unter dem Ziel → Raum-Soll 0,5 K höher.
+  - **Engpass:** nur einzelne Räume bleiben zurück → das liegt am Heizkörper
+    oder an der Voreinstellung; die Kurve bleibt, die Räume werden genannt.
+- „Vorschlag eintragen“ füllt die Werte nur vor – übernommen wird wie bisher
+  erst nach der Rückfrage, und 24 Stunden lang lässt sich alles zurücknehmen.
+- Die Übersicht nennt „kühler möglich“ / „wärmer nötig“ unter „Was ist zu tun“.
+- Nur Räume mit genug Messwerten (gut 1,5 Tage) zählen.
+
 ## 0.9.0b2 – 2026-11-21 (Beta)
 
 ### Neu

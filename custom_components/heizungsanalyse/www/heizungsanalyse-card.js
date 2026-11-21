@@ -1,7 +1,7 @@
-/* Heizungsanalyse 0.9.0b2 - gebaut aus frontend/src (npm run build). Nicht von Hand bearbeiten. */
+/* Heizungsanalyse 0.9.0b3 - gebaut aus frontend/src (npm run build). Nicht von Hand bearbeiten. */
 (() => {
   // src/version.js
-  var HA_VERSION = "0.9.0b2";
+  var HA_VERSION = "0.9.0b3";
 
   // src/i18n.js
   var EN = {
@@ -552,7 +552,16 @@
     "übernommen": "applied",
     "wartet auf Regler": "waiting for controller",
     "nicht übernommen": "not applied",
-    "Der Regler meldet wieder den alten Wert. Manche Werte lassen sich über die ISG nicht dauerhaft setzen – dann bitte direkt am Regler oder in der ISG-Weboberfläche ändern.": "The controller reports the old value again. Some values cannot be set permanently via the ISG – please change them on the controller or in the ISG web interface."
+    "Der Regler meldet wieder den alten Wert. Manche Werte lassen sich über die ISG nicht dauerhaft setzen – dann bitte direkt am Regler oder in der ISG-Weboberfläche ändern.": "The controller reports the old value again. Some values cannot be set permanently via the ISG – please change them on the controller or in the ISG web interface.",
+    "Alle {n} Räume halten ihr Ziel und liegen im Mittel {m} K darüber. Der Kreis kann 0,5 K kühler fahren – das spart Strom, ohne dass es kalt wird.": "All {n} rooms reach their target and sit {m} K above it on average. The circuit can run 0.5 K cooler – that saves power without getting cold.",
+    "Die Mehrheit der Räume bleibt oft unter dem Ziel ({r}). Der Kreis sollte 0,5 K wärmer fahren.": "Most rooms often stay below target ({r}). The circuit should run 0.5 K warmer.",
+    "Nur {r} bleibt oft unter dem Ziel – das liegt am Heizkörper oder an seiner Voreinstellung, nicht an der Heizkurve. Eine höhere Kurve würde alle anderen Räume mitheizen.": "Only {r} often stays below target – that is the radiator or its preset, not the heating curve. A higher curve would heat all the other rooms too.",
+    "Die Räume dieses Kreises passen zur Heizkurve.": "The rooms of this circuit match the heating curve.",
+    "Vorschlag eintragen": "Fill in suggestion",
+    "{c}: 0,5 K kühler möglich": "{c}: 0.5 K cooler possible",
+    "{c}: 0,5 K wärmer nötig": "{c}: 0.5 K warmer needed",
+    "Vorschlag unter Geräte → Regler einstellen": "Suggestion under Devices → Controller settings",
+    "Kurve": "Curve"
   };
   var lang = "de";
   function setLang(hass) {
@@ -1074,6 +1083,10 @@ table.tbl td { white-space:nowrap; }
 .ctrl .cmsg { margin:6px 0; font-size:.85rem; }
 .ctrl .cmsg.ok { color:var(--hz-ok); } .ctrl .cmsg.bad, .fd.bad { color:var(--hz-bad); }
 .hint-warn { border-left:3px solid var(--hz-warn); }
+.ctrl .cadv { margin-top:8px; display:flex; flex-wrap:wrap; align-items:center; gap:8px; font-size:.84rem; padding:8px 10px; border-radius:10px; background:color-mix(in srgb, var(--hz-ok) 7%, transparent); }
+.ctrl .cadv.tone-warn { background:color-mix(in srgb, var(--hz-warn) 9%, transparent); }
+.ctrl .cadv.tone-mut { background:transparent; color:var(--hz-mut); }
+.ctrl .cadv > span { flex:1 1 260px; }
 `;
 
   // src/data.js
@@ -1815,10 +1828,11 @@ table.tbl td { white-space:nowrap; }
       <div class="fd">${esc(dsHp ? t("Punkte: Tages-COP · Band: deine eigene Kennlinie ± Streuung · blau gepunktet: Datenblatt {m} bei deinem Vorlauf", { m: dsHp.model }) : t("Punkte: Tages-COP · Band: deine eigene Kennlinie ± Streuung"))}</div>
       ${datasheetSay(dsHp)}
     </section>`;
+    const adviceItems = (d.curve_advice || []).filter((x) => x.action === "lower" || x.action === "raise").map((x) => `<div class="todo-i"><i class="tone-${x.action === "lower" ? "ok" : "warn"}"></i><span><b>${esc(x.action === "lower" ? t("{c}: 0,5 K kühler möglich", { c: x.circuit_name }) : t("{c}: 0,5 K wärmer nötig", { c: x.circuit_name }))}</b><small>${esc(t("Vorschlag unter Geräte → Regler einstellen"))}</small></span><small>${esc(t("Kurve"))}</small></div>`);
     const hintItems = scheduleHints(d).map(
       (h) => `<div class="todo-i"><i class="tone-${h.tone}"></i><span><b>${esc(h.title)}</b><small>${esc(h.text)}</small></span><small>${esc(t("Zeit"))}</small></div>`
     );
-    const items = [...hintItems, ...findings.slice(0, Math.max(0, 3 - hintItems.length)).map(
+    const items = [...hintItems, ...adviceItems, ...findings.slice(0, Math.max(0, 3 - hintItems.length - adviceItems.length)).map(
       (f) => `<div class="todo-i"><i class="tone-${f.severity === "warning" ? "bad" : "warn"}"></i><span><b>${esc(f.title)}</b><small>${esc(f.text)}</small></span><small>${esc(f.id)}</small></div>`
     )];
     const flow = k.flow_deviation && k.flow_deviation.median;
@@ -1832,7 +1846,7 @@ table.tbl td { white-space:nowrap; }
       <div><small>${esc(t("Strom"))}</small><b>${fmt(lv.power, 2)}<i>kW</i></b></div>
       <div><small>${esc(t("COP jetzt"))}</small><b>${fmt(lv.cop, 1)}</b></div>
     </div>`;
-    const todo = `<section class="c"><div class="h"><span>${esc(t("Was ist zu tun"))}</span><span class="grow"></span><span>${findings.length + hintItems.length ? esc(t("{n} Punkte", { n: findings.length + hintItems.length })) : esc(t("nichts"))}</span></div>
+    const todo = `<section class="c"><div class="h"><span>${esc(t("Was ist zu tun"))}</span><span class="grow"></span><span>${findings.length + hintItems.length + adviceItems.length ? esc(t("{n} Punkte", { n: findings.length + hintItems.length + adviceItems.length })) : esc(t("nichts"))}</span></div>
     <div class="todo">${items.join("")}</div>${nowBlock}</section>`;
     const last30 = (d.series || []).slice(-30);
     const copTone = !ex || ex.rel == null ? "mut" : ex.rel < -0.08 ? "warn" : "ok";
@@ -2279,6 +2293,22 @@ table.tbl td { white-space:nowrap; }
       (c) => confirm === c.key ? confirmBox(c, ui) : `<div class="cact"><span>${esc(ctrlLabel(c))}: ${ctrlFmt(c, c.value)} → <b>${ctrlFmt(c, ctrlValue(c, ui))}</b></span><button class="cbtn" data-act="ctrl-reset" data-key="${esc(c.key)}">${esc(t("Verwerfen"))}</button><button class="cbtn go" data-act="ctrl-ask" data-key="${esc(c.key)}">${esc(t("Übernehmen…"))}</button></div>`
     ).join("");
   }
+  function adviceText(a) {
+    if (!a) return "";
+    if (a.action === "lower")
+      return t("Alle {n} Räume halten ihr Ziel und liegen im Mittel {m} K darüber. Der Kreis kann 0,5 K kühler fahren – das spart Strom, ohne dass es kalt wird.", { n: a.rooms, m: fmt(a.median, 1) });
+    if (a.action === "raise") return t("Die Mehrheit der Räume bleibt oft unter dem Ziel ({r}). Der Kreis sollte 0,5 K wärmer fahren.", { r: a.cold_rooms.join(", ") });
+    if (a.action === "bottleneck")
+      return t("Nur {r} bleibt oft unter dem Ziel – das liegt am Heizkörper oder an seiner Voreinstellung, nicht an der Heizkurve. Eine höhere Kurve würde alle anderen Räume mitheizen.", { r: a.cold_rooms.join(", ") });
+    return t("Die Räume dieses Kreises passen zur Heizkurve.");
+  }
+  function adviceBox(d, circuit, admin) {
+    const a = (d.curve_advice || []).find((x) => x.circuit === circuit);
+    if (!a) return "";
+    const tone = a.action === "lower" ? "ok" : a.action === "raise" ? "warn" : a.action === "bottleneck" ? "warn" : "mut";
+    const btn = admin && a.changes && a.changes.length ? `<button class="cbtn" data-act="ctrl-suggest" data-circuit="${esc(circuit)}">${esc(t("Vorschlag eintragen"))}</button>` : "";
+    return `<div class="cadv tone-${tone}"><span>💡 ${esc(adviceText(a))}</span>${btn}</div>`;
+  }
   function controlsCard(d, ui) {
     const ctl = d.controls;
     if (!ctl || !(ctl.items || []).length) return "";
@@ -2291,7 +2321,7 @@ table.tbl td { white-space:nowrap; }
       g.items.push(c);
     }
     const block = (title, list, extra = "") => `<div class="cgrp"><div class="cgt">${esc(title)}</div><div class="crow">${list.map((c) => stepper(c, ui, admin)).join("")}</div>${extra}${pendingActions(list, ui, admin)}</div>`;
-    const parts = circuits.map((g) => block(g.name, g.items, curvePreview(g.items, ui)));
+    const parts = circuits.map((g) => block(g.name, g.items, curvePreview(g.items, ui) + adviceBox(d, g.id, admin)));
     const dhw = items.filter((c) => c.group === "dhw");
     if (dhw.length) parts.push(block(t("Warmwasser"), dhw));
     const plant = items.filter((c) => c.group === "plant");
@@ -3278,7 +3308,10 @@ table.tbl td { white-space:nowrap; }
       const key = el.dataset.key;
       ui.msg = null;
       ui.err = false;
-      if (act === "ctrl-step") {
+      if (act === "ctrl-suggest") {
+        const a = (this._data && this._data.curve_advice || []).find((x) => x.circuit === el.dataset.circuit);
+        for (const change of a && a.changes || []) ui.pending[change.key] = change.to;
+      } else if (act === "ctrl-step") {
         const c = this._ctrlItem(key);
         if (!c) return;
         const cur = ui.pending[key] !== void 0 ? ui.pending[key] : c.value;

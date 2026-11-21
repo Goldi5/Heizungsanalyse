@@ -429,4 +429,8 @@ table.tbl td { white-space:nowrap; }
 .ctrl .cmsg { margin:6px 0; font-size:.85rem; }
 .ctrl .cmsg.ok { color:var(--hz-ok); } .ctrl .cmsg.bad, .fd.bad { color:var(--hz-bad); }
 .hint-warn { border-left:3px solid var(--hz-warn); }
+.ctrl .cadv { margin-top:8px; display:flex; flex-wrap:wrap; align-items:center; gap:8px; font-size:.84rem; padding:8px 10px; border-radius:10px; background:color-mix(in srgb, var(--hz-ok) 7%, transparent); }
+.ctrl .cadv.tone-warn { background:color-mix(in srgb, var(--hz-warn) 9%, transparent); }
+.ctrl .cadv.tone-mut { background:transparent; color:var(--hz-mut); }
+.ctrl .cadv > span { flex:1 1 260px; }
 `;

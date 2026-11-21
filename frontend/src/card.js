@@ -452,7 +452,10 @@ export class HeizungsanalyseCard extends HTMLElement {
     const key = el.dataset.key;
     ui.msg = null;
     ui.err = false;
-    if (act === "ctrl-step") {
+    if (act === "ctrl-suggest") {
+      const a = ((this._data && this._data.curve_advice) || []).find((x) => x.circuit === el.dataset.circuit);
+      for (const change of (a && a.changes) || []) ui.pending[change.key] = change.to;
+    } else if (act === "ctrl-step") {
       const c = this._ctrlItem(key);
       if (!c) return;
       const cur = ui.pending[key] !== undefined ? ui.pending[key] : c.value;
