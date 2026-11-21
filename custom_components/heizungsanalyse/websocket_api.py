@@ -128,11 +128,14 @@ async def ws_summary(hass: HomeAssistant, connection: websocket_api.ActiveConnec
     except Exception as err:  # noqa: BLE001 - Zusatzdaten dürfen die Übersicht nie verhindern
         _LOGGER.debug("Betrieb/Geräte nicht lesbar: %s", err)
     try:
+        items = reg.discover(hass, dict(entry.options))
+        current = {item["entity"]: item.get("value") for item in items}
         result["controls"] = {
-            "items": reg.discover(hass, dict(entry.options)),
+            "items": items,
             "admin": bool(connection.user and connection.user.is_admin),
             "recent": [
-                {**record, "undo": reg.undo_open(record)} for record in reversed(await runtime.store.async_controls())
+                {**record, "undo": reg.undo_open(record), "applied": reg.applied_state(record, current.get(record["entity"]))}
+                for record in reversed(await runtime.store.async_controls())
             ][:10],
         }
     except Exception as err:  # noqa: BLE001 - Bedienung ist Zusatz
@@ -586,21 +589,10 @@ async def ws_status(hass: HomeAssistant, connection: websocket_api.ActiveConnect
     )
 
 
-FIELD_LABELS = {
-    "slope": "Heizkurve Steilheit",
-    "room_day": "Raum-Soll Tag",
-    "room_night": "Raum-Soll Absenkung",
-    "dhw_comfort": "Warmwasser-Soll Komfort",
-    "dhw_eco": "Warmwasser-Soll Eco",
-    "bivalent_heating": "Bivalenztemperatur Heizen",
-    "bivalent_dhw": "Bivalenztemperatur Warmwasser",
-    "mode": "Betriebsart",
-}
 
 
 def _control_label(control: dict[str, Any]) -> str:
-    label = FIELD_LABELS.get(str(control.get("field")), str(control.get("entity")))
-    return f"{control['circuit_name']}: {label}" if control.get("circuit_name") else label
+    return reg.label(control)
 
 
 @websocket_api.websocket_command(

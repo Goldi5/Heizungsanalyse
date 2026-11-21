@@ -273,7 +273,25 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
         self.last_error = None
         self.last_duration_ms = round((perf_counter() - started) * 1000, 1)
         await self._log_update(snapshot)
+        await self._watch_controls()
         return snapshot
+
+    async def _watch_controls(self) -> None:
+        """Reglerwerte beobachten: Änderungen außerhalb des Dashboards ins Protokoll.
+
+        So fällt auf, wenn jemand am Regler, in der ISG oder ein anderes System
+        (z. B. ein Energiemanager) Heizkurve oder Sollwerte verstellt.
+        """
+        if self.store is None:
+            return
+        try:
+            from . import controls as reg
+
+            items = reg.discover(self.hass, dict(self.entry.options))
+            current = {item["entity"]: item.get("value") for item in items if item.get("value") is not None}
+            await self.store.async_watch_controls(current, reg.label_for(items))
+        except Exception as err:  # noqa: BLE001 - Beobachtung ist Zusatz
+            _LOGGER.debug("Reglerwerte nicht beobachtbar: %s", err)
 
     async def _log_error(self, text: str) -> None:
         if self.log is None:

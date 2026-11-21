@@ -198,6 +198,16 @@ async def async_frost_preview(
         return {"ready": False, "reason": "model"}
     forecast = await async_forecast(hass, weather)
     bivalent = _num(hass, _find(hass, "number", "bivalenztemperatur_heizung"))
-    days = frost_days(forecast[:7], model, hp["range"], bivalent=bivalent)
+    from homeassistant.util import dt as dt_util
+
+    def local_day(item: dict[str, Any]) -> str:
+        # Vorhersagen liefern Mitternacht oft in UTC (z. B. 23:00Z = nächster Tag bei uns)
+        parsed = dt_util.parse_datetime(str(item.get("datetime") or ""))
+        return dt_util.as_local(parsed).date().isoformat() if parsed else str(item.get("datetime") or "")[:10]
+
+    today = dt_util.now().date().isoformat()
+    upcoming = [{**item, "datetime": local_day(item)} for item in forecast]
+    upcoming = [item for item in upcoming if item["datetime"] >= today]
+    days = frost_days(upcoming[:7], model, hp["range"], bivalent=bivalent)
     worst = max((d for d in days), key=lambda d: d["peak_kw"] / (d["max_kw"] or 1), default=None)
     return {"ready": True, "model": model, "days": days, "bivalent": bivalent, "worst": worst}

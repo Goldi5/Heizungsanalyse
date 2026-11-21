@@ -183,3 +183,41 @@ def undo_open(record: dict[str, Any], now=None) -> bool:
     if ts is None:
         return False
     return (now or dt_util.utcnow()) - ts <= UNDO_WINDOW
+
+
+def applied_state(record: dict[str, Any], current: Any, now=None) -> str:
+    """Hat der Regler den Wert übernommen? ``ok``, ``waiting`` (bis 10 min) oder ``rejected``.
+
+    Manche Regler nehmen einen Schreibwert an, melden beim nächsten Abfragen aber
+    wieder den alten Wert. Das soll man im Dashboard sehen.
+    """
+    if record.get("undone"):
+        return "undone"
+    target = record.get("new")
+    if current == target or (isinstance(current, float) and isinstance(target, (int, float)) and abs(current - float(target)) < 0.01):
+        return "ok"
+    ts = dt_util.parse_datetime(str(record.get("ts") or ""))
+    if ts is not None and (now or dt_util.utcnow()) - ts < timedelta(minutes=10):
+        return "waiting"
+    return "rejected"
+
+
+_FIELD_LABELS = {
+    "slope": "Heizkurve Steilheit",
+    "room_day": "Raum-Soll Tag",
+    "room_night": "Raum-Soll Absenkung",
+    "dhw_comfort": "Warmwasser-Soll Komfort",
+    "dhw_eco": "Warmwasser-Soll Eco",
+    "bivalent_heating": "Bivalenztemperatur Heizen",
+    "bivalent_dhw": "Bivalenztemperatur Warmwasser",
+    "mode": "Betriebsart",
+}
+
+
+def label(control: dict[str, Any]) -> str:
+    text = _FIELD_LABELS.get(str(control.get("field")), str(control.get("entity")))
+    return f"{control['circuit_name']}: {text}" if control.get("circuit_name") else text
+
+
+def label_for(items: list[dict[str, Any]]) -> dict[str, str]:
+    return {item["entity"]: label(item) for item in items}

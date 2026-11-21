@@ -81,6 +81,7 @@ class InventoryStore:
                 "trace": list(stored.get("trace") or []),
                 "config_snapshot": dict(stored.get("config_snapshot") or {}),
                 "controls": list(stored.get("controls") or []),
+                "control_values": dict(stored.get("control_values") or {}),
             }
         return self._data
 
@@ -184,6 +185,35 @@ class InventoryStore:
         data = await self.async_load()
         data["controls"] = [*data["controls"], record][-20:]
         await self.async_save()
+
+    async def async_watch_controls(self, current: dict[str, Any], labels: dict[str, str]) -> None:
+        """Vergleich mit dem letzten Stand; Änderungen von außen protokollieren."""
+        data = await self.async_load()
+        known: dict[str, Any] = data["control_values"]
+        ours = {
+            (r.get("entity"), r.get("new") if not r.get("undone") else r.get("old"))
+            for r in data["controls"][-5:]
+        }
+        changed = False
+        for entity, value in current.items():
+            before = known.get(entity)
+            if before is not None and before != value and (entity, value) not in ours:
+                data["change_log"].append(
+                    {
+                        "ts": dt_util.utcnow().isoformat(),
+                        "object": "regler",
+                        "field": labels.get(entity, entity),
+                        "old": before,
+                        "new": value,
+                        "note": "außerhalb des Dashboards verstellt (Regler, ISG oder anderes System)",
+                    }
+                )
+                data["change_log"] = data["change_log"][-CHANGE_LOG_LIMIT:]
+            if before != value:
+                known[entity] = value
+                changed = True
+        if changed:
+            await self.async_save()
 
     async def async_controls(self) -> list[dict[str, Any]]:
         return list((await self.async_load())["controls"])

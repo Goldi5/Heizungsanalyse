@@ -858,7 +858,9 @@ export function controlsCard(d, ui) {
         : r.undone
           ? `<span class="mut">${esc(t("zurückgenommen"))}</span>`
           : "";
-      return `<div class="crec"><span>${esc(when)} · ${esc((c.circuit_name ? c.circuit_name + ": " : "") + ctrlLabel(c))}: ${ctrlFmt(c, r.old)} → ${ctrlFmt(c, r.new)}</span><span>${undo}</span></div>`;
+      const st = { ok: pill("ok", t("übernommen")), waiting: pill("mut", t("wartet auf Regler")), rejected: pill("bad", t("nicht übernommen")) }[r.applied] || "";
+      const warn = r.applied === "rejected" ? `<div class="fd bad">${esc(t("Der Regler meldet wieder den alten Wert. Manche Werte lassen sich über die ISG nicht dauerhaft setzen – dann bitte direkt am Regler oder in der ISG-Weboberfläche ändern."))}</div>` : "";
+      return `<div class="crec"><span>${esc(when)} · ${esc((c.circuit_name ? c.circuit_name + ": " : "") + ctrlLabel(c))}: ${ctrlFmt(c, r.old)} → ${ctrlFmt(c, r.new)} ${st}</span><span>${undo}</span></div>${warn}`;
     })
     .join("");
   const msg = ui.ctrl && ui.ctrl.msg ? `<div class="cmsg ${ui.ctrl.err ? "bad" : "ok"}">${esc(ui.ctrl.msg)}</div>` : "";

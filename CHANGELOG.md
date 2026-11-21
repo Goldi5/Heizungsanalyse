@@ -1,3 +1,17 @@
+## 0.9.0b2 – 2026-11-21 (Beta)
+
+### Neu
+- **Regler einstellen:** Jede Verstellung zeigt, ob der Regler den Wert
+  übernommen hat („übernommen“, „wartet auf Regler“, „nicht übernommen“).
+- **Änderungen von außen:** Verstellt jemand Heizkurve, Sollwerte,
+  Bivalenzpunkt oder Betriebsart am Regler, in der ISG oder über ein anderes
+  System, landet das automatisch unter „Änderungen“ – mit altem und neuem
+  Wert.
+
+### Behoben
+- Frost-Vorschau: Vorhersagetage mit Mitternacht in UTC wurden dem Vortag
+  zugeordnet; vergangene Tage erscheinen nicht mehr.
+
 ## 0.9.0b1 – 2026-11-21 (Beta)
 
 ### Neu: Regler einstellen

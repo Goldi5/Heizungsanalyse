@@ -1,7 +1,7 @@
-/* Heizungsanalyse 0.9.0b1 - gebaut aus frontend/src (npm run build). Nicht von Hand bearbeiten. */
+/* Heizungsanalyse 0.9.0b2 - gebaut aus frontend/src (npm run build). Nicht von Hand bearbeiten. */
 (() => {
   // src/version.js
-  var HA_VERSION = "0.9.0b1";
+  var HA_VERSION = "0.9.0b2";
 
   // src/i18n.js
   var EN = {
@@ -548,7 +548,11 @@
     "Bedarf kälteste Stunde": "Demand coldest hour",
     "WP max": "HP max",
     "Der Heizstab ist erst ab {b} °C freigegeben. Damit es warm bleibt: Bivalenztemperatur Heizen anheben (Geräte → Regler einstellen).": "The heating element is only enabled below {b} °C. To stay warm: raise the bivalent point for heating (Devices → Controller settings).",
-    "Modell: Wärme je Tag = {a} × Außentemperatur + {b} kWh (aus {n} Tagen, R² {r}).": "Model: heat per day = {a} × outdoor temperature + {b} kWh (from {n} days, R² {r})."
+    "Modell: Wärme je Tag = {a} × Außentemperatur + {b} kWh (aus {n} Tagen, R² {r}).": "Model: heat per day = {a} × outdoor temperature + {b} kWh (from {n} days, R² {r}).",
+    "übernommen": "applied",
+    "wartet auf Regler": "waiting for controller",
+    "nicht übernommen": "not applied",
+    "Der Regler meldet wieder den alten Wert. Manche Werte lassen sich über die ISG nicht dauerhaft setzen – dann bitte direkt am Regler oder in der ISG-Weboberfläche ändern.": "The controller reports the old value again. Some values cannot be set permanently via the ISG – please change them on the controller or in the ISG web interface."
   };
   var lang = "de";
   function setLang(hass) {
@@ -2296,7 +2300,9 @@ table.tbl td { white-space:nowrap; }
       const c = items.find((x) => x.entity === r.entity) || { field: r.field, kind: typeof r.new === "string" ? "select" : "number", step: 0.5 };
       const when = new Date(r.ts).toLocaleString(getLang(), { weekday: "short", hour: "2-digit", minute: "2-digit" });
       const undo = admin && r.undo ? ui.ctrl && ui.ctrl.undoConfirm === r.id ? `<button class="cbtn" data-act="ctrl-cancel">${esc(t("Abbrechen"))}</button><button class="cbtn go" data-act="ctrl-undo" data-id="${esc(r.id)}">${esc(t("Ja, zurücksetzen"))}</button>` : `<button class="cbtn" data-act="ctrl-undo-ask" data-id="${esc(r.id)}">${esc(t("Rückgängig"))}</button>` : r.undone ? `<span class="mut">${esc(t("zurückgenommen"))}</span>` : "";
-      return `<div class="crec"><span>${esc(when)} · ${esc((c.circuit_name ? c.circuit_name + ": " : "") + ctrlLabel(c))}: ${ctrlFmt(c, r.old)} → ${ctrlFmt(c, r.new)}</span><span>${undo}</span></div>`;
+      const st = { ok: statusPill("ok", t("übernommen")), waiting: statusPill("mut", t("wartet auf Regler")), rejected: statusPill("bad", t("nicht übernommen")) }[r.applied] || "";
+      const warn = r.applied === "rejected" ? `<div class="fd bad">${esc(t("Der Regler meldet wieder den alten Wert. Manche Werte lassen sich über die ISG nicht dauerhaft setzen – dann bitte direkt am Regler oder in der ISG-Weboberfläche ändern."))}</div>` : "";
+      return `<div class="crec"><span>${esc(when)} · ${esc((c.circuit_name ? c.circuit_name + ": " : "") + ctrlLabel(c))}: ${ctrlFmt(c, r.old)} → ${ctrlFmt(c, r.new)} ${st}</span><span>${undo}</span></div>${warn}`;
     }).join("");
     const msg = ui.ctrl && ui.ctrl.msg ? `<div class="cmsg ${ui.ctrl.err ? "bad" : "ok"}">${esc(ui.ctrl.msg)}</div>` : "";
     return `<section class="c ctrl"><div class="top"><b>${esc(t("Regler einstellen"))}</b>${admin ? statusPill("mut", t("mit Rückfrage")) : statusPill("mut", t("nur Anzeige"))}</div>

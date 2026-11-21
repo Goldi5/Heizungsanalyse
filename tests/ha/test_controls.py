@@ -83,3 +83,17 @@ async def test_undo_window() -> None:
     assert reg.undo_open(record) is True
     record["undone"] = True
     assert reg.undo_open(record) is False
+
+
+async def test_external_change_is_logged(hass: HomeAssistant) -> None:
+    entry = await _setup(hass)
+    store = entry.runtime_data.store
+    labels = {DHW: "Warmwasser-Soll Komfort"}
+    await store.async_watch_controls({DHW: 50.0}, labels)  # erster Stand: nichts protokollieren
+    before = len(await store.async_change_log())
+    await store.async_watch_controls({DHW: 50.0}, labels)
+    await store.async_watch_controls({DHW: 55.0}, labels)
+    log = await store.async_change_log()
+    assert len(log) == before + 1
+    assert log[0]["old"] == 50.0 and log[0]["new"] == 55.0
+    assert "außerhalb" in log[0]["note"]

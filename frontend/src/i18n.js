@@ -545,6 +545,10 @@ export const EN = {
   "WP max": "HP max",
   "Der Heizstab ist erst ab {b} °C freigegeben. Damit es warm bleibt: Bivalenztemperatur Heizen anheben (Geräte → Regler einstellen).": "The heating element is only enabled below {b} °C. To stay warm: raise the bivalent point for heating (Devices → Controller settings).",
   "Modell: Wärme je Tag = {a} × Außentemperatur + {b} kWh (aus {n} Tagen, R² {r}).": "Model: heat per day = {a} × outdoor temperature + {b} kWh (from {n} days, R² {r}).",
+  "übernommen": "applied",
+  "wartet auf Regler": "waiting for controller",
+  "nicht übernommen": "not applied",
+  "Der Regler meldet wieder den alten Wert. Manche Werte lassen sich über die ISG nicht dauerhaft setzen – dann bitte direkt am Regler oder in der ISG-Weboberfläche ändern.": "The controller reports the old value again. Some values cannot be set permanently via the ISG – please change them on the controller or in the ISG web interface.",
 };
 
 let lang = "de";
