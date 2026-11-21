@@ -88,3 +88,78 @@ def storage_kwh_per_k(storage: Mapping[str, Any] | None) -> float | None:
     if not storage or not storage.get("volume_l"):
         return None
     return round(float(storage["volume_l"]) * WATER_KWH_PER_L_K, 3)
+
+
+def demand_model(rows: Sequence[Mapping[str, Any]], *, min_days: int = 10) -> dict[str, float] | None:
+    """Heizwärme je Tag gegen Außentemperatur: kWh/Tag = slope × T + intercept.
+
+    Aus den eigenen Messtagen der Anlage; nur Tage mit Wärme und Außentemperatur.
+    """
+    points = [
+        (float(r["outdoor"]), float(r["heat"]))
+        for r in rows
+        if r.get("outdoor") is not None and r.get("heat") is not None and float(r["heat"]) > 0
+    ]
+    if len(points) < min_days:
+        return None
+    n = len(points)
+    mx = sum(x for x, _ in points) / n
+    my = sum(y for _, y in points) / n
+    sxx = sum((x - mx) ** 2 for x, _ in points)
+    if sxx <= 0:
+        return None
+    slope = sum((x - mx) * (y - my) for x, y in points) / sxx
+    if slope >= 0:
+        return None  # mehr Wärme bei Wärme – kein brauchbares Modell
+    intercept = my - slope * mx
+    ss_tot = sum((y - my) ** 2 for _, y in points)
+    ss_res = sum((y - (slope * x + intercept)) ** 2 for x, y in points)
+    r2 = 1 - ss_res / ss_tot if ss_tot > 0 else 0.0
+    return {"slope": round(slope, 3), "intercept": round(intercept, 2), "r2": round(r2, 3), "days": n}
+
+
+def demand_kw(model: Mapping[str, float], outdoor: float) -> float:
+    """Mittlere Heizleistung in kW bei dieser Außentemperatur (nie negativ)."""
+    return max(0.0, (model["slope"] * outdoor + model["intercept"]) / 24)
+
+
+def frost_days(
+    forecast: Sequence[Mapping[str, Any]],
+    model: Mapping[str, float],
+    output_table: Sequence[Mapping[str, Any]],
+    *,
+    bivalent: float | None = None,
+) -> list[dict[str, Any]]:
+    """Je Vorhersagetag: Bedarf im Tagesmittel und in der kältesten Stunde gegen die WP-Leistung."""
+    days: list[dict[str, Any]] = []
+    for item in forecast:
+        high, low = item.get("temperature"), item.get("templow")
+        if high is None and low is None:
+            continue
+        high = float(high if high is not None else low)
+        low = float(low if low is not None else high)
+        mean = (high + low) / 2
+        need_mean = demand_kw(model, mean)
+        need_peak = demand_kw(model, low)
+        _low_out, max_out = output_range(output_table, low)
+        if max_out is None:
+            status = "unknown"
+        elif need_peak <= 0.85 * max_out:
+            status = "ok"
+        elif need_peak <= max_out:
+            status = "tight"
+        else:
+            status = "short"
+        days.append(
+            {
+                "date": str(item.get("datetime") or "")[:10],
+                "high": round(high, 1),
+                "low": round(low, 1),
+                "demand_kw": round(need_mean, 2),
+                "peak_kw": round(need_peak, 2),
+                "max_kw": max_out,
+                "status": status,
+                "aux_blocked": bool(status == "short" and bivalent is not None and low > bivalent),
+            }
+        )
+    return days

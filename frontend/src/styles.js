@@ -406,4 +406,27 @@ table.tbl td { white-space:nowrap; }
 .dsline b { color:var(--hz-ink); font-size:1rem; }
 .row2 .dot { display:inline-block; margin-right:6px; vertical-align:middle; }
 .dcard a { color:var(--hz-cool); }
+.ctrl .cgrp { border-top:1px solid var(--hz-line); padding-top:10px; margin-top:10px; }
+.ctrl .cgt { font-weight:600; font-size:.85rem; margin-bottom:6px; }
+.ctrl .crow { display:flex; flex-wrap:wrap; gap:8px 18px; }
+.ctrl .cstep { display:flex; flex-direction:column; gap:2px; min-width:150px; padding:6px 8px; border-radius:10px; border:1px solid transparent; }
+.ctrl .cstep.chg { border-color:var(--hz-warn); background:color-mix(in srgb, var(--hz-warn) 8%, transparent); }
+.ctrl .cl { font-size:.75rem; color:var(--hz-mut); }
+.ctrl .cv { display:flex; align-items:center; gap:8px; }
+.ctrl .cv b { min-width:64px; text-align:center; font-size:1.05rem; }
+.ctrl .was { font-size:.72rem; color:var(--hz-mut); }
+.ctrl select { font:inherit; padding:4px 6px; border-radius:8px; background:var(--hz-card); color:inherit; border:1px solid var(--hz-line); }
+.cbtn { font:inherit; font-size:.85rem; padding:4px 10px; min-width:32px; border-radius:8px; border:1px solid var(--hz-line); background:transparent; color:inherit; cursor:pointer; }
+.cbtn:disabled { opacity:.4; cursor:default; }
+.cbtn.go { background:var(--hz-heat); border-color:var(--hz-heat); color:#fff; font-weight:600; }
+.cbtn.wide { padding:6px 14px; }
+.ctrl .cact { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:8px; font-size:.85rem; }
+.ctrl .cact > span { flex:1 1 200px; }
+.ctrl .cconf { margin-top:8px; padding:10px 12px; border-radius:10px; border:1px solid var(--hz-heat); background:color-mix(in srgb, var(--hz-heat) 10%, transparent); display:flex; flex-direction:column; gap:6px; }
+.ctrl .cprev { margin-top:8px; display:flex; flex-wrap:wrap; gap:4px 16px; font-size:.82rem; color:var(--hz-mut); }
+.ctrl .cprev b { color:var(--hz-ink); }
+.ctrl .crec { display:flex; flex-wrap:wrap; justify-content:space-between; gap:6px; font-size:.82rem; padding:4px 0; }
+.ctrl .cmsg { margin:6px 0; font-size:.85rem; }
+.ctrl .cmsg.ok { color:var(--hz-ok); } .ctrl .cmsg.bad, .fd.bad { color:var(--hz-bad); }
+.hint-warn { border-left:3px solid var(--hz-warn); }
 `;

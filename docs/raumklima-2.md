@@ -9,9 +9,10 @@ Speicher.
 1. **Keine Codeabhängigkeit.** Die Heizungsanalyse importiert nichts aus
    `custom_components.raumklima` und registriert dort keine Dienste. Ein Test
    prüft das (`tests/test_isolation.py`).
-2. **Keine Steuerung.** Die Heizungsanalyse ruft keinen Dienst auf, der ein
-   Thermostat, eine Pumpe oder einen Mischer stellt. Auch nicht von
-   raumklima-2.
+2. **Keine Steuerung von Raumklima-Geräten.** Die Heizungsanalyse ruft
+   keinen Dienst auf, der ein Thermostat, eine Pumpe oder einen Mischer
+   stellt. Die einzige Schreibstelle sind Reglerwerte der Wärmepumpe unter
+   *Geräte → Regler einstellen* (nur Admins, doppelte Bestätigung).
 3. **Getrennte Speicher.** Inventar und Roll-ups liegen unter
    `.storage/heizungsanalyse.<entry_id>`. raumklima-2 hat eigene Daten.
 4. **Gemeinsame Entities nur lesend.** raumklima-2 kann die Sensoren der

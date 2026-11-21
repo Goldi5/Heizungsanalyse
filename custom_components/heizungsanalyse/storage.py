@@ -80,6 +80,7 @@ class InventoryStore:
                 "evaluations": list(stored.get("evaluations") or []),
                 "trace": list(stored.get("trace") or []),
                 "config_snapshot": dict(stored.get("config_snapshot") or {}),
+                "controls": list(stored.get("controls") or []),
             }
         return self._data
 
@@ -177,6 +178,22 @@ class InventoryStore:
         data["change_log"] = data["change_log"][-CHANGE_LOG_LIMIT:]
         await self.async_save()
         return change
+
+    async def async_add_control(self, record: dict[str, Any]) -> None:
+        """Eine Reglerverstellung für „Rückgängig“ merken (die letzten 20)."""
+        data = await self.async_load()
+        data["controls"] = [*data["controls"], record][-20:]
+        await self.async_save()
+
+    async def async_controls(self) -> list[dict[str, Any]]:
+        return list((await self.async_load())["controls"])
+
+    async def async_mark_control_undone(self, record_id: str) -> None:
+        data = await self.async_load()
+        for record in data["controls"]:
+            if record.get("id") == record_id:
+                record["undone"] = True
+        await self.async_save()
 
     async def async_change_log(self, *, limit: int = 50) -> list[dict[str, Any]]:
         data = await self.async_load()

@@ -58,3 +58,43 @@ def hour_profile(readings: Sequence, tz: tzinfo) -> list[float | None]:
         median = ordered[mid] if len(ordered) % 2 else (ordered[mid - 1] + ordered[mid]) / 2
         out.append(round(median, 2))
     return out
+
+
+def night_runs(
+    spans: Sequence[tuple[datetime, datetime]],
+    tz: tzinfo,
+    since: datetime,
+    *,
+    start_hour: int = 0,
+    end_hour: int = 4,
+    min_minutes: float = 30,
+) -> dict:
+    """Wie viele Nächte lief etwas mindestens ``min_minutes`` zwischen ``start_hour`` und ``end_hour``?
+
+    Grundlage für den Zeitprogramm-Check: Eine Zirkulation, die Nacht für Nacht
+    läuft, deutet auf ein falsches Programm oder eine verstellte Reglerzeit hin.
+    """
+    from datetime import timedelta
+
+    per_night: dict[str, float] = {}
+    for start, end in spans:
+        if end <= since:
+            continue
+        start = max(start, since)
+        cursor = start.astimezone(tz)
+        stop = end.astimezone(tz)
+        while cursor < stop:
+            day = cursor.replace(hour=0, minute=0, second=0, microsecond=0)
+            window_start = day + timedelta(hours=start_hour)
+            window_end = day + timedelta(hours=end_hour)
+            overlap_start, overlap_end = max(cursor, window_start), min(stop, window_end)
+            if overlap_end > overlap_start:
+                key = day.date().isoformat()
+                per_night[key] = per_night.get(key, 0.0) + (overlap_end - overlap_start).total_seconds() / 60
+            cursor = day + timedelta(days=1)
+    nights = sorted(day for day, minutes in per_night.items() if minutes >= min_minutes)
+    return {
+        "nights": len(nights),
+        "minutes": round(sum(per_night.get(day, 0.0) for day in nights) / len(nights)) if nights else 0,
+        "days": nights,
+    }

@@ -1,14 +1,18 @@
 # Heizungsanalyse
 
-Home-Assistant-Custom-Integration zur **reinen Beobachtung und Auswertung**
+Home-Assistant-Custom-Integration zur **Beobachtung und Auswertung**
 einer Wärmepumpenheizung. Sie liest vorhandene Entities und
 Recorder-Statistiken, berechnet Kennzahlen (COP, Taktung, Vorlauf-Abweichung,
 Raumkomfort, Pumpen- und Mischerverhalten) und leitet Hinweise mit Beleg ab.
 
-**Die Integration steuert nichts.** Es gibt keinen Schreibzugriff auf
-Wärmepumpe, Heizkreise, Thermostate oder Pumpen. Der einzige Schreibpfad ist
-das integrationseigene Inventar (Stammdaten, Änderungsverlauf, Roll-ups); ein
-Test prüft den Quelltext auf steuernde Aufrufe.
+**Die Integration steuert nichts von selbst.** Sie liest nur – mit einer
+bewussten Ausnahme: Unter *Geräte → Regler einstellen* können Admins einzelne
+Reglerwerte verstellen (Heizkurve, Raum-Soll, Warmwasser-Soll,
+Bivalenzpunkt, Betriebsart). Jede Verstellung braucht zwei Bestätigungen,
+bleibt in engen Grenzen, landet im Änderungsprotokoll und lässt sich 24
+Stunden lang mit einem Klick zurücknehmen. Erkannt werden diese Werte heute
+für Stiebel-Eltron-Regler (WPM) über die ISG-Integration. Ein Test prüft den
+Quelltext darauf, dass nur diese Stelle schreibt.
 
 ## Dashboard
 
@@ -25,7 +29,7 @@ an jeder Kachel, hell und dunkel, auf Deutsch und Englisch.
 | Räume | Welcher Raum ist wann zu warm oder zu kalt? |
 | Hydraulik | Wie fließt die Wärme gerade durchs Haus? |
 | Änderungen | Hat eine Einstellung etwas gebracht? |
-| Geräte | Was ist eingebaut, und fehlt etwas? |
+| Geräte | Was ist eingebaut, und fehlt etwas? Regler einstellen |
 | System | Liefern alle Quellen, und was ist passiert? |
 
 ![Übersicht](docs/images/anlage.png)

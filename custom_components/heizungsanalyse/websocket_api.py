@@ -11,6 +11,7 @@ from homeassistant.exceptions import ServiceValidationError
 from homeassistant.util import dt as dt_util
 import voluptuous as vol
 
+from . import controls as reg
 from .analysis.curve_suggestion import suggest_curve
 from .analysis.periods import merge_samples, samples_from_rollups
 from .catalog import inventory_catalog
@@ -34,7 +35,7 @@ from .devices import build_devices
 from .diagnostics import async_build_diagnostics
 from .inventory_io import export_csv, parse_csv, validate_import
 from .inventory_schema import build_schema, completeness, validate_values
-from .plant import build_datasheet
+from .plant import async_frost_preview, build_datasheet
 from .services import async_apply_inventory, async_remove_inventory
 from .summary import build_summary, local_day
 
@@ -73,6 +74,8 @@ def async_register(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_log)
     websocket_api.async_register_command(hass, ws_diagnostics)
     websocket_api.async_register_command(hass, ws_trace)
+    websocket_api.async_register_command(hass, ws_control_set)
+    websocket_api.async_register_command(hass, ws_control_undo)
 
 
 @websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/summary", vol.Optional("language"): str})
@@ -125,11 +128,25 @@ async def ws_summary(hass: HomeAssistant, connection: websocket_api.ActiveConnec
     except Exception as err:  # noqa: BLE001 - Zusatzdaten dürfen die Übersicht nie verhindern
         _LOGGER.debug("Betrieb/Geräte nicht lesbar: %s", err)
     try:
+        result["controls"] = {
+            "items": reg.discover(hass, dict(entry.options)),
+            "admin": bool(connection.user and connection.user.is_admin),
+            "recent": [
+                {**record, "undo": reg.undo_open(record)} for record in reversed(await runtime.store.async_controls())
+            ][:10],
+        }
+    except Exception as err:  # noqa: BLE001 - Bedienung ist Zusatz
+        _LOGGER.debug("Reglerwerte nicht lesbar: %s", err)
+    try:
         result["datasheet"] = build_datasheet(
             hass, dict(entry.data), dict(entry.options), result["series"], result["kpis"].get("hydraulics") or {}
         )
     except Exception as err:  # noqa: BLE001 - Herstellerdaten sind Zusatz
         _LOGGER.debug("Herstellerdaten nicht verknüpfbar: %s", err)
+    try:
+        result["frost"] = await async_frost_preview(hass, dict(entry.options), result["series"])
+    except Exception as err:  # noqa: BLE001 - Vorschau ist Zusatz
+        _LOGGER.debug("Frost-Vorschau nicht möglich: %s", err)
     connection.send_result(msg["id"], result)
 
 
@@ -567,3 +584,95 @@ async def ws_status(hass: HomeAssistant, connection: websocket_api.ActiveConnect
             "log": log_entries,
         },
     )
+
+
+FIELD_LABELS = {
+    "slope": "Heizkurve Steilheit",
+    "room_day": "Raum-Soll Tag",
+    "room_night": "Raum-Soll Absenkung",
+    "dhw_comfort": "Warmwasser-Soll Komfort",
+    "dhw_eco": "Warmwasser-Soll Eco",
+    "bivalent_heating": "Bivalenztemperatur Heizen",
+    "bivalent_dhw": "Bivalenztemperatur Warmwasser",
+    "mode": "Betriebsart",
+}
+
+
+def _control_label(control: dict[str, Any]) -> str:
+    label = FIELD_LABELS.get(str(control.get("field")), str(control.get("entity")))
+    return f"{control['circuit_name']}: {label}" if control.get("circuit_name") else label
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/control/set",
+        vol.Required("key"): str,
+        vol.Required("value"): vol.Any(str, int, float),
+        vol.Required("confirm"): True,
+    }
+)
+@websocket_api.require_admin
+@websocket_api.async_response
+async def ws_control_set(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Einen Reglerwert setzen (nur erkannte Werte, nur in sicheren Grenzen)."""
+    runtime = _runtime(hass)
+    if runtime is None:
+        connection.send_error(msg["id"], "not_setup", "Heizungsanalyse ist nicht eingerichtet")
+        return
+    control = next((c for c in reg.discover(hass, dict(runtime.entry.options)) if c["key"] == msg["key"]), None)
+    if control is None:
+        connection.send_error(msg["id"], "unknown_control", "Dieser Wert kann hier nicht verstellt werden")
+        return
+    try:
+        value = reg.check_value(control, msg["value"])
+    except ValueError as err:
+        connection.send_error(msg["id"], "invalid_value", f"Ungültiger Wert ({err})")
+        return
+    old = control.get("value")
+    if old == value:
+        connection.send_result(msg["id"], {"ok": True, "unchanged": True})
+        return
+    try:
+        await reg.async_apply(hass, control, value)
+    except Exception as err:  # noqa: BLE001 - Fehler des Reglers an die Karte weitergeben
+        connection.send_error(msg["id"], "apply_failed", str(err))
+        return
+    user = connection.user.name if connection.user else None
+    record = reg.new_record(control, old, value, user)
+    await runtime.store.async_add_control(record)
+    await runtime.store.async_log_change(
+        "regler", _control_label(control), old_value=old, new_value=value, note=f"im Dashboard verstellt ({user or 'Admin'})"
+    )
+    connection.send_result(msg["id"], {"ok": True, "record": {**record, "undo": True}})
+
+
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/control/undo", vol.Required("change"): str})
+@websocket_api.require_admin
+@websocket_api.async_response
+async def ws_control_undo(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Eine Verstellung der letzten 24 Stunden zurücknehmen."""
+    runtime = _runtime(hass)
+    if runtime is None:
+        connection.send_error(msg["id"], "not_setup", "Heizungsanalyse ist nicht eingerichtet")
+        return
+    record = next((r for r in await runtime.store.async_controls() if r.get("id") == msg["change"]), None)
+    if record is None or not reg.undo_open(record):
+        connection.send_error(msg["id"], "undo_closed", "Diese Änderung kann nicht mehr zurückgenommen werden")
+        return
+    control = next((c for c in reg.discover(hass, dict(runtime.entry.options)) if c["entity"] == record["entity"]), None)
+    if control is None:
+        connection.send_error(msg["id"], "unknown_control", "Der Wert ist nicht mehr erreichbar")
+        return
+    if control.get("value") != record.get("new"):
+        connection.send_error(msg["id"], "changed_since", "Der Wert wurde inzwischen anders verstellt")
+        return
+    try:
+        await reg.async_apply(hass, control, record["old"])
+    except Exception as err:  # noqa: BLE001
+        connection.send_error(msg["id"], "apply_failed", str(err))
+        return
+    await runtime.store.async_mark_control_undone(record["id"])
+    await runtime.store.async_log_change(
+        "regler", _control_label(control), old_value=record["new"], new_value=record["old"], note="rückgängig gemacht"
+    )
+    connection.send_result(msg["id"], {"ok": True})

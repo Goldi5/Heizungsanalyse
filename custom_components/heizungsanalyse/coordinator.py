@@ -57,7 +57,7 @@ from .analysis.onoff import (
     starts_per_day as onoff_starts_per_day,
     value_at,
 )
-from .analysis.operation import cycle_histogram, hour_profile, timeline
+from .analysis.operation import cycle_histogram, hour_profile, night_runs, timeline
 from .analysis.rooms import RoomDeviation, RoomReading, climate_values
 from .analysis.series import build_samples, counter_by_day, energy_by_day, mean_by_day
 from .analysis.types import DaySample, HourSample
@@ -664,7 +664,16 @@ class HeizungsanalyseCoordinator(DataUpdateCoordinator[AnalysisSnapshot]):
         }
         lanes = {kind: timeline(spans.get(entity_id, []), since) for kind, entity_id in kinds.items() if entity_id and entity_id in spans}
         compressor = spans.get(kinds["compressor"] or "", [])
+        hints = []
+        for kind in ("circulation", "dhw"):
+            entity_id = kinds.get(kind)
+            if not entity_id or entity_id not in spans:
+                continue
+            runs = night_runs(spans[entity_id], tz, since)
+            if runs["nights"] >= 3:
+                hints.append({"kind": kind, **runs, "severity": "warning" if kind == "circulation" else "info"})
         return {
+            "schedule_hints": hints,
             "since": int(since.timestamp()),
             "now": int(now.timestamp()),
             "timeline": lanes,

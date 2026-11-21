@@ -59,6 +59,7 @@ from .const import (
     CONF_TYPE,
     CONF_VALVE_POSITION_ENTITY,
     CONF_VOLUME_FLOW_ENTITY,
+    CONF_WEATHER_ENTITY,
     DOMAIN,
     NAME,
     OPTIONAL_SOURCES,
@@ -313,6 +314,8 @@ class HeizungsanalyseOptionsFlow(OptionsFlowWithReload):
             )
             marker, option_selector = _optional(key, current, option_selector)
             fields[marker] = option_selector
+        marker, weather = _optional(CONF_WEATHER_ENTITY, current, _entity("weather"))
+        fields[marker] = weather
         return self.async_show_form(step_id="plant", data_schema=vol.Schema(fields))
 
     async def async_step_thresholds(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:

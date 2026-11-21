@@ -14,13 +14,23 @@ from typing import Any
 from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
 from homeassistant.core import HomeAssistant
 
-from .analysis.datasheet import curve_points, output_range, reference_cop, standby_cooling, stiebel_curve, storage_kwh_per_k
+from .analysis.datasheet import (
+    curve_points,
+    demand_model,
+    frost_days,
+    output_range,
+    reference_cop,
+    standby_cooling,
+    stiebel_curve,
+    storage_kwh_per_k,
+)
 from .const import (
     CONF_BUFFER_MODEL,
     CONF_CIRCUITS,
     CONF_DHW_TANK_MODEL,
     CONF_HEAT_PUMP_MODEL,
     CONF_OUTDOOR_ENTITY,
+    CONF_WEATHER_ENTITY,
 )
 from .heat_pump_catalog import heat_pump, storage
 
@@ -153,3 +163,41 @@ def build_datasheet(
     if buffer is not None:
         result["buffer"] = {**buffer, "kwh_per_k": storage_kwh_per_k(buffer)}
     return result
+
+
+_FORECAST_CACHE: dict[str, tuple[Any, list[dict[str, Any]]]] = {}
+
+
+async def async_forecast(hass: HomeAssistant, entity_id: str) -> list[dict[str, Any]]:
+    """Tagesvorhersage, höchstens einmal pro Stunde abgefragt."""
+    from datetime import timedelta
+
+    from homeassistant.util import dt as dt_util
+
+    cached = _FORECAST_CACHE.get(entity_id)
+    if cached and dt_util.utcnow() - cached[0] < timedelta(hours=1):
+        return cached[1]
+    response = await hass.services.async_call(
+        "weather", "get_forecasts", {"type": "daily"}, target={"entity_id": entity_id}, blocking=True, return_response=True
+    )
+    forecast = list(((response or {}).get(entity_id) or {}).get("forecast") or [])
+    _FORECAST_CACHE[entity_id] = (dt_util.utcnow(), forecast)
+    return forecast
+
+
+async def async_frost_preview(
+    hass: HomeAssistant, options: dict[str, Any], series: list[dict[str, Any]]
+) -> dict[str, Any] | None:
+    """Frost-Vorschau: Wärmebedarf der nächsten Tage gegen die Leistung der Wärmepumpe."""
+    weather = options.get(CONF_WEATHER_ENTITY)
+    hp = heat_pump(options.get(CONF_HEAT_PUMP_MODEL))
+    if not weather or hp is None:
+        return None
+    model = demand_model(series[-46:-1])  # der heutige Tag ist noch unvollständig
+    if model is None:
+        return {"ready": False, "reason": "model"}
+    forecast = await async_forecast(hass, weather)
+    bivalent = _num(hass, _find(hass, "number", "bivalenztemperatur_heizung"))
+    days = frost_days(forecast[:7], model, hp["range"], bivalent=bivalent)
+    worst = max((d for d in days), key=lambda d: d["peak_kw"] / (d["max_kw"] or 1), default=None)
+    return {"ready": True, "model": model, "days": days, "bivalent": bivalent, "worst": worst}

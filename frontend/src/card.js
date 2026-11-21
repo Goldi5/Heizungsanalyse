@@ -425,6 +425,7 @@ export class HeizungsanalyseCard extends HTMLElement {
     else if (el.dataset.act === "inv-export") return void this._inventoryExport();
     else if (el.dataset.act === "inv-import") return void this._inventoryImport();
     else if (el.dataset.act === "inv-close") { this._ui.invForm = null; this._ui.invSaved = false; }
+    else if (el.dataset.act && el.dataset.act.startsWith("ctrl-")) return void this._ctrl(el);
     else if (el.dataset.act === "goto-vergleich") {
       window.history.pushState(null, "", "/heizungs-analyse/vergleich");
       window.dispatchEvent(new CustomEvent("location-changed"));
@@ -441,9 +442,70 @@ export class HeizungsanalyseCard extends HTMLElement {
     this._searchTimer = setTimeout(() => this._loadLog(true), 250);
   }
 
+  _ctrlItem(key) {
+    return ((this._data && this._data.controls && this._data.controls.items) || []).find((c) => c.key === key);
+  }
+
+  async _ctrl(el) {
+    const ui = (this._ui.ctrl = this._ui.ctrl || { pending: {} });
+    const act = el.dataset.act;
+    const key = el.dataset.key;
+    ui.msg = null;
+    ui.err = false;
+    if (act === "ctrl-step") {
+      const c = this._ctrlItem(key);
+      if (!c) return;
+      const cur = ui.pending[key] !== undefined ? ui.pending[key] : c.value;
+      const next = Math.round((Number(cur) + Number(el.dataset.dir) * c.step) / c.step) * c.step;
+      const v = Math.min(c.max, Math.max(c.min, Number(next.toFixed(2))));
+      if (v === c.value) delete ui.pending[key];
+      else ui.pending[key] = v;
+      if (ui.confirm === key) ui.confirm = null;
+    } else if (act === "ctrl-reset") {
+      delete ui.pending[key];
+      if (ui.confirm === key) ui.confirm = null;
+    } else if (act === "ctrl-ask") ui.confirm = key;
+    else if (act === "ctrl-cancel") {
+      ui.confirm = null;
+      ui.undoConfirm = null;
+    } else if (act === "ctrl-undo-ask") ui.undoConfirm = el.dataset.id;
+    else if (act === "ctrl-apply" || act === "ctrl-undo") {
+      ui.busy = true;
+      this._render();
+      try {
+        if (act === "ctrl-apply") {
+          const res = await this._hass.callWS({ type: "heizungsanalyse/control/set", key, value: ui.pending[key], confirm: true });
+          delete ui.pending[key];
+          ui.msg = res && res.unchanged ? t("Der Regler hatte diesen Wert schon.") : t("Gespeichert – der Regler übernimmt den Wert in den nächsten Minuten.");
+        } else {
+          await this._hass.callWS({ type: "heizungsanalyse/control/undo", change: el.dataset.id });
+          ui.msg = t("Zurückgesetzt.");
+        }
+      } catch (e) {
+        ui.err = true;
+        ui.msg = t("Fehler: {e}", { e: e.message || e.code || e });
+      }
+      ui.busy = false;
+      ui.confirm = null;
+      ui.undoConfirm = null;
+      invalidate();
+      setTimeout(() => this._load(true), 2500);
+    }
+    this._render();
+  }
+
   _change(e) {
     const el = e.target;
     if (!el || !el.dataset) return;
+    if (el.dataset.ctrlSelect) {
+      const ui = (this._ui.ctrl = this._ui.ctrl || { pending: {} });
+      const c = this._ctrlItem(el.dataset.ctrlSelect);
+      if (!c) return;
+      if (el.value === c.value) delete ui.pending[c.key];
+      else ui.pending[c.key] = el.value;
+      this._render();
+      return;
+    }
     if (el.dataset.catalog) {
       const selected = el.selectedOptions && el.selectedOptions[0];
       if (!selected) return;

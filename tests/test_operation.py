@@ -29,3 +29,14 @@ def test_raumprofil_je_stunde() -> None:
     profile = hour_profile(readings, UTC)
     assert profile[6] == -1.0
     assert profile[7] is None
+
+
+def test_nachtlauf_wird_erkannt() -> None:
+    from hz.analysis.operation import night_runs
+
+    # drei Nächte 23:25–02:55 (UTC als Ortszeit), eine Nacht nur 10 min
+    spans = [(T0 + timedelta(days=d, hours=-1, minutes=25), T0 + timedelta(days=d, hours=2, minutes=55)) for d in range(3)]
+    spans.append((T0 + timedelta(days=3, hours=1), T0 + timedelta(days=3, hours=1, minutes=10)))
+    result = night_runs(spans, UTC, T0 - timedelta(days=1))
+    assert result["nights"] == 3
+    assert result["minutes"] == 175

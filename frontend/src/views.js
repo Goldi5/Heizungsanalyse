@@ -16,7 +16,7 @@ import {
   sectionTitle,
   targetChoices,
 } from "./inventory.js";
-import { devicesBlock, header8, liveValues, viewBetrieb, viewHydraulik, viewRaeume8, viewUebersicht } from "./views8.js";
+import { controlsCard, devicesBlock, header8, liveValues, viewBetrieb, viewHydraulik, viewRaeume8, viewUebersicht } from "./views8.js";
 import { CHECK_NAMES, SCORE_LEVEL, binByOutdoor, dayLabel, esc, fmt, kpiTone, linearFit, rangeRows, signed, trend, weatherAdjusted } from "./logic.js";
 
 export const VIEWS = ["anlage", "effizienz", "betrieb", "raeume", "schema", "vergleich", "inventar", "protokoll"];
@@ -1039,7 +1039,7 @@ export function renderView(view, d, ui, live, states = {}) {
     case "vergleich":
       return say("Hat eine Einstellung etwas gebracht? Wetter ist herausgerechnet.") + viewVergleich(d, ui);
     case "inventar":
-      return say("Was ist eingebaut – und fehlt etwas, das eine Auswertung braucht?") + devicesBlock(d) + viewInventar(d, ui);
+      return say("Was ist eingebaut – und fehlt etwas, das eine Auswertung braucht?") + controlsCard(d, ui) + devicesBlock(d) + viewInventar(d, ui);
     case "protokoll":
       return say("Liefern alle Quellen, und was ist passiert?") + viewProtokoll(d, ui);
     default:

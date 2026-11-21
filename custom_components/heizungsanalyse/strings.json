@@ -197,11 +197,12 @@
       },
       "plant": {
         "title": "Wärmepumpe und Speicher",
-        "description": "Modell aus dem Herstellerkatalog wählen. Die Analyse vergleicht dann mit dem Datenblatt: COP bei gleichem Wetter und Vorlauf, kleinste Leistung (Takten), Heizkurve des Reglers und Speicherverluste. Leer lassen, wenn das Gerät nicht in der Liste ist.",
+        "description": "Modell aus dem Herstellerkatalog wählen. Die Analyse vergleicht dann mit dem Datenblatt: COP bei gleichem Wetter und Vorlauf, kleinste Leistung (Takten), Heizkurve des Reglers und Speicherverluste. Leer lassen, wenn das Gerät nicht in der Liste ist. Für die Frost-Vorschau: Wärmebedarf der nächsten Tage gegen die Leistung der Wärmepumpe.",
         "data": {
           "heat_pump_model": "Wärmepumpe",
           "dhw_tank_model": "Warmwasserspeicher",
-          "buffer_model": "Pufferspeicher"
+          "buffer_model": "Pufferspeicher",
+          "weather_entity": "Wettervorhersage"
         }
       }
     },

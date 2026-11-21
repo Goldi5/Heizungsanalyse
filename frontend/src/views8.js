@@ -253,9 +253,12 @@ export function viewUebersicht(d, ui, live) {
     </section>`;
 
   // Was ist zu tun
-  const items = findings.slice(0, 3).map(
-    (f) => `<div class="todo-i"><i class="tone-${f.severity === "warning" ? "bad" : "warn"}"></i><span><b>${esc(f.title)}</b><small>${esc(f.text)}</small></span><small>${esc(f.id)}</small></div>`,
+  const hintItems = scheduleHints(d).map(
+    (h) => `<div class="todo-i"><i class="tone-${h.tone}"></i><span><b>${esc(h.title)}</b><small>${esc(h.text)}</small></span><small>${esc(t("Zeit"))}</small></div>`,
   );
+  const items = [...hintItems, ...findings.slice(0, Math.max(0, 3 - hintItems.length)).map(
+    (f) => `<div class="todo-i"><i class="tone-${f.severity === "warning" ? "bad" : "warn"}"></i><span><b>${esc(f.title)}</b><small>${esc(f.text)}</small></span><small>${esc(f.id)}</small></div>`,
+  )];
   const flow = k.flow_deviation && k.flow_deviation.median;
   if (items.length < 3 && flow != null && Math.abs(flow) <= 1) items.push(`<div class="todo-i"><i class="tone-ok"></i><span>${esc(t("Vorlauf passt zur Heizkurve ({v} K)", { v: signed(flow) }))}</span><small>ok</small></div>`);
   if (items.length < 3 && k.starts_per_day != null && th.starts_per_day && k.starts_per_day <= th.starts_per_day)
@@ -268,7 +271,7 @@ export function viewUebersicht(d, ui, live) {
       <div><small>${esc(t("Strom"))}</small><b>${fmt(lv.power, 2)}<i>kW</i></b></div>
       <div><small>${esc(t("COP jetzt"))}</small><b>${fmt(lv.cop, 1)}</b></div>
     </div>`;
-  const todo = `<section class="c"><div class="h"><span>${esc(t("Was ist zu tun"))}</span><span class="grow"></span><span>${findings.length ? esc(t("{n} Punkte", { n: findings.length })) : esc(t("nichts"))}</span></div>
+  const todo = `<section class="c"><div class="h"><span>${esc(t("Was ist zu tun"))}</span><span class="grow"></span><span>${findings.length + hintItems.length ? esc(t("{n} Punkte", { n: findings.length + hintItems.length })) : esc(t("nichts"))}</span></div>
     <div class="todo">${items.join("")}</div>${nowBlock}</section>`;
 
   // Vier Kennzahlen mit gleicher Logik: Zahl, Pill und Linie in derselben Farbe
@@ -288,7 +291,57 @@ export function viewUebersicht(d, ui, live) {
   </div>`;
 
   return `${say(t("Läuft die Anlage so gut, wie sie bei diesem Wetter kann?"))}
-    <div class="grid ov">${verdict}${todo}</div>${kpis}${costStrip(d, ui)}`;
+    <div class="grid ov">${verdict}${todo}</div>${kpis}${frostCard(d)}${costStrip(d, ui)}`;
+}
+
+// Zeitprogramm-Check: läuft etwas Nacht für Nacht, das man nachts nicht braucht?
+export function scheduleHints(d) {
+  const hints = ((d.operation || {}).schedule_hints || []).map((h) => {
+    const base = { nights: h.nights, minutes: h.minutes };
+    if (h.kind === "circulation")
+      return {
+        tone: "warn",
+        title: t("Zirkulation läuft nachts"),
+        text: t("In {n} der letzten 7 Nächte lief die Zirkulation zwischen 0 und 4 Uhr, im Schnitt {m} min. Zeitprogramm oder Uhrzeit am Regler prüfen.", { n: base.nights, m: base.minutes }),
+      };
+    return {
+      tone: "mut",
+      title: t("Warmwasser lädt nachts"),
+      text: t("In {n} der letzten 7 Nächte wurde zwischen 0 und 4 Uhr Warmwasser geladen. Gewollt (Nachtstrom)? Sonst Zeitprogramm oder Uhrzeit prüfen.", { n: base.nights }),
+    };
+  });
+  return hints;
+}
+
+// Frost-Vorschau: Wärmebedarf der nächsten Tage gegen die Leistung der Wärmepumpe
+export function frostCard(d) {
+  const f = d.frost;
+  if (!f) return "";
+  if (!f.ready)
+    return `<section class="c"><div class="h"><span>${esc(t("Nächste Tage"))}</span></div><div class="fd">${esc(t("Für die Vorschau braucht es mindestens 10 Heiztage mit Messwerten."))}</div></section>`;
+  const tone = { ok: "ok", tight: "warn", short: "bad", unknown: "mut" };
+  const word = { ok: t("reicht"), tight: t("knapp"), short: t("zu wenig"), unknown: "–" };
+  const rows = (f.days || [])
+    .map((x) => {
+      const day = x.date ? new Date(x.date + "T12:00:00").toLocaleDateString(getLang(), { weekday: "short", day: "numeric", month: "numeric" }) : "";
+      return `<tr><td>${esc(day)}</td><td class="n">${fmt(x.low, 0)} / ${fmt(x.high, 0)} °C</td><td class="n">${fmt(x.demand_kw, 1)} kW</td><td class="n">${fmt(x.peak_kw, 1)} kW</td><td class="n">${fmt(x.max_kw, 1)} kW</td><td>${pill(tone[x.status], word[x.status])}</td></tr>`;
+    })
+    .join("");
+  const blocked = (f.days || []).some((x) => x.aux_blocked);
+  const worst = f.worst;
+  const say8 = !worst
+    ? ""
+    : worst.status === "ok"
+      ? t("Die Wärmepumpe schafft die nächsten Tage allein.")
+      : worst.status === "tight"
+        ? t("Am kältesten Tag wird es knapp – die Wärmepumpe läuft dann fast an der Grenze.")
+        : t("Am kältesten Tag reicht die Wärmepumpe allein nicht.");
+  return `<section class="c wide"><div class="h"><span>${esc(t("Nächste Tage"))}</span><span class="grow"></span><span>${esc(t("Bedarf aus deinen Messtagen · Leistung laut Datenblatt"))}</span></div>
+    <p class="say8">${esc(say8)}</p>
+    <table class="tbl"><thead><tr><th>${esc(t("Tag"))}</th><th class="n">${esc(t("min / max"))}</th><th class="n">${esc(t("Bedarf Ø"))}</th><th class="n">${esc(t("Bedarf kälteste Stunde"))}</th><th class="n">${esc(t("WP max"))}</th><th></th></tr></thead><tbody>${rows}</tbody></table>
+    ${blocked ? `<div class="fd bad">${esc(t("Der Heizstab ist erst ab {b} °C freigegeben. Damit es warm bleibt: Bivalenztemperatur Heizen anheben (Geräte → Regler einstellen).", { b: fmt(f.bivalent, 0) }))}</div>` : ""}
+    <div class="fd">${esc(t("Modell: Wärme je Tag = {a} × Außentemperatur + {b} kWh (aus {n} Tagen, R² {r}).", { a: fmt(f.model.slope, 2), b: fmt(f.model.intercept, 0), n: f.model.days, r: fmt(f.model.r2, 2) }))}</div>
+  </section>`;
 }
 
 export function costStrip(d, ui) {
@@ -372,7 +425,10 @@ export function viewBetrieb(d, ui) {
       ? t("Der Verdichter startete im Schnitt <b>{s}-mal am Tag</b> und lief <b>{m} Minuten</b> am Stück.", { s: fmt(k.starts_per_day, 1), m: fmt(c.median_min ?? k.runtime_per_cycle, 0) })
       : esc(t("Für den Tagesverlauf fehlt noch der Verlauf des Verdichters."));
 
-  const timelineCard = `<section class="c wide"><div class="h"><span>${esc(t("Verdichter je Tag"))}</span><span class="grow"></span><span>${esc(t("letzte 7 Tage · 0–24 Uhr"))}</span>${q("timeline", ui)}</div>${hb("timeline", ui)}${lanes(op) || `<div class="empty">${esc(t("keine Daten"))}</div>`}</section>`;
+  const hintCard = scheduleHints(d)
+    .map((h) => `<section class="c wide hint-${h.tone}"><div class="h"><span>${esc(h.title)}</span></div><div class="fd">${esc(h.text)}</div></section>`)
+    .join("");
+  const timelineCard = hintCard + `<section class="c wide"><div class="h"><span>${esc(t("Verdichter je Tag"))}</span><span class="grow"></span><span>${esc(t("letzte 7 Tage · 0–24 Uhr"))}</span>${q("timeline", ui)}</div>${hb("timeline", ui)}${lanes(op) || `<div class="empty">${esc(t("keine Daten"))}</div>`}</section>`;
   const cycleCard = `<section class="c"><div class="h"><span>${esc(t("Laufzeit je Start"))}</span><span class="grow"></span><span>${esc(t("Minuten"))}</span>${q("cycle", ui)}</div>${hb("cycle", ui)}${cycleBars(op, ui)}</section>`;
   const startBins = binByOutdoor(rows, "starts");
   const startsCard = `<section class="c"><div class="h"><span>${esc(t("Starts nach Außentemperatur"))}</span>${q("cycling", ui)}</div>${hb("cycling", ui)}${startBins.length ? box(ui, "b-starts", () => binChart(startBins, { h: 180, ref: th.starts_per_day, unit: t("Starts/Tag"), digits: 0 })) : `<div class="empty">${esc(t("keine Daten"))}</div>`}</section>`;
@@ -682,4 +738,133 @@ export function curveCard(d) {
   const diff = curves.filter((c) => c.difference != null);
   const note = diff.length ? t("Regler-Soll jetzt gegen Kurve: {v}", { v: diff.map((c) => `${c.name} ${signed(c.difference)} K`).join(" · ") }) : "";
   return `<div class="c dcard"><div class="top"><b>${esc(t("Heizkurven laut Regler"))}</b></div>${scatterChart(pts, { h: 180, unitY: "°C", lines })}${rows}<div class="fd">${esc(note)}</div><div class="fd">${esc(t("Linie: Raum-Soll + Steilheit × (Raum-Soll − außen). Punkt: was der Regler gerade fordert."))}</div></div>`;
+}
+
+// ---------------------------------------------------------------- Regler einstellen
+const CTRL_LABEL = {
+  slope: "Steilheit",
+  room_day: "Raum-Soll Tag",
+  room_night: "Raum-Soll Absenkung",
+  dhw_comfort: "Komfort",
+  dhw_eco: "Eco",
+  bivalent_heating: "Bivalenz Heizen",
+  bivalent_dhw: "Bivalenz Warmwasser",
+  mode: "Betriebsart",
+};
+const MODE_LABEL = { program: "Programm", comfort: "Komfort", eco: "Eco", dhw: "Warmwasser", standby: "Bereitschaft", emergency: "Notbetrieb", manual: "Handbetrieb" };
+
+function curveAt(slope, room, outdoor) {
+  return room + slope * Math.max(0, room - outdoor);
+}
+
+export function ctrlValue(c, ui) {
+  const p = ui.ctrl && ui.ctrl.pending;
+  return p && p[c.key] !== undefined ? p[c.key] : c.value;
+}
+
+function ctrlLabel(c) {
+  return t(CTRL_LABEL[c.field] || c.field);
+}
+
+function ctrlFmt(c, v) {
+  if (c.kind === "select") return esc(t(MODE_LABEL[v] || v || "–"));
+  const digits = c.step < 0.1 ? 2 : 1;
+  return `${fmt(v, digits)}${c.unit ? ` ${esc(c.unit)}` : ""}`;
+}
+
+function stepper(c, ui, admin) {
+  const v = ctrlValue(c, ui);
+  const changed = v !== c.value;
+  if (c.kind === "select") {
+    const opts = (c.options || []).map((o) => `<option value="${esc(o)}" ${o === v ? "selected" : ""}>${esc(t(MODE_LABEL[o] || o))}</option>`).join("");
+    return `<div class="cstep${changed ? " chg" : ""}"><span class="cl">${esc(ctrlLabel(c))}</span>${
+      admin ? `<select data-ctrl-select="${esc(c.key)}">${opts}</select>` : `<b>${ctrlFmt(c, v)}</b>`
+    }</div>`;
+  }
+  const btn = (dir, sym, off) =>
+    admin ? `<button class="cbtn" data-act="ctrl-step" data-key="${esc(c.key)}" data-dir="${dir}" ${off ? "disabled" : ""} aria-label="${sym}">${sym}</button>` : "";
+  return `<div class="cstep${changed ? " chg" : ""}"><span class="cl">${esc(ctrlLabel(c))}</span><span class="cv">${btn(-1, "−", v <= c.min)}<b>${ctrlFmt(c, v)}</b>${btn(1, "+", v >= c.max)}</span>${
+    changed ? `<span class="was">${esc(t("bisher"))} ${ctrlFmt(c, c.value)}</span>` : ""
+  }</div>`;
+}
+
+function curvePreview(items, ui) {
+  const slope = items.find((c) => c.field === "slope");
+  const day = items.find((c) => c.field === "room_day");
+  if (!slope || !day || slope.value == null || day.value == null) return "";
+  const s0 = slope.value, r0 = day.value, s1 = ctrlValue(slope, ui), r1 = ctrlValue(day, ui);
+  if (s0 === s1 && r0 === r1) return "";
+  const cells = [7, 0, -7]
+    .map((T) => {
+      const a = curveAt(s0, r0, T), b = curveAt(s1, r1, T);
+      return `<span>${esc(t("bei {t} °C", { t: fmt(T, 0) }))}: ${fmt(a, 1)} → <b>${fmt(b, 1)} °C</b> <small>(${signed(b - a)} K)</small></span>`;
+    })
+    .join("");
+  return `<div class="cprev">${esc(t("Vorlauf-Soll"))} ${cells}</div>`;
+}
+
+function confirmBox(c, ui) {
+  const v = ctrlValue(c, ui);
+  const where = c.circuit_name ? `${c.circuit_name}: ` : "";
+  return `<div class="cconf" role="alertdialog">
+    <b>${esc(t("Wirklich am Regler ändern?"))}</b>
+    <div>${esc(where + ctrlLabel(c))}: ${ctrlFmt(c, c.value)} → <b>${ctrlFmt(c, v)}</b></div>
+    <div class="fd">${esc(t("Der Wert wird sofort an die Wärmepumpe geschickt. Unter „Änderungen“ siehst du später Vorher und Nachher; 24 Stunden lang kannst du ihn mit einem Klick zurücknehmen."))}</div>
+    <div class="cact"><button class="cbtn wide" data-act="ctrl-cancel">${esc(t("Abbrechen"))}</button><button class="cbtn wide go" data-act="ctrl-apply" data-key="${esc(c.key)}" ${ui.ctrl && ui.ctrl.busy ? "disabled" : ""}>${esc(t("Ja, ändern"))}</button></div>
+  </div>`;
+}
+
+function pendingActions(items, ui, admin) {
+  if (!admin) return "";
+  const changed = items.filter((c) => ctrlValue(c, ui) !== c.value);
+  if (!changed.length) return "";
+  const confirm = ui.ctrl && ui.ctrl.confirm;
+  return changed
+    .map((c) =>
+      confirm === c.key
+        ? confirmBox(c, ui)
+        : `<div class="cact"><span>${esc(ctrlLabel(c))}: ${ctrlFmt(c, c.value)} → <b>${ctrlFmt(c, ctrlValue(c, ui))}</b></span><button class="cbtn" data-act="ctrl-reset" data-key="${esc(c.key)}">${esc(t("Verwerfen"))}</button><button class="cbtn go" data-act="ctrl-ask" data-key="${esc(c.key)}">${esc(t("Übernehmen…"))}</button></div>`,
+    )
+    .join("");
+}
+
+export function controlsCard(d, ui) {
+  const ctl = d.controls;
+  if (!ctl || !(ctl.items || []).length) return "";
+  const admin = Boolean(ctl.admin);
+  const items = ctl.items;
+  const circuits = [];
+  for (const c of items.filter((x) => x.group === "circuit")) {
+    let g = circuits.find((x) => x.id === c.circuit);
+    if (!g) circuits.push((g = { id: c.circuit, name: c.circuit_name, items: [] }));
+    g.items.push(c);
+  }
+  const block = (title, list, extra = "") =>
+    `<div class="cgrp"><div class="cgt">${esc(title)}</div><div class="crow">${list.map((c) => stepper(c, ui, admin)).join("")}</div>${extra}${pendingActions(list, ui, admin)}</div>`;
+  const parts = circuits.map((g) => block(g.name, g.items, curvePreview(g.items, ui)));
+  const dhw = items.filter((c) => c.group === "dhw");
+  if (dhw.length) parts.push(block(t("Warmwasser"), dhw));
+  const plant = items.filter((c) => c.group === "plant");
+  if (plant.length) parts.push(block(t("Anlage"), plant));
+  const recent = (ctl.recent || [])
+    .slice(0, 5)
+    .map((r) => {
+      const c = items.find((x) => x.entity === r.entity) || { field: r.field, kind: typeof r.new === "string" ? "select" : "number", step: 0.5 };
+      const when = new Date(r.ts).toLocaleString(getLang(), { weekday: "short", hour: "2-digit", minute: "2-digit" });
+      const undo = admin && r.undo
+        ? ui.ctrl && ui.ctrl.undoConfirm === r.id
+          ? `<button class="cbtn" data-act="ctrl-cancel">${esc(t("Abbrechen"))}</button><button class="cbtn go" data-act="ctrl-undo" data-id="${esc(r.id)}">${esc(t("Ja, zurücksetzen"))}</button>`
+          : `<button class="cbtn" data-act="ctrl-undo-ask" data-id="${esc(r.id)}">${esc(t("Rückgängig"))}</button>`
+        : r.undone
+          ? `<span class="mut">${esc(t("zurückgenommen"))}</span>`
+          : "";
+      return `<div class="crec"><span>${esc(when)} · ${esc((c.circuit_name ? c.circuit_name + ": " : "") + ctrlLabel(c))}: ${ctrlFmt(c, r.old)} → ${ctrlFmt(c, r.new)}</span><span>${undo}</span></div>`;
+    })
+    .join("");
+  const msg = ui.ctrl && ui.ctrl.msg ? `<div class="cmsg ${ui.ctrl.err ? "bad" : "ok"}">${esc(ui.ctrl.msg)}</div>` : "";
+  return `<section class="c ctrl"><div class="top"><b>${esc(t("Regler einstellen"))}</b>${admin ? pill("mut", t("mit Rückfrage")) : pill("mut", t("nur Anzeige"))}</div>
+    ${admin ? "" : `<div class="fd">${esc(t("Ändern können nur Administratoren."))}</div>`}
+    ${msg}${parts.join("")}
+    ${recent ? `<div class="cgrp"><div class="cgt">${esc(t("Zuletzt verstellt"))}</div>${recent}</div>` : ""}
+  </section>`;
 }

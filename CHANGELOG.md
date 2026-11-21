@@ -1,3 +1,36 @@
+## 0.9.0b1 – 2026-11-21 (Beta)
+
+### Neu: Regler einstellen
+- **Geräte → Regler einstellen:** Heizkurve (Steilheit), Raum-Soll Tag und
+  Absenkung je Heizkreis, Warmwasser-Soll Komfort und Eco,
+  Bivalenztemperatur Heizen und Warmwasser, Betriebsart – direkt aus dem
+  Dashboard. Heute für Stiebel Eltron WPM über die ISG-Integration.
+- **Doppelte Bestätigung:** Wert mit − / + wählen, „Übernehmen…“, dann
+  „Ja, ändern“. Erst dann geht der Wert an den Regler.
+- **Vorschau:** Bei Heizkurve und Raum-Soll zeigt die Karte sofort den neuen
+  Vorlauf bei +7, 0 und −7 °C.
+- **Sichere Grenzen**, enger als der Regler: Steilheit 0,1–1,5, Raum-Soll
+  16–25 °C, Warmwasser 40–60 °C, Bivalenz −20 bis +5 °C.
+- **Nur Admins** können ändern; alle anderen sehen die Werte.
+- **Protokoll und Rückgängig:** Jede Verstellung landet unter „Änderungen“
+  (Vorher-Nachher-Vergleich) und lässt sich 24 Stunden lang mit einem Klick
+  zurücknehmen – auch nur, wenn der Wert seitdem nicht anders verstellt wurde.
+
+### Neu: Zeitprogramm-Check
+- Läuft die Zirkulation in mindestens 3 der letzten 7 Nächte zwischen 0 und
+  4 Uhr, erscheint ein Hinweis in der Übersicht und im Betrieb („Zeitprogramm
+  oder Uhrzeit am Regler prüfen“). Dasselbe als Info für nächtliches
+  Warmwasserladen.
+
+### Neu: Frost-Vorschau
+- **Übersicht → Nächste Tage:** Wärmebedarf im Tagesmittel und in der
+  kältesten Stunde aus den eigenen Messtagen, gegen die größte Leistung der
+  Wärmepumpe laut Datenblatt – „reicht“, „knapp“ oder „zu wenig“.
+- Hinweis, wenn der Heizstab bei der Vorhersage noch gesperrt wäre
+  (Bivalenztemperatur unter der Tiefsttemperatur).
+- Neue Option *Wettervorhersage* unter *Konfigurieren → Wärmepumpe und
+  Speicher*.
+
 ## 0.8.0b4 – 2026-11-20 (Beta)
 
 ### Behoben

@@ -197,11 +197,12 @@
       },
       "plant": {
         "title": "Heat pump and storage",
-        "description": "Pick the model from the manufacturer catalogue. The analysis then compares against the datasheet: COP at the same weather and flow temperature, minimum output (cycling), the controller's heating curve and storage losses. Leave empty if the device is not listed.",
+        "description": "Pick the model from the manufacturer catalogue. The analysis then compares against the datasheet: COP at the same weather and flow temperature, minimum output (cycling), the controller's heating curve and storage losses. Leave empty if the device is not listed. For the frost preview: heat demand of the coming days against the heat pump's output.",
         "data": {
           "heat_pump_model": "Heat pump",
           "dhw_tank_model": "Hot water tank",
-          "buffer_model": "Buffer tank"
+          "buffer_model": "Buffer tank",
+          "weather_entity": "Weather forecast"
         }
       }
     },

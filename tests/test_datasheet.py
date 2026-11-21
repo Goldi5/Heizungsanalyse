@@ -73,3 +73,20 @@ def test_abkuehlung_mit_und_ohne_zirkulation() -> None:
     with_circ, idle = cooling_split(temps, {}, circ)
     assert with_circ == 1.3
     assert idle == 0.1
+
+
+def test_bedarfsmodell_und_frostvorschau() -> None:
+    from hz.analysis.datasheet import demand_model, frost_days
+
+    rows = [{"outdoor": t, "heat": 121.4 - 5.5 * t} for t in (4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)]
+    model = demand_model(rows)
+    assert model["slope"] == pytest.approx(-5.5, abs=0.01)
+    forecast = [
+        {"datetime": "2026-11-25T00:00:00+01:00", "temperature": 5, "templow": 1},
+        {"datetime": "2026-11-26T00:00:00+01:00", "temperature": -3, "templow": -10},
+    ]
+    days = frost_days(forecast, model, WPL07["range"], bivalent=-12)
+    assert days[0]["status"] == "ok"
+    assert days[1]["status"] == "short"  # 7,3 kW Bedarf gegen 6,87 kW
+    assert days[1]["aux_blocked"] is True
+    assert demand_model(rows[:5]) is None

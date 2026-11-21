@@ -1,7 +1,7 @@
-/* Heizungsanalyse 0.8.0b4 - gebaut aus frontend/src (npm run build). Nicht von Hand bearbeiten. */
+/* Heizungsanalyse 0.9.0b1 - gebaut aus frontend/src (npm run build). Nicht von Hand bearbeiten. */
 (() => {
   // src/version.js
-  var HA_VERSION = "0.8.0b4";
+  var HA_VERSION = "0.9.0b1";
 
   // src/i18n.js
   var EN = {
@@ -496,7 +496,59 @@
     "Zirkulation": "Circulation",
     "an": "on",
     "mit / ohne Zirkulation": "with / without circulation",
-    "{s}: laut Datenblatt ohne Zapfen etwa {e} K/h, gemessen ohne Zirkulation {i} K/h. Läuft die Zirkulation, sind es {c} K/h – der Unterschied geht in der Zirkulationsleitung verloren.": "{s}: about {e} K/h without draw-off per datasheet, measured {i} K/h without circulation. With circulation running it is {c} K/h – the difference is lost in the circulation loop."
+    "{s}: laut Datenblatt ohne Zapfen etwa {e} K/h, gemessen ohne Zirkulation {i} K/h. Läuft die Zirkulation, sind es {c} K/h – der Unterschied geht in der Zirkulationsleitung verloren.": "{s}: about {e} K/h without draw-off per datasheet, measured {i} K/h without circulation. With circulation running it is {c} K/h – the difference is lost in the circulation loop.",
+    "Steilheit": "Slope",
+    "Raum-Soll Tag": "Room target day",
+    "Raum-Soll Absenkung": "Room target setback",
+    "Komfort": "Comfort",
+    "Eco": "Eco",
+    "Bivalenz Heizen": "Bivalent point heating",
+    "Bivalenz Warmwasser": "Bivalent point hot water",
+    "Betriebsart": "Operating mode",
+    "Programm": "Program",
+    "Bereitschaft": "Standby",
+    "Notbetrieb": "Emergency",
+    "Handbetrieb": "Manual",
+    "bisher": "was",
+    "bei {t} °C": "at {t} °C",
+    "Vorlauf-Soll": "Flow target",
+    "Wirklich am Regler ändern?": "Really change on the controller?",
+    "Der Wert wird sofort an die Wärmepumpe geschickt. Unter „Änderungen“ siehst du später Vorher und Nachher; 24 Stunden lang kannst du ihn mit einem Klick zurücknehmen.": "The value is sent to the heat pump right away. Under “Changes” you will see before and after; for 24 hours you can undo it with one click.",
+    "Ja, ändern": "Yes, change",
+    "Verwerfen": "Discard",
+    "Übernehmen…": "Apply…",
+    "Ja, zurücksetzen": "Yes, revert",
+    "Rückgängig": "Undo",
+    "zurückgenommen": "reverted",
+    "Regler einstellen": "Controller settings",
+    "mit Rückfrage": "with confirmation",
+    "nur Anzeige": "view only",
+    "Ändern können nur Administratoren.": "Only administrators can make changes.",
+    "Zuletzt verstellt": "Recently changed",
+    "Der Regler hatte diesen Wert schon.": "The controller already had this value.",
+    "Gespeichert – der Regler übernimmt den Wert in den nächsten Minuten.": "Saved – the controller will pick up the value within a few minutes.",
+    "Zurückgesetzt.": "Reverted.",
+    "Zeit": "Time",
+    "Zirkulation läuft nachts": "Circulation runs at night",
+    "In {n} der letzten 7 Nächte lief die Zirkulation zwischen 0 und 4 Uhr, im Schnitt {m} min. Zeitprogramm oder Uhrzeit am Regler prüfen.": "On {n} of the last 7 nights the circulation ran between 0 and 4 a.m., {m} min on average. Check the time program or the controller's clock.",
+    "Warmwasser lädt nachts": "Hot water charges at night",
+    "In {n} der letzten 7 Nächte wurde zwischen 0 und 4 Uhr Warmwasser geladen. Gewollt (Nachtstrom)? Sonst Zeitprogramm oder Uhrzeit prüfen.": "On {n} of the last 7 nights hot water was charged between 0 and 4 a.m. Intended (night tariff)? Otherwise check the time program or clock.",
+    "Nächste Tage": "Coming days",
+    "Für die Vorschau braucht es mindestens 10 Heiztage mit Messwerten.": "The preview needs at least 10 heating days with measurements.",
+    "reicht": "enough",
+    "knapp": "tight",
+    "zu wenig": "too little",
+    "Die Wärmepumpe schafft die nächsten Tage allein.": "The heat pump manages the coming days on its own.",
+    "Am kältesten Tag wird es knapp – die Wärmepumpe läuft dann fast an der Grenze.": "On the coldest day it gets tight – the heat pump runs close to its limit.",
+    "Am kältesten Tag reicht die Wärmepumpe allein nicht.": "On the coldest day the heat pump alone is not enough.",
+    "Bedarf aus deinen Messtagen · Leistung laut Datenblatt": "Demand from your measured days · output per datasheet",
+    "Tag": "Day",
+    "min / max": "min / max",
+    "Bedarf Ø": "Demand avg",
+    "Bedarf kälteste Stunde": "Demand coldest hour",
+    "WP max": "HP max",
+    "Der Heizstab ist erst ab {b} °C freigegeben. Damit es warm bleibt: Bivalenztemperatur Heizen anheben (Geräte → Regler einstellen).": "The heating element is only enabled below {b} °C. To stay warm: raise the bivalent point for heating (Devices → Controller settings).",
+    "Modell: Wärme je Tag = {a} × Außentemperatur + {b} kWh (aus {n} Tagen, R² {r}).": "Model: heat per day = {a} × outdoor temperature + {b} kWh (from {n} days, R² {r})."
   };
   var lang = "de";
   function setLang(hass) {
@@ -995,6 +1047,29 @@ table.tbl td { white-space:nowrap; }
 .dsline b { color:var(--hz-ink); font-size:1rem; }
 .row2 .dot { display:inline-block; margin-right:6px; vertical-align:middle; }
 .dcard a { color:var(--hz-cool); }
+.ctrl .cgrp { border-top:1px solid var(--hz-line); padding-top:10px; margin-top:10px; }
+.ctrl .cgt { font-weight:600; font-size:.85rem; margin-bottom:6px; }
+.ctrl .crow { display:flex; flex-wrap:wrap; gap:8px 18px; }
+.ctrl .cstep { display:flex; flex-direction:column; gap:2px; min-width:150px; padding:6px 8px; border-radius:10px; border:1px solid transparent; }
+.ctrl .cstep.chg { border-color:var(--hz-warn); background:color-mix(in srgb, var(--hz-warn) 8%, transparent); }
+.ctrl .cl { font-size:.75rem; color:var(--hz-mut); }
+.ctrl .cv { display:flex; align-items:center; gap:8px; }
+.ctrl .cv b { min-width:64px; text-align:center; font-size:1.05rem; }
+.ctrl .was { font-size:.72rem; color:var(--hz-mut); }
+.ctrl select { font:inherit; padding:4px 6px; border-radius:8px; background:var(--hz-card); color:inherit; border:1px solid var(--hz-line); }
+.cbtn { font:inherit; font-size:.85rem; padding:4px 10px; min-width:32px; border-radius:8px; border:1px solid var(--hz-line); background:transparent; color:inherit; cursor:pointer; }
+.cbtn:disabled { opacity:.4; cursor:default; }
+.cbtn.go { background:var(--hz-heat); border-color:var(--hz-heat); color:#fff; font-weight:600; }
+.cbtn.wide { padding:6px 14px; }
+.ctrl .cact { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:8px; font-size:.85rem; }
+.ctrl .cact > span { flex:1 1 200px; }
+.ctrl .cconf { margin-top:8px; padding:10px 12px; border-radius:10px; border:1px solid var(--hz-heat); background:color-mix(in srgb, var(--hz-heat) 10%, transparent); display:flex; flex-direction:column; gap:6px; }
+.ctrl .cprev { margin-top:8px; display:flex; flex-wrap:wrap; gap:4px 16px; font-size:.82rem; color:var(--hz-mut); }
+.ctrl .cprev b { color:var(--hz-ink); }
+.ctrl .crec { display:flex; flex-wrap:wrap; justify-content:space-between; gap:6px; font-size:.82rem; padding:4px 0; }
+.ctrl .cmsg { margin:6px 0; font-size:.85rem; }
+.ctrl .cmsg.ok { color:var(--hz-ok); } .ctrl .cmsg.bad, .fd.bad { color:var(--hz-bad); }
+.hint-warn { border-left:3px solid var(--hz-warn); }
 `;
 
   // src/data.js
@@ -1736,9 +1811,12 @@ table.tbl td { white-space:nowrap; }
       <div class="fd">${esc(dsHp ? t("Punkte: Tages-COP · Band: deine eigene Kennlinie ± Streuung · blau gepunktet: Datenblatt {m} bei deinem Vorlauf", { m: dsHp.model }) : t("Punkte: Tages-COP · Band: deine eigene Kennlinie ± Streuung"))}</div>
       ${datasheetSay(dsHp)}
     </section>`;
-    const items = findings.slice(0, 3).map(
-      (f) => `<div class="todo-i"><i class="tone-${f.severity === "warning" ? "bad" : "warn"}"></i><span><b>${esc(f.title)}</b><small>${esc(f.text)}</small></span><small>${esc(f.id)}</small></div>`
+    const hintItems = scheduleHints(d).map(
+      (h) => `<div class="todo-i"><i class="tone-${h.tone}"></i><span><b>${esc(h.title)}</b><small>${esc(h.text)}</small></span><small>${esc(t("Zeit"))}</small></div>`
     );
+    const items = [...hintItems, ...findings.slice(0, Math.max(0, 3 - hintItems.length)).map(
+      (f) => `<div class="todo-i"><i class="tone-${f.severity === "warning" ? "bad" : "warn"}"></i><span><b>${esc(f.title)}</b><small>${esc(f.text)}</small></span><small>${esc(f.id)}</small></div>`
+    )];
     const flow = k.flow_deviation && k.flow_deviation.median;
     if (items.length < 3 && flow != null && Math.abs(flow) <= 1) items.push(`<div class="todo-i"><i class="tone-ok"></i><span>${esc(t("Vorlauf passt zur Heizkurve ({v} K)", { v: signed(flow) }))}</span><small>ok</small></div>`);
     if (items.length < 3 && k.starts_per_day != null && th.starts_per_day && k.starts_per_day <= th.starts_per_day)
@@ -1750,7 +1828,7 @@ table.tbl td { white-space:nowrap; }
       <div><small>${esc(t("Strom"))}</small><b>${fmt(lv.power, 2)}<i>kW</i></b></div>
       <div><small>${esc(t("COP jetzt"))}</small><b>${fmt(lv.cop, 1)}</b></div>
     </div>`;
-    const todo = `<section class="c"><div class="h"><span>${esc(t("Was ist zu tun"))}</span><span class="grow"></span><span>${findings.length ? esc(t("{n} Punkte", { n: findings.length })) : esc(t("nichts"))}</span></div>
+    const todo = `<section class="c"><div class="h"><span>${esc(t("Was ist zu tun"))}</span><span class="grow"></span><span>${findings.length + hintItems.length ? esc(t("{n} Punkte", { n: findings.length + hintItems.length })) : esc(t("nichts"))}</span></div>
     <div class="todo">${items.join("")}</div>${nowBlock}</section>`;
     const last30 = (d.series || []).slice(-30);
     const copTone = !ex || ex.rel == null ? "mut" : ex.rel < -0.08 ? "warn" : "ok";
@@ -1766,7 +1844,45 @@ table.tbl td { white-space:nowrap; }
     ${tile(t("Vorlauf Ist − Soll"), signed(flow), "K", t("Zielband ±1 K"), flowTone, flowTone === "ok" ? t("passt") : flow > 0 ? t("zu warm") : t("zu kalt"), sparkline(last30.map((r) => r.flow != null && r.target_flow != null ? r.flow - r.target_flow : null), col(flowTone), { ref: 0 }))}
   </div>`;
     return `${say(t("Läuft die Anlage so gut, wie sie bei diesem Wetter kann?"))}
-    <div class="grid ov">${verdict}${todo}</div>${kpis}${costStrip(d, ui)}`;
+    <div class="grid ov">${verdict}${todo}</div>${kpis}${frostCard(d)}${costStrip(d, ui)}`;
+  }
+  function scheduleHints(d) {
+    const hints = ((d.operation || {}).schedule_hints || []).map((h) => {
+      const base = { nights: h.nights, minutes: h.minutes };
+      if (h.kind === "circulation")
+        return {
+          tone: "warn",
+          title: t("Zirkulation läuft nachts"),
+          text: t("In {n} der letzten 7 Nächte lief die Zirkulation zwischen 0 und 4 Uhr, im Schnitt {m} min. Zeitprogramm oder Uhrzeit am Regler prüfen.", { n: base.nights, m: base.minutes })
+        };
+      return {
+        tone: "mut",
+        title: t("Warmwasser lädt nachts"),
+        text: t("In {n} der letzten 7 Nächte wurde zwischen 0 und 4 Uhr Warmwasser geladen. Gewollt (Nachtstrom)? Sonst Zeitprogramm oder Uhrzeit prüfen.", { n: base.nights })
+      };
+    });
+    return hints;
+  }
+  function frostCard(d) {
+    const f = d.frost;
+    if (!f) return "";
+    if (!f.ready)
+      return `<section class="c"><div class="h"><span>${esc(t("Nächste Tage"))}</span></div><div class="fd">${esc(t("Für die Vorschau braucht es mindestens 10 Heiztage mit Messwerten."))}</div></section>`;
+    const tone = { ok: "ok", tight: "warn", short: "bad", unknown: "mut" };
+    const word = { ok: t("reicht"), tight: t("knapp"), short: t("zu wenig"), unknown: "–" };
+    const rows = (f.days || []).map((x) => {
+      const day = x.date ? (/* @__PURE__ */ new Date(x.date + "T12:00:00")).toLocaleDateString(getLang(), { weekday: "short", day: "numeric", month: "numeric" }) : "";
+      return `<tr><td>${esc(day)}</td><td class="n">${fmt(x.low, 0)} / ${fmt(x.high, 0)} °C</td><td class="n">${fmt(x.demand_kw, 1)} kW</td><td class="n">${fmt(x.peak_kw, 1)} kW</td><td class="n">${fmt(x.max_kw, 1)} kW</td><td>${statusPill(tone[x.status], word[x.status])}</td></tr>`;
+    }).join("");
+    const blocked = (f.days || []).some((x) => x.aux_blocked);
+    const worst = f.worst;
+    const say8 = !worst ? "" : worst.status === "ok" ? t("Die Wärmepumpe schafft die nächsten Tage allein.") : worst.status === "tight" ? t("Am kältesten Tag wird es knapp – die Wärmepumpe läuft dann fast an der Grenze.") : t("Am kältesten Tag reicht die Wärmepumpe allein nicht.");
+    return `<section class="c wide"><div class="h"><span>${esc(t("Nächste Tage"))}</span><span class="grow"></span><span>${esc(t("Bedarf aus deinen Messtagen · Leistung laut Datenblatt"))}</span></div>
+    <p class="say8">${esc(say8)}</p>
+    <table class="tbl"><thead><tr><th>${esc(t("Tag"))}</th><th class="n">${esc(t("min / max"))}</th><th class="n">${esc(t("Bedarf Ø"))}</th><th class="n">${esc(t("Bedarf kälteste Stunde"))}</th><th class="n">${esc(t("WP max"))}</th><th></th></tr></thead><tbody>${rows}</tbody></table>
+    ${blocked ? `<div class="fd bad">${esc(t("Der Heizstab ist erst ab {b} °C freigegeben. Damit es warm bleibt: Bivalenztemperatur Heizen anheben (Geräte → Regler einstellen).", { b: fmt(f.bivalent, 0) }))}</div>` : ""}
+    <div class="fd">${esc(t("Modell: Wärme je Tag = {a} × Außentemperatur + {b} kWh (aus {n} Tagen, R² {r}).", { a: fmt(f.model.slope, 2), b: fmt(f.model.intercept, 0), n: f.model.days, r: fmt(f.model.r2, 2) }))}</div>
+  </section>`;
   }
   function costStrip(d, ui) {
     const c = d.kpis && d.kpis.costs || {};
@@ -1835,7 +1951,8 @@ table.tbl td { white-space:nowrap; }
     const rows = (d.series || []).slice(-30);
     const c = op.cycles || {};
     const sentence = c.cycles ? t("Der Verdichter startete im Schnitt <b>{s}-mal am Tag</b> und lief <b>{m} Minuten</b> am Stück.", { s: fmt(k.starts_per_day, 1), m: fmt(c.median_min ?? k.runtime_per_cycle, 0) }) : esc(t("Für den Tagesverlauf fehlt noch der Verlauf des Verdichters."));
-    const timelineCard = `<section class="c wide"><div class="h"><span>${esc(t("Verdichter je Tag"))}</span><span class="grow"></span><span>${esc(t("letzte 7 Tage · 0–24 Uhr"))}</span>${q("timeline", ui)}</div>${hb("timeline", ui)}${lanes(op) || `<div class="empty">${esc(t("keine Daten"))}</div>`}</section>`;
+    const hintCard = scheduleHints(d).map((h) => `<section class="c wide hint-${h.tone}"><div class="h"><span>${esc(h.title)}</span></div><div class="fd">${esc(h.text)}</div></section>`).join("");
+    const timelineCard = hintCard + `<section class="c wide"><div class="h"><span>${esc(t("Verdichter je Tag"))}</span><span class="grow"></span><span>${esc(t("letzte 7 Tage · 0–24 Uhr"))}</span>${q("timeline", ui)}</div>${hb("timeline", ui)}${lanes(op) || `<div class="empty">${esc(t("keine Daten"))}</div>`}</section>`;
     const cycleCard = `<section class="c"><div class="h"><span>${esc(t("Laufzeit je Start"))}</span><span class="grow"></span><span>${esc(t("Minuten"))}</span>${q("cycle", ui)}</div>${hb("cycle", ui)}${cycleBars(op, ui)}</section>`;
     const startBins = binByOutdoor(rows, "starts");
     const startsCard = `<section class="c"><div class="h"><span>${esc(t("Starts nach Außentemperatur"))}</span>${q("cycling", ui)}</div>${hb("cycling", ui)}${startBins.length ? box(ui, "b-starts", () => binChart(startBins, { h: 180, ref: th.starts_per_day, unit: t("Starts/Tag"), digits: 0 })) : `<div class="empty">${esc(t("keine Daten"))}</div>`}</section>`;
@@ -2090,6 +2207,103 @@ table.tbl td { white-space:nowrap; }
     const diff = curves.filter((c) => c.difference != null);
     const note = diff.length ? t("Regler-Soll jetzt gegen Kurve: {v}", { v: diff.map((c) => `${c.name} ${signed(c.difference)} K`).join(" · ") }) : "";
     return `<div class="c dcard"><div class="top"><b>${esc(t("Heizkurven laut Regler"))}</b></div>${scatterChart(pts, { h: 180, unitY: "°C", lines })}${rows}<div class="fd">${esc(note)}</div><div class="fd">${esc(t("Linie: Raum-Soll + Steilheit × (Raum-Soll − außen). Punkt: was der Regler gerade fordert."))}</div></div>`;
+  }
+  var CTRL_LABEL = {
+    slope: "Steilheit",
+    room_day: "Raum-Soll Tag",
+    room_night: "Raum-Soll Absenkung",
+    dhw_comfort: "Komfort",
+    dhw_eco: "Eco",
+    bivalent_heating: "Bivalenz Heizen",
+    bivalent_dhw: "Bivalenz Warmwasser",
+    mode: "Betriebsart"
+  };
+  var MODE_LABEL = { program: "Programm", comfort: "Komfort", eco: "Eco", dhw: "Warmwasser", standby: "Bereitschaft", emergency: "Notbetrieb", manual: "Handbetrieb" };
+  function curveAt(slope, room, outdoor) {
+    return room + slope * Math.max(0, room - outdoor);
+  }
+  function ctrlValue(c, ui) {
+    const p = ui.ctrl && ui.ctrl.pending;
+    return p && p[c.key] !== void 0 ? p[c.key] : c.value;
+  }
+  function ctrlLabel(c) {
+    return t(CTRL_LABEL[c.field] || c.field);
+  }
+  function ctrlFmt(c, v) {
+    if (c.kind === "select") return esc(t(MODE_LABEL[v] || v || "–"));
+    const digits = c.step < 0.1 ? 2 : 1;
+    return `${fmt(v, digits)}${c.unit ? ` ${esc(c.unit)}` : ""}`;
+  }
+  function stepper(c, ui, admin) {
+    const v = ctrlValue(c, ui);
+    const changed = v !== c.value;
+    if (c.kind === "select") {
+      const opts = (c.options || []).map((o) => `<option value="${esc(o)}" ${o === v ? "selected" : ""}>${esc(t(MODE_LABEL[o] || o))}</option>`).join("");
+      return `<div class="cstep${changed ? " chg" : ""}"><span class="cl">${esc(ctrlLabel(c))}</span>${admin ? `<select data-ctrl-select="${esc(c.key)}">${opts}</select>` : `<b>${ctrlFmt(c, v)}</b>`}</div>`;
+    }
+    const btn = (dir, sym, off) => admin ? `<button class="cbtn" data-act="ctrl-step" data-key="${esc(c.key)}" data-dir="${dir}" ${off ? "disabled" : ""} aria-label="${sym}">${sym}</button>` : "";
+    return `<div class="cstep${changed ? " chg" : ""}"><span class="cl">${esc(ctrlLabel(c))}</span><span class="cv">${btn(-1, "−", v <= c.min)}<b>${ctrlFmt(c, v)}</b>${btn(1, "+", v >= c.max)}</span>${changed ? `<span class="was">${esc(t("bisher"))} ${ctrlFmt(c, c.value)}</span>` : ""}</div>`;
+  }
+  function curvePreview(items, ui) {
+    const slope = items.find((c) => c.field === "slope");
+    const day = items.find((c) => c.field === "room_day");
+    if (!slope || !day || slope.value == null || day.value == null) return "";
+    const s0 = slope.value, r0 = day.value, s1 = ctrlValue(slope, ui), r1 = ctrlValue(day, ui);
+    if (s0 === s1 && r0 === r1) return "";
+    const cells = [7, 0, -7].map((T) => {
+      const a = curveAt(s0, r0, T), b = curveAt(s1, r1, T);
+      return `<span>${esc(t("bei {t} °C", { t: fmt(T, 0) }))}: ${fmt(a, 1)} → <b>${fmt(b, 1)} °C</b> <small>(${signed(b - a)} K)</small></span>`;
+    }).join("");
+    return `<div class="cprev">${esc(t("Vorlauf-Soll"))} ${cells}</div>`;
+  }
+  function confirmBox(c, ui) {
+    const v = ctrlValue(c, ui);
+    const where = c.circuit_name ? `${c.circuit_name}: ` : "";
+    return `<div class="cconf" role="alertdialog">
+    <b>${esc(t("Wirklich am Regler ändern?"))}</b>
+    <div>${esc(where + ctrlLabel(c))}: ${ctrlFmt(c, c.value)} → <b>${ctrlFmt(c, v)}</b></div>
+    <div class="fd">${esc(t("Der Wert wird sofort an die Wärmepumpe geschickt. Unter „Änderungen“ siehst du später Vorher und Nachher; 24 Stunden lang kannst du ihn mit einem Klick zurücknehmen."))}</div>
+    <div class="cact"><button class="cbtn wide" data-act="ctrl-cancel">${esc(t("Abbrechen"))}</button><button class="cbtn wide go" data-act="ctrl-apply" data-key="${esc(c.key)}" ${ui.ctrl && ui.ctrl.busy ? "disabled" : ""}>${esc(t("Ja, ändern"))}</button></div>
+  </div>`;
+  }
+  function pendingActions(items, ui, admin) {
+    if (!admin) return "";
+    const changed = items.filter((c) => ctrlValue(c, ui) !== c.value);
+    if (!changed.length) return "";
+    const confirm = ui.ctrl && ui.ctrl.confirm;
+    return changed.map(
+      (c) => confirm === c.key ? confirmBox(c, ui) : `<div class="cact"><span>${esc(ctrlLabel(c))}: ${ctrlFmt(c, c.value)} → <b>${ctrlFmt(c, ctrlValue(c, ui))}</b></span><button class="cbtn" data-act="ctrl-reset" data-key="${esc(c.key)}">${esc(t("Verwerfen"))}</button><button class="cbtn go" data-act="ctrl-ask" data-key="${esc(c.key)}">${esc(t("Übernehmen…"))}</button></div>`
+    ).join("");
+  }
+  function controlsCard(d, ui) {
+    const ctl = d.controls;
+    if (!ctl || !(ctl.items || []).length) return "";
+    const admin = Boolean(ctl.admin);
+    const items = ctl.items;
+    const circuits = [];
+    for (const c of items.filter((x) => x.group === "circuit")) {
+      let g = circuits.find((x) => x.id === c.circuit);
+      if (!g) circuits.push(g = { id: c.circuit, name: c.circuit_name, items: [] });
+      g.items.push(c);
+    }
+    const block = (title, list, extra = "") => `<div class="cgrp"><div class="cgt">${esc(title)}</div><div class="crow">${list.map((c) => stepper(c, ui, admin)).join("")}</div>${extra}${pendingActions(list, ui, admin)}</div>`;
+    const parts = circuits.map((g) => block(g.name, g.items, curvePreview(g.items, ui)));
+    const dhw = items.filter((c) => c.group === "dhw");
+    if (dhw.length) parts.push(block(t("Warmwasser"), dhw));
+    const plant = items.filter((c) => c.group === "plant");
+    if (plant.length) parts.push(block(t("Anlage"), plant));
+    const recent = (ctl.recent || []).slice(0, 5).map((r) => {
+      const c = items.find((x) => x.entity === r.entity) || { field: r.field, kind: typeof r.new === "string" ? "select" : "number", step: 0.5 };
+      const when = new Date(r.ts).toLocaleString(getLang(), { weekday: "short", hour: "2-digit", minute: "2-digit" });
+      const undo = admin && r.undo ? ui.ctrl && ui.ctrl.undoConfirm === r.id ? `<button class="cbtn" data-act="ctrl-cancel">${esc(t("Abbrechen"))}</button><button class="cbtn go" data-act="ctrl-undo" data-id="${esc(r.id)}">${esc(t("Ja, zurücksetzen"))}</button>` : `<button class="cbtn" data-act="ctrl-undo-ask" data-id="${esc(r.id)}">${esc(t("Rückgängig"))}</button>` : r.undone ? `<span class="mut">${esc(t("zurückgenommen"))}</span>` : "";
+      return `<div class="crec"><span>${esc(when)} · ${esc((c.circuit_name ? c.circuit_name + ": " : "") + ctrlLabel(c))}: ${ctrlFmt(c, r.old)} → ${ctrlFmt(c, r.new)}</span><span>${undo}</span></div>`;
+    }).join("");
+    const msg = ui.ctrl && ui.ctrl.msg ? `<div class="cmsg ${ui.ctrl.err ? "bad" : "ok"}">${esc(ui.ctrl.msg)}</div>` : "";
+    return `<section class="c ctrl"><div class="top"><b>${esc(t("Regler einstellen"))}</b>${admin ? statusPill("mut", t("mit Rückfrage")) : statusPill("mut", t("nur Anzeige"))}</div>
+    ${admin ? "" : `<div class="fd">${esc(t("Ändern können nur Administratoren."))}</div>`}
+    ${msg}${parts.join("")}
+    ${recent ? `<div class="cgrp"><div class="cgt">${esc(t("Zuletzt verstellt"))}</div>${recent}</div>` : ""}
+  </section>`;
   }
 
   // src/views.js
@@ -2600,7 +2814,7 @@ table.tbl td { white-space:nowrap; }
       case "vergleich":
         return say2("Hat eine Einstellung etwas gebracht? Wetter ist herausgerechnet.") + viewVergleich(d, ui);
       case "inventar":
-        return say2("Was ist eingebaut – und fehlt etwas, das eine Auswertung braucht?") + devicesBlock(d) + viewInventar(d, ui);
+        return say2("Was ist eingebaut – und fehlt etwas, das eine Auswertung braucht?") + controlsCard(d, ui) + devicesBlock(d) + viewInventar(d, ui);
       case "protokoll":
         return say2("Liefern alle Quellen, und was ist passiert?") + viewProtokoll(d, ui);
       default:
@@ -3034,7 +3248,8 @@ table.tbl td { white-space:nowrap; }
       else if (el.dataset.act === "inv-close") {
         this._ui.invForm = null;
         this._ui.invSaved = false;
-      } else if (el.dataset.act === "goto-vergleich") {
+      } else if (el.dataset.act && el.dataset.act.startsWith("ctrl-")) return void this._ctrl(el);
+      else if (el.dataset.act === "goto-vergleich") {
         window.history.pushState(null, "", "/heizungs-analyse/vergleich");
         window.dispatchEvent(new CustomEvent("location-changed"));
         return;
@@ -3048,9 +3263,68 @@ table.tbl td { white-space:nowrap; }
       clearTimeout(this._searchTimer);
       this._searchTimer = setTimeout(() => this._loadLog(true), 250);
     }
+    _ctrlItem(key) {
+      return (this._data && this._data.controls && this._data.controls.items || []).find((c) => c.key === key);
+    }
+    async _ctrl(el) {
+      const ui = this._ui.ctrl = this._ui.ctrl || { pending: {} };
+      const act = el.dataset.act;
+      const key = el.dataset.key;
+      ui.msg = null;
+      ui.err = false;
+      if (act === "ctrl-step") {
+        const c = this._ctrlItem(key);
+        if (!c) return;
+        const cur = ui.pending[key] !== void 0 ? ui.pending[key] : c.value;
+        const next = Math.round((Number(cur) + Number(el.dataset.dir) * c.step) / c.step) * c.step;
+        const v = Math.min(c.max, Math.max(c.min, Number(next.toFixed(2))));
+        if (v === c.value) delete ui.pending[key];
+        else ui.pending[key] = v;
+        if (ui.confirm === key) ui.confirm = null;
+      } else if (act === "ctrl-reset") {
+        delete ui.pending[key];
+        if (ui.confirm === key) ui.confirm = null;
+      } else if (act === "ctrl-ask") ui.confirm = key;
+      else if (act === "ctrl-cancel") {
+        ui.confirm = null;
+        ui.undoConfirm = null;
+      } else if (act === "ctrl-undo-ask") ui.undoConfirm = el.dataset.id;
+      else if (act === "ctrl-apply" || act === "ctrl-undo") {
+        ui.busy = true;
+        this._render();
+        try {
+          if (act === "ctrl-apply") {
+            const res = await this._hass.callWS({ type: "heizungsanalyse/control/set", key, value: ui.pending[key], confirm: true });
+            delete ui.pending[key];
+            ui.msg = res && res.unchanged ? t("Der Regler hatte diesen Wert schon.") : t("Gespeichert – der Regler übernimmt den Wert in den nächsten Minuten.");
+          } else {
+            await this._hass.callWS({ type: "heizungsanalyse/control/undo", change: el.dataset.id });
+            ui.msg = t("Zurückgesetzt.");
+          }
+        } catch (e) {
+          ui.err = true;
+          ui.msg = t("Fehler: {e}", { e: e.message || e.code || e });
+        }
+        ui.busy = false;
+        ui.confirm = null;
+        ui.undoConfirm = null;
+        invalidate();
+        setTimeout(() => this._load(true), 2500);
+      }
+      this._render();
+    }
     _change(e) {
       const el = e.target;
       if (!el || !el.dataset) return;
+      if (el.dataset.ctrlSelect) {
+        const ui = this._ui.ctrl = this._ui.ctrl || { pending: {} };
+        const c = this._ctrlItem(el.dataset.ctrlSelect);
+        if (!c) return;
+        if (el.value === c.value) delete ui.pending[c.key];
+        else ui.pending[c.key] = el.value;
+        this._render();
+        return;
+      }
       if (el.dataset.catalog) {
         const selected = el.selectedOptions && el.selectedOptions[0];
         if (!selected) return;
