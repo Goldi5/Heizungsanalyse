@@ -12,6 +12,7 @@ from homeassistant.util import dt as dt_util
 import voluptuous as vol
 
 from . import controls as reg
+from .analysis.curve_advice import advise as advise_curve
 from .analysis.curve_suggestion import suggest_curve
 from .analysis.periods import merge_samples, samples_from_rollups
 from .catalog import inventory_catalog
@@ -35,7 +36,6 @@ from .devices import build_devices
 from .diagnostics import async_build_diagnostics
 from .inventory_io import export_csv, parse_csv, validate_import
 from .inventory_schema import build_schema, completeness, validate_values
-from .analysis.curve_advice import advise as advise_curve
 from .plant import async_frost_preview, build_datasheet
 from .services import async_apply_inventory, async_remove_inventory
 from .summary import build_summary, local_day
